@@ -10,6 +10,15 @@ Las instrucciones completas para la elaboracion del reporte se encuentran en:
 in/IntruccionesDeReporte1.pdf
 ```
 
+## Estado de las actividades Pendientes
+
+| Actividad 3 | Programa libre con 10 instrucciones en Code::Blocks |  Pendiente |
+| Actividad 6 | Desplazamiento de bit LSB a MSB |  Pendiente |
+| Actividad 7 | Suma de dos numeros de 32 bits con acarreo |  Pendiente |
+| Actividad 8 | Suma de dos numeros de 64 bits con acarreo |  Pendiente |
+| Actividad 9 | Factorial de un numero de 8 bits |  Pendiente |
+| Actividad 10 | Implementar sentencia en ensamblador |  Pendiente |
+
 ## Estructura del proyecto
 
 ```

@@ -19,9 +19,7 @@
 \usepackage{makecell}
 \usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, positioning}
-\usetikzlibrary{shapes.multipart, positioning, arrows.meta, calc, shadows}
-
+\usetikzlibrary{shapes.geometric, shapes.multipart, positioning, arrows.meta, calc, shadows, decorations.pathreplacing}
 
 % --- LISTAS ---
 \usepackage{enumitem}
@@ -29,44 +27,56 @@
 % --- PAQUETES DE CÓDIGO ---
 \usepackage{listings}
 % Configuración del estilo de listings
-% Paleta de colores estilo VSCode
-\definecolor{codebg}{rgb}{0.95,0.95,0.95}   % gris claro de fondo
-\definecolor{keyword}{rgb}{0.0,0.2,0.6}     % azul oscuro
-\definecolor{comment}{rgb}{0.25,0.5,0.35}   % verde
-\definecolor{string}{rgb}{0.6,0.0,0.0}      % rojo oscuro
-\definecolor{number}{rgb}{0.5,0.0,0.5}      % morado
-
-% Paleta de colores personalizada
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}   
+\definecolor{keyword}{rgb}{0.0,0.2,0.6}     
+\definecolor{comment}{rgb}{0.25,0.5,0.35}   
+\definecolor{string}{rgb}{0.6,0.0,0.0}      
+\definecolor{number}{rgb}{0.5,0.0,0.5}      
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.95}
 
-% Configuración del estilo
 \lstset{
-  backgroundcolor=\color{backcolour},   % Fondo gris claro
-  basicstyle=\ttfamily\small,           % Fuente monoespaciada
-  keywordstyle=\color{blue}\bfseries,   % Palabras clave en azul y negrita
-  stringstyle=\color{codepurple},       % Cadenas en morado
-  commentstyle=\color{codegray}\itshape,% Comentarios grises en cursiva
-  numbers=left,                         % Números de línea a la izquierda
-  numberstyle=\tiny\color{codegray},    % Estilo de los números
-  frame=single,                         % Marco alrededor
-  rulecolor=\color{black},              % Color del marco
-  breaklines=true,                      % Ajuste automático de línea
-  tabsize=4,                            % Tabulación de 4 espacios
-  showstringspaces=false                % No mostrar espacios raros
+  backgroundcolor=\color{backcolour},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codepurple},
+  commentstyle=\color{codegray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false
 }
 
+% Definición del lenguaje ARM Assembler para listings
+\lstdefinelanguage[ARM]{Assembler}{
+  morekeywords={MOV, ADD, SUB, SUBS, MUL, AND, ORR, EOR, NOT, CMP, TST,
+                BEQ, BNE, BGT, BLT, BGE, BLE, B, BL, BX, BLX,
+                LDR, STR, LDRB, STRB, PUSH, POP, SVC, LSL, LSR, ASR,
+                ROR, RRX, MVN, RSB, ADC, SBC, MLA, SMULL, UMULL,
+                STMFD, LDMFD, STMIA, LDMIA, NOP},
+  morecomment=[l]{@},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]",
+  sensitive=false
+}
+
+% --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
+\tikzset{
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+  arrow/.style={thick,->,>=stealth}
+}
 
 % --- RUTAS DE IMÁGENES ---
-% LaTeX buscará imágenes en estas carpetas automáticamente
-\graphicspath{{img/}{portada_img/}} 
+\graphicspath{{img/}{portada_img/}}
 
-% --- DIBUJO DE CIRCUITOS ---
-\usepackage{pgf,tikz}
-\usetikzlibrary{decorations.pathreplacing, calc, positioning}
-
-% Definimos el color azul similar al de la imagen
 \definecolor{armblue}{RGB}{0, 113, 188}
 
 % --- CONFIGURACIÓN DE PÁGINA (GEOMETRÍA) ---
@@ -80,9 +90,9 @@
 ]{geometry}
 
 % --- FORMATO DE TEXTO ---
-\renewcommand{\baselinestretch}{1.25} % Interlineado 1.25
-\usepackage{parskip} % Espacio entre párrafos sin sangría
-\usepackage{lipsum}  % Texto de relleno
+\renewcommand{\baselinestretch}{1.25} 
+\usepackage{parskip} 
+\usepackage{lipsum}  
 
 % --- VARIABLES GLOBALES ---
 \newcommand{\materia}{}
@@ -90,21 +100,18 @@
 % --- ENCABEZADOS Y PIES DE PÁGINA ---
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\fancyhf{} % Limpia encabezados y pies por defecto
-
-% CONFIGURACIÓN DE LOS ESCUDOS EN EL ENCABEZADO
-\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/izq.png}} 
-\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/der.png}} 
-
-\fancyfoot[C]{\thepage} % Número de página al centro abajo
-\renewcommand{\headrulewidth}{0.4pt} % Línea horizontal bajo el encabezado
-\renewcommand{\footrulewidth}{0pt}   % Sin línea en el pie
+\fancyhf{} 
+\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/izq.png}}
+\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/der.png}}
+\fancyfoot[C]{\thepage} 
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0pt}  
 
 % --- BIBLIOGRAFÍA ---
 \usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
 \addbibresource{referencias.bib}
 
-% --- HIPERVÍNCULOS (Siempre al final del preámbulo) ---
+% --- HIPERVÍNCULOS ---
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -114,73 +121,379 @@
     urlcolor=cyan
 }
 
-% ---------------------------------------------------------
-% INICIO DEL DOCUMENTO
-% ---------------------------------------------------------
-
 \begin{document}
 
-    % 1. INSERTAR PORTADA (portada.tex)
     \input{portada.tex}
 
     \newpage
-    \setcounter{page}{1} % Reiniciar contador en 1
+    \setcounter{page}{1}
 
-    % 2. CONTENIDO
     \section{Objetivo:}
     Aprender la estructura de los procesadores con arquitectura ARM, utilizar la plataforma Raspberry Pi, los entornos para programar; desarrollar algoritmos con las instrucciones en lenguaje ensamblador, controlar directamente los recursos del microprocesador; editar, compilar, ensamblar, simular y ejecutar programas en Raspberry Pi.
 
     \section*{Actividad 1}
-    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir,
-    comentar y ensamblar y ejecutar el siguiente programa; explicar que hace:
+    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir, comentar y ensamblar y ejecutar el siguiente programa; explicar qué hace.
+
+    \subsection*{Propuesta de solución}
+    Se propone cargar cada operando directamente en un registro mediante
+    \textbf{direccionamiento inmediato} (\texttt{MOV Rn, \#valor}), de modo que el dato
+    viaja desde la instrucción misma hacia el banco de registros sin pasar por memoria.
+    Una vez que ambos operandos residen en R1 y R2, la ALU calcula la suma con
+    \texttt{ADD R3, R2, R1} y deposita el resultado en R3; finalmente, dicho valor se
+    copia a R0 (registro de retorno por convención ABI) antes de invocar la llamada al
+    sistema de salida. El diagrama de flujo que representa este proceso es:
+    
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Cargar $0x19$ en R1};
+        \node (pro2) [process, below of=pro1] {Cargar $53$ en R2};
+        \node (pro3) [process, below of=pro2] {R3 = R2 + R1};
+        \node (pro4) [process, below of=pro3] {Mover R3 a R0};
+        \node (stop) [startstop, below of=pro4] {Fin (Syscall Exit)};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (pro3);
+        \draw [arrow] (pro3) -- (pro4);
+        \draw [arrow] (pro4) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
+
+    \textbf{Desarrollo}
+    Se transcribió y compiló el código fuente. Se utilizó GDB para la depuración y verificación de los registros de la CPU.
+    
+    \begin{lstlisting}[language={[ARM]Assembler}, caption=Código de la Actividad 1]
+    .global _start      @ Hace visible la etiqueta _start para el enlazador (linker)
+
+    _start:             @ Punto de entrada del programa
+        MOV R1, #0x19   @ Carga el valor hexadecimal 19 (25 decimal) en el registro R1
+        MOV R2, #53     @ Carga el valor decimal 53 en el registro R2
+        
+        ADD R3, R2, R1  @ Suma: R3 = R2 + R1. Resultado esperado: 78
+        
+        MOV R0, R3      @ Mueve el resultado (78) al registro R0 (registro de retorno)
+        MOV R7, #1      @ Carga el valor 1 en R7. En Linux, 1 significa "Syscall Exit"
+        SVC 0           @ Supervisor Call: Llama al Kernel para ejecutar la salida
+    \end{lstlisting}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A1_2.png}
+        \caption{Proceso de ensamblado, enlazado e inicio de GDB en Raspberry Pi.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A1_1.png}
+        \caption{Inspección de registros en GDB mostrando R0 y R3 con el valor de 78 (0x4E).}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El programa utiliza el \textbf{modo de direccionamiento inmediato} para cargar constantes estáticas en los registros internos del procesador (\texttt{MOV R1, \#0x19} y \texttt{MOV R2, \#53}). El flujo interno de los datos envía el contenido de los registros R1 y R2 a la Unidad Aritmético Lógica (ALU) a través de la instrucción \texttt{ADD}, la cual deposita el resultado de la suma matemática en el registro R3.
+    Se comprobó que el flujo y la lógica son correctos, ya que la suma de $25 + 53$ arroja $78$ en decimal, equivalente a \texttt{0x4E} en hexadecimal, valor que se observa claramente almacenado en los registros durante la ejecución controlada con GDB.
+
+    \newpage
 
     \section*{Actividad 2}
-    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir,
-    comentar, ensamblar y ejecutar el siguiente programa; explicar que hace.
+    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir, comentar, ensamblar y ejecutar el siguiente programa; explicar qué hace.
+
+    \subsection*{Propuesta de solución}
+    El problema requiere comparar dos valores y seleccionar un mensaje de salida según
+    el resultado. Se propone usar la instrucción \texttt{SUBS} para restar ambos valores
+    y actualizar simultáneamente la bandera \textbf{Zero (Z)} del registro \texttt{CPSR}:
+    si el resultado es cero, los datos son iguales (Z\,=\,1); si no, son diferentes (Z\,=\,0).
+    A partir de ese estado de bandera, las instrucciones \texttt{BEQ} y \texttt{BNE}
+    dirigen el flujo hacia la rama correspondiente de entrada/salida.
+    El dato transita así del banco de registros hacia la ALU (para la resta), luego al
+    \texttt{CPSR} (para fijar Z) y finalmente al periférico de salida estándar mediante
+    la llamada al sistema. El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {R0 = 5,\ R1 = 1};
+        \node (pro2) [process, below of=pro1] {SUBS: R3 = R0 $-$ R1};
+        \node (dec1) [decision, below of=pro2, yshift=-0.5cm] {¿R3 == 0?};
+
+        \node (pro3) [io, below of=dec1, xshift=-3.2cm, yshift=-1.5cm,
+                      minimum width=2.8cm, minimum height=0.8cm, align=center]
+                     {Imprimir:\\''Datos diferentes''};
+        \node (pro4) [io, below of=dec1, xshift=3.2cm, yshift=-1.5cm,
+                      minimum width=2.8cm, minimum height=0.8cm, align=center]
+                     {Imprimir:\\''Datos iguales''};
+        \node (stop) [startstop, below of=dec1, yshift=-4.5cm] {Fin};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (dec1);
+        \draw [arrow] (dec1.west) -- node[above]{\small No (Z=0)} (dec1.west -| pro3.north) -- (pro3.north);
+        \draw [arrow] (dec1.east) -- node[above]{\small Sí (Z=1)} (dec1.east -| pro4.north) -- (pro4.north);
+        \draw [arrow] (pro3.south) |- (stop);
+        \draw [arrow] (pro4.south) |- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
+
+    \textbf{Desarrollo}
+    
+    \begin{lstlisting}[language={[ARM]Assembler}, caption=Código de la Actividad 2]
+    .text                   
+    .global _start          
+
+    _start:
+        MOV R0, #5          @ Carga el valor 5 en R0
+        MOV R1, #0x01       @ Carga el valor 1 en R1
+        SUBS R3, R0, R1     @ Resta R1 a R0 (5-1), guarda en R3 y actualiza banderas
+        
+        BEQ igual           @ Si Z=1, salta a etiqueta 'igual'
+        BNE diferente       @ Si Z=0, salta a 'diferente'
+
+    igual:                  
+        MOV R0, #1          @ Descriptor de archivo 1 (Salida estandar / pantalla)
+        LDR R1, =texto1     @ Carga la direccion de 'texto1'
+        MOV R2, #14         @ Longitud del mensaje
+        MOV R7, #4          @ Syscall 4 (Write)
+        SVC 0               
+        B fin               @ Salto al final
+
+    diferente:              
+        MOV R0, #1          @ Descriptor de archivo 1
+        LDR R1, =texto2     @ Carga la direccion de 'texto2'
+        MOV R2, #17         @ Longitud del mensaje
+        MOV R7, #4          @ Syscall 4 (Write)
+        SVC 0               
+
+    fin:                    
+        MOV R0, R3          
+        MOV R7, #1          @ Syscall 1 (Exit)
+        SVC 0               
+
+    .data                   
+        texto1: .asciz "Datos iguales\n"      
+        texto2: .asciz "Datos diferentes\n"   
+    \end{lstlisting}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A2_1.png}
+        \caption{Inspección de registros antes del salto condicional.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A2_2.png}
+        \caption{Ejecución del programa evaluando la condición de desigualdad.}
+    \end{figure}
+
+    \newpage
+
+    \textbf{Análisis de resultados}
+    
+    Se implementó un algoritmo de control de flujo usando saltos condicionales (\texttt{BEQ} y \texttt{BNE}). La instrucción clave aquí es \texttt{SUBS}, la cual no solo realiza la resta mediante la ALU, sino que interactúa con el registro \texttt{CPSR} (Current Program Status Register) para actualizar la bandera Zero (Z). Como $5 - 1 = 4$, la bandera Z se estableció en 0, activando la rama del salto \texttt{BNE}. Adicionalmente, el programa utiliza el periférico de salida estándar (pantalla) a través de la llamada al sistema de Linux (\texttt{SVC 0} con R7=4), mandando la cadena de texto almacenada en la memoria \texttt{.data} hacia la terminal.
 
     \section*{Actividad 3}
-    Empleando el IDE Code::Block, seleccionar 10 instrucciones, formalizar un programa;
-    comprobar el funcionamiento (agregar las directivas correspondientes).
+    Empleando el IDE Code::Block, seleccionar 10 instrucciones, formalizar un programa; comprobar el funcionamiento (agregar las directivas correspondientes).
 
     \begin{enumerate}[label=\alph*.]
         \item Reportar el resultado esperado y el obtenido.
     \end{enumerate}
 
+
+    \newpage
+
     \section*{Actividad 4}
-    Tomando como base el programa de la actividad 1, para que obtenga el promedio de dos
-    números de 8 bits; utilizar Code::Blocks para todo el proceso.
+    Tomando como base el programa de la actividad 1, para que obtenga el promedio de dos números de 8 bits; utilizar Code::Blocks para todo el proceso.
+
+    \subsection*{Propuesta de solución}
+    Para obtener el promedio de dos números de 8 bits se parte de la identidad
+    $\overline{x} = (A + B) \div 2$. La suma se realiza con \texttt{ADD} igual que
+    en la Actividad~1, y la división entre 2 se sustituye por un desplazamiento
+    lógico a la derecha de un bit (\texttt{LSR \#1}), operación equivalente y más
+    eficiente en arquitectura ARM. El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Cargar Dato 1 (80) en R1};
+        \node (pro2) [process, below of=pro1] {Cargar Dato 2 (20) en R2};
+        \node (pro3) [process, below of=pro2] {Suma: R3 = R1 + R2};
+        \node (pro4) [process, below of=pro3] {Desplazamiento a la derecha: R0 = R3 $\gg$ 1};
+        \node (stop) [startstop, below of=pro4] {Fin};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (pro3);
+        \draw [arrow] (pro3) -- (pro4);
+        \draw [arrow] (pro4) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \begin{lstlisting}[language={[ARM]Assembler}, caption=Código de la Actividad 4]
+    .text
+    .global main
+
+    main:
+        MOV R1, #80         @ Dato 1 
+        MOV R2, #20         @ Dato 2 
+        
+        ADD R3, R1, R2      @ R3 = 80 + 20 = 100
+        
+        @ Para dividir entre 2 usamos LSR (Logical Shift Right)
+        LSR R0, R3, #1      @ Desplaza bits a la derecha 1 vez. 
+        
+        @ El resultado (50) ya esta en R0 listo para devolverlo
+        MOV R7, #1          @ Salida
+        SVC 0
+    \end{lstlisting}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A4.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 4, mostrando R0=0x32 (50).}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El objetivo se cumplió promediando dos números enteros de manera eficiente. En lugar de utilizar una instrucción de división pesada, se manipuló la arquitectura mediante un \textbf{Logical Shift Right (LSR)}. En la arquitectura ARM, el flujo de datos pasa a través de un desplazador de barril (\textit{barrel shifter}) antes de la ALU. Mover los bits una posición a la derecha equivale matemáticamente a dividir entre 2 ($100 \gg 1 = 50$). El depurador en Code::Blocks muestra en la imagen el registro R0 con el valor correcto de \texttt{0x32} (50 en decimal).
+
 
     \section*{Actividad 5}
     Emplear el IDE Code::Block, escribir, comentar, compilar y ejecutar el siguiente programa.
 
+    \subsection*{Propuesta de solución}
+    El problema consiste en implementar un contador cíclico que incremente su valor de
+    0 a 9 y luego lo decremente de 9 a 0, repitiéndose indefinidamente.
+    Se propone almacenar el contador en R0, el límite superior (9) en R1 y el límite
+    inferior (0) en R2. La solución emplea dos bucles etiquetados (\texttt{loop1} y
+    \texttt{loop2}) controlados por la instrucción \texttt{CMP}, la cual resta
+    internamente los operandos sin guardar resultado, actualizando solo las banderas del
+    \texttt{CPSR}. El flujo de datos es el siguiente: R0 avanza por \texttt{ADD} hasta
+    alcanzar R1, momento en que \texttt{BNE} deja de redirigir el \texttt{PC} a
+    \texttt{loop1} y el control pasa a \texttt{loop2}; desde ahí, \texttt{ADD R0,\#-1}
+    decrementa R0 hasta igualar R2, y \texttt{BEQ} devuelve el \texttt{PC} a
+    \texttt{loop1}. El diagrama de flujo que describe este comportamiento cíclico es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {R0=0, R1=9 (Sup), R2=0 (Inf)};
+        \node (loop1) [process, below of=pro1] {loop1: R0 = R0 + 1};
+        \node (dec1) [decision, below of=loop1, yshift=-1.0cm] {¿R0 == R1?};
+        
+        \node (loop2) [process, right of=dec1, xshift=3cm] {loop2: R0 = R0 - 1};
+        \node (dec2) [decision, above of=loop2, yshift=1cm] {¿R0 == R2?};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (loop1);
+        \draw [arrow] (loop1) -- (dec1);
+        
+        % Loop ascendente
+        \draw [arrow] (dec1.west) -- ++(-1.5,0) |- node[anchor=east, pos=0.25] {No} (loop1.west);
+        
+        % Transición a descendente
+        \draw [arrow] (dec1.east) -- node[anchor=south] {Sí} (loop2.west);
+        \draw [arrow] (loop2) -- (dec2);
+        
+        % Loop descendente
+        \draw [arrow] (dec2.east) -- ++(1.5,0) |- node[anchor=west, pos=0.25] {No} (loop2.east);
+        
+        % Regreso a ascendente
+        \draw [arrow] (dec2.west) -- node[anchor=south] {Sí} (loop1.east);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \begin{lstlisting}[language={[ARM]Assembler}, caption=Código de la Actividad 5]
+        /* Actividad 5: Bucle Ascendente y Descendente */
+
+        .text
+        .global main
+
+        main:
+        MOV R0, #0          @ R0 sera nuestro contador, inicia en 0
+        MOV R1, #9          @ R1 es el limite superior (9)
+        MOV R2, #0          @ R2 es el limite inferior (0)
+
+        loop1:                  @ Etiqueta para subir
+        ADD R0, R0, #1      @ Incrementa R0 en 1
+        CMP R1, R0          @ Compara si llegamos al limite superior (9)
+        BNE loop1           @ Si NO es igual, repite loop1
+
+        loop2:                  @ Etiqueta para bajar
+        ADD R0, R0, #-1     @ Decrementa R0 en 1
+        CMP R2, R0          @ Compara si llegamos al limite inferior (0)
+        BEQ loop1           @ Si es igual a 0, salta de nuevo a loop1
+        B loop2             @ Si no es 0, sigue bajando
+    \end{lstlisting}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A5.png}
+        \caption{Monitoreo de bucle en Code::Blocks, mostrando a R0 en la iteración de bajada.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    Este programa demuestra el funcionamiento interno del \textbf{Contador de Programa (PC)} ante instrucciones de bifurcación. El ciclo infinito es gobernado por la instrucción de comparación virtual \texttt{CMP}, que resta internamente los registros sin almacenar el resultado, solo para manipular el \texttt{CPSR}. Al combinarse con ramas relativas (\texttt{BNE}, \texttt{BEQ}, \texttt{B}), la CPU salta las direcciones de memoria hacia atrás, repitiendo el proceso lógico. En la evidencia visual se observa que el contador principal \texttt{R0} ha operado correctamente dentro de los márgenes limitantes de los registros \texttt{R1} y \texttt{R2}.
+
     \section*{Actividad 6}
-    Realizar un programa que inicie activando el bit menos significativo de un registro y
-    recorra de posición hacia el bit más significativo (solo un bit estará activado); usar el
-    IDE Code::Blocks.
+
+    Realizar un programa que inicie activando el bit menos significativo de un registro y recorra de posición hacia el bit más significativo (solo un bit estará activado); usar el IDE Code::Blocks.
+
+
+    \newpage
 
     \section*{Actividad 7}
-    Escribir un programa que realice la suma de dos números de 32 bits y almacene el resultado
-    en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
 
+    Escribir un programa que realice la suma de dos números de 32 bits y almacene el resultado en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
+
+
+    \newpage
     \section*{Actividad 8}
-    Escribir un programa que realice la suma de dos números de 64 bits y almacene el resultado
-    en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
 
+    Escribir un programa que realice la suma de dos números de 64 bits y almacene el resultado en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
+
+
+    \newpage
     \section*{Actividad 9}
+
     Realizar un programa que obtenga el factorial de un número de 8 bits.
 
+
+    \newpage
     \section*{Actividad 10}
+
     Implementar con instrucciones en lenguaje ensamblador la sentencia:
 
+
+    \newpage
     \section{Conclusiones:}
 
+
+
     \begin{itemize}
+
         \item \textbf{Espinoza Matamoros Percival Ulises:}
+
         \item \textbf{Flores Colin Victor Jaziel:}
+
         \item \textbf{Lara Hernandez Angel Husiel:}
+
     \end{itemize}
+
     \newpage
-    \nocite{*} 
+
+    \nocite{*}
+
     \printbibliography[heading=bibintoc, title={Referencias}]
+
 
 \end{document}
