@@ -18,6 +18,3 @@
 *.glg
 *.glo
 *.gls
-
-# PDF generado (salida del compilador)
-main.pdf
