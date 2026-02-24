@@ -1,44 +1,30 @@
-/* Actividad 3: Programa con 10 instrucciones (Versión Simplificada)
-   Plataforma: Raspberry Pi (Code::Blocks)
-   Objetivo: Usar 10 instrucciones diferentes de forma lineal.
-*/
+.data
+var1: .word 0xAA            @ Definimos una variable con valor hexadecimal AA
 
-.text                   @ Inicio de la sección de código
-.global main            @ "main" es necesario para Code::Blocks
+.text
+.global main
 
 main:
-    @ --- INSTRUCCIÓN 1: MOV (Mover/Cargar) ---
-    MOV R1, #10         @ Cargamos el valor 10 en el registro R1.
+    MOV R0, #10             @ 1. MOV: Carga valor 10 en R0
+    MOV R1, #20             @ 2. MOV: Carga valor 20 en R1
+    ADD R2, R0, R1          @ 3. ADD: Suma 10 + 20 = 30 en R2
+    SUB R3, R1, R0          @ 4. SUB: Resta 20 - 10 = 10 en R3
+    
+    LDR R4, =var1           @ 5. LDR (dirección): Carga dirección de var1 en R4
+    LDR R5, [R4]            @ 6. LDR (valor): Carga el valor 0xAA de memoria en R5
+    
+    AND R6, R5, #0x0F       @ 7. AND: Máscara para quedarse con la parte baja (0x0A)
+    ORR R7, R2, #1          @ 8. ORR: Operación lógica OR con 1 (30 OR 1 = 31)
+    
+    CMP R2, #30             @ 9. CMP: Compara si R2 es igual a 30
+    BEQ es_treinta          @ 10. BEQ: Salta si es igual (R2 = 30)
+    
+    MOV R0, #0              @ Si no es igual, pone 0 en R0
+    B sailr                 @ 11. B: Salto incondicional (instrucción adicional)
 
-    @ --- INSTRUCCIÓN 2: ADD (Suma) ---
-    ADD R2, R1, #5      @ R2 = 10 + 5. Resultado: 15.
+es_treinta:
+    MOV R0, #1              @ Si es igual, pone 1 en R0
 
-    @ --- INSTRUCCIÓN 3: SUB (Resta) ---
-    SUB R3, R2, #2      @ R3 = 15 - 2. Resultado: 13.
-
-    @ --- INSTRUCCIÓN 4: MUL (Multiplicación) ---
-    MUL R4, R1, R2      @ R4 = 10 * 15. Resultado: 150.
-                        @ (Nota: MUL requiere solo registros, no números directos).
-
-    @ --- INSTRUCCIÓN 5: AND (Y Lógico - Máscara) ---
-    AND R5, R1, #1      @ R5 = 10 AND 1. (10 es 1010 en binario, 1 es 0001).
-                        @ Resultado: 0 (Sirve para saber si es par).
-
-    @ --- INSTRUCCIÓN 6: ORR (O Lógico - Encender bits) ---
-    ORR R6, R1, #1      @ R6 = 10 OR 1. (1010 OR 0001). Resultado: 11 (1011).
-
-    @ --- INSTRUCCIÓN 7: LSL (Desplazamiento Izquierda - Multiplicar por 2) ---
-    LSL R7, R1, #1      @ R7 = 10 desplazado 1 vez a la izquierda.
-                        @ 10 (decimal) -> 20 (decimal). Equivale a multiplicar por 2.
-
-    @ --- INSTRUCCIÓN 8: LSR (Desplazamiento Derecha - Dividir por 2) ---
-    LSR R8, R1, #1      @ R8 = 10 desplazado 1 vez a la derecha.
-                        @ 10 (decimal) -> 5 (decimal). Equivale a dividir entre 2.
-
-    @ --- INSTRUCCIÓN 9: CMP (Comparar) ---
-    CMP R1, #10         @ Comparamos si R1 es igual a 10. 
-                        @ Esto actualiza las banderas internas (Z flag).
-
-    @ --- INSTRUCCIÓN 10: SVC (Llamada al Sistema - Salir) ---
-    MOV R7, #1          @ Preparamos la salida (sys_exit).
-    SVC 0               @ Ejecutamos la salida.
+sailr:
+    MOV R7, #1              @ Preparamos la salida (sys_exit)
+    SVC 0                   @ 12. SVC: Ejecutamos la salida

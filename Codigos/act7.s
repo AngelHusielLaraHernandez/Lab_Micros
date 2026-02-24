@@ -1,5 +1,3 @@
-/* Actividad 7: Suma de 32 bits detectando acarreo
-*/
 .data
     dato1: .word 0xFFFFFFFF  @ Número grande para forzar acarreo
     dato2: .word 0x00000002

@@ -1,6 +1,3 @@
-/* Actividad 9: Factorial de un número (n!)
-*/
-
 .text
 .global main
 

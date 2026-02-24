@@ -1,8 +1,3 @@
-/* Actividad 8: Suma de 64 bits (Parte Baja y Alta)
-   Num1 = R1:R0 (Alta:Baja)
-   Num2 = R3:R2 (Alta:Baja)
-*/
-
 .text
 .global main
 
@@ -25,3 +20,4 @@ main:
     
     MOV R7, #1
     SVC 0
+   

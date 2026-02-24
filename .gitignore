@@ -18,3 +18,5 @@
 *.glg
 *.glo
 *.gls
+/%OUTDIR%
+main.bbl-SAVE-ERROR

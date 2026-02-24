@@ -1,7 +1,3 @@
-/* Actividad 10: Traducción de ciclo FOR
-   Variables: j -> R0, i -> R1
-*/
-
 .text
 .global main
 

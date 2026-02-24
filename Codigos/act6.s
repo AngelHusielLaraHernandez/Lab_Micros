@@ -1,6 +1,3 @@
-/* Actividad 6: Recorrido de bit (Shift Register)
-*/
-
 .text
 .global main
 
