@@ -20,3 +20,4 @@
 *.gls
 /%OUTDIR%
 main.bbl-SAVE-ERROR
+/.vscode
