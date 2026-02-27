@@ -808,8 +808,17 @@
 
         Por medio de los ejercicios solicitados a lo largo de las actividades pude conocer el funcionamiento del conjunto de instrucciones básicas del ensamblador ARM, en general conocer la sintaxis de las instrucciones en ensamblador mnemonicos, bandera, condiciones, registro destino, operando1 y operando2. Al comprobar los programas realizados ejecutándolos en una Raspberry Pi pude verificar el correcto funcionamiento, esto Analizando el contenido de los registros verificando que su contenido corresponda con el esperado.
 
-        \item \textbf{Flores Colin Victor Jaziel:}
+        \item \textbf{Flores Colin Victor Jaziel:} 
 
+        En esta primera práctica de laboratorio he trabajado y conocido la plataforma Raspberry Pi, la cual implementa una arquitectura ARM. Este procesador tiene 16 registros de 32 bits, los cuales fueron de suma importancia para lograr implementar las 10 actividades que marca el manual. Hice principalmente uso de los registros de propósito general para trabajar con los diferentes datos.
+
+        Utilicé más de 10 instrucciones diferentes propias del lenguaje ensamblador, como lo son \texttt{MOV} para cargar ciertos valores en un registro específico. También se realizaron operaciones aritméticas como la suma de los datos de un registro (\texttt{ADD}), la resta con \texttt{SUB} y la multiplicación con \texttt{MUL}. 
+
+        Asimismo, se implementaron instrucciones para corrimiento de bits, las cuales resultaron muy convenientes para multiplicar o dividir por 2 algunos valores numéricos. Además, se trabajó con operadores como \texttt{LDR} para cargar direcciones de memoria de ciertas variables según nuestra conveniencia, de manera similar a lo que es un apuntador.
+
+        También se implementaron operaciones lógicas como es el caso de \texttt{CMP}, que se utilizó como una instrucción condicional para realizar las actividades del ciclo \texttt{for} y el cálculo del factorial.
+
+        Me familiaricé más con el registro \texttt{CPSR}, que contiene banderas muy útiles para manejar el flujo de los programas. Por último, aprendí más de una forma de editar, ensamblar, depurar y ejecutar un programa en lenguaje ensamblador, ya sea utilizando la línea de comandos o el editor de código Code::Blocks, que resulta más amigable y práctico que la terminal.
         \item \textbf{Lara Hernandez Angel Husiel:} La realización de esta práctica me permitió comprender de manera directa cómo opera un procesador ARM desde el nivel más bajo de abstracción. A través de los ejercicios desarrollados pude identificar el papel concreto que juegan los registros de propósito general, el registro de estado CPSR y sus banderas (Zero, Carry, Negative, oVerflow) en el control del flujo de ejecución de los programas.
 
         El desarrollo de las actividades me permitió contrastar distintas formas de interactuar con el procesador: desde operaciones aritméticas simples con direccionamiento inmediato (suma y promedio), pasando por el control de flujo mediante saltos condicionales e incondicionales, hasta operaciones más avanzadas como el manejo de acarreo en sumas de 32 y 64 bits y el cálculo iterativo de un factorial. En cada caso fue posible verificar cómo cada instrucción en ensamblador se traduce directamente en una acción sobre los recursos del procesador, sin ninguna capa de abstracción intermedia.
