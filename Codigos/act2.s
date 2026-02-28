@@ -1,34 +1,24 @@
-.text                   
-.global _start          
+/* ACTIVIDAD 2: Direccionamiento Post-indexado con 32 datos
+   Objetivo: Guardar 32 números usando auto-incremento de dirección.
+*/
+.data
+    i: .skip 128              @ Reserva 128 bytes (32 elementos * 4 bytes cada uno)
 
-_start:
-    MOV R0, #5          @ Carga el valor 5 en R0
-    MOV R1, #0x01       @ Carga el valor 1 en R1
-    SUBS R3, R0, R1     @ Resta R1 a R0 (5-1), guarda en R3 y actualiza banderas
+.text
+.global main
+
+main:
+    ldr r1, =i                @ Carga en R1 la dirección base del arreglo 'i'
+    mov r2, #0                @ R2 es el contador, inicia en 0
+
+loop2:
+    cmp r2, #32               @ Compara el contador con 32 (el doble que la act. 1)
+    beq salir                 @ Si llegamos a 32, salta a 'salir'
     
-    BEQ igual           @ Si Z=1, salta a etiqueta 'igual'
-    BNE diferente       @ Si Z=0, salta a 'diferente'
+    str r2, [r1], #4          @ DIRECCIONAMIENTO POST-INDEXADO: Guarda R2 en la memoria de R1, y LUEGO suma 4 a R1 automáticamente.
+    add r2, r2, #1            @ Incrementa el contador R2 en 1
+    b loop2                   @ Repite el bucle
 
-igual:                  
-    MOV R0, #1          @ Descriptor de archivo 1 (Salida estandar / pantalla)
-    LDR R1, =texto1     @ Carga la direccion de 'texto1'
-    MOV R2, #14         @ Longitud del mensaje
-    MOV R7, #4          @ Syscall 4 (Write)
-    SVC 0               
-    B fin               @ Salto al final
-
-diferente:              
-    MOV R0, #1          @ Descriptor de archivo 1
-    LDR R1, =texto2     @ Carga la direccion de 'texto2'
-    MOV R2, #17         @ Longitud del mensaje
-    MOV R7, #4          @ Syscall 4 (Write)
-    SVC 0               
-
-fin:                    
-    MOV R0, R3          
-    MOV R7, #1          @ Syscall 1 (Exit)
-    SVC 0               
-
-.data                   
-    texto1: .asciz "Datos iguales\n"      
-    texto2: .asciz "Datos diferentes\n"   
+salir:
+    MOV R7, #1                @ Prepara sys_exit
+    SVC 0                     @ Termina ejecución

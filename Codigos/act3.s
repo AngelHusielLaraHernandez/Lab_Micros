@@ -1,30 +1,29 @@
+/* ACTIVIDAD 3: Copia de arreglo invertida
+   Objetivo: A = [1..16], B = [16..1]
+*/
 .data
-var1: .word 0xAA            @ Definimos una variable con valor hexadecimal AA
+    A: .word 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16  @ Arreglo original de 16 datos
+    B: .skip 64               @ Arreglo vacío 'B' para la copia (64 bytes)
 
 .text
 .global main
 
 main:
-    MOV R0, #10             @ 1. MOV: Carga valor 10 en R0
-    MOV R1, #20             @ 2. MOV: Carga valor 20 en R1
-    ADD R2, R0, R1          @ 3. ADD: Suma 10 + 20 = 30 en R2
-    SUB R3, R1, R0          @ 4. SUB: Resta 20 - 10 = 10 en R3
-    
-    LDR R4, =var1           @ 5. LDR (dirección): Carga dirección de var1 en R4
-    LDR R5, [R4]            @ 6. LDR (valor): Carga el valor 0xAA de memoria en R5
-    
-    AND R6, R5, #0x0F       @ 7. AND: Máscara para quedarse con la parte baja (0x0A)
-    ORR R7, R2, #1          @ 8. ORR: Operación lógica OR con 1 (30 OR 1 = 31)
-    
-    CMP R2, #30             @ 9. CMP: Compara si R2 es igual a 30
-    BEQ es_treinta          @ 10. BEQ: Salta si es igual (R2 = 30)
-    
-    MOV R0, #0              @ Si no es igual, pone 0 en R0
-    B sailr                 @ 11. B: Salto incondicional (instrucción adicional)
+    ldr r1, =A                @ R1 apunta al INICIO del arreglo original 'A'
+    ldr r2, =B                @ R2 apunta al INICIO del arreglo destino 'B'
+    add r2, r2, #60           @ Movemos R2 para que apunte al ÚLTIMO espacio de 'B' (15 posiciones * 4 bytes = +60)
+    mov r3, #0                @ R3 es el contador, inicia en 0
 
-es_treinta:
-    MOV R0, #1              @ Si es igual, pone 1 en R0
+loop_copia:
+    cmp r3, #16               @ ¿Ya copiamos 16 elementos?
+    beq fin_copia             @ Si sí, termina el ciclo
+    
+    ldr r4, [r1], #4          @ Lee el dato apuntado por R1, lo guarda en R4 y avanza R1 hacia ADELANTE (+4 bytes)
+    str r4, [r2], #-4         @ Escribe R4 en la dirección R2, y mueve R2 hacia ATRÁS (-4 bytes)
+    
+    add r3, r3, #1            @ Aumenta el contador de copiados
+    b loop_copia              @ Repite el ciclo
 
-sailr:
-    MOV R7, #1              @ Preparamos la salida (sys_exit)
-    SVC 0                   @ 12. SVC: Ejecutamos la salida
+fin_copia:
+    MOV R7, #1                @ sys_exit
+    SVC 0                     @ Termina programa

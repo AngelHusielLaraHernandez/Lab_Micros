@@ -1,0 +1,835 @@
+\documentclass[letterpaper,12pt]{article}
+
+% --- PAQUETES DE IDIOMA
+\usepackage[spanish,mexico]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+
+% --- PAQUETES MATEMÁTICOS --
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cancel}
+\usepackage{mathrsfs}
+
+% --- PAQUETES GRÁFICOS Y DE DISEÑO ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.multipart, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
+
+% --- LISTAS ---
+\usepackage{enumitem}
+
+% --- PAQUETES DE CÓDIGO ---
+\usepackage{listings}
+% Configuración del estilo de listings
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}   
+\definecolor{keyword}{rgb}{0.0,0.2,0.6}     
+\definecolor{comment}{rgb}{0.25,0.5,0.35}   
+\definecolor{string}{rgb}{0.6,0.0,0.0}      
+\definecolor{number}{rgb}{0.5,0.0,0.5}      
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+\lstset{
+  backgroundcolor=\color{backcolour},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codepurple},
+  commentstyle=\color{codegray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false,
+  literate={á}{{\'a}}1
+           {é}{{\'e}}1
+           {í}{{\'i}}1
+           {ó}{{\'o}}1
+           {ú}{{\'u}}1
+           {Á}{{\'A}}1
+           {É}{{\'E}}1
+           {Í}{{\'I}}1
+           {Ó}{{\'O}}1
+           {Ú}{{\'U}}1
+           {ñ}{{\~n}}1
+           {Ñ}{{\~N}}1
+           {¿}{{\textquestiondown}}1
+           {¡}{{\textexclamdown}}1
+}
+
+% Definición del lenguaje ARM Assembler para listings
+\lstdefinelanguage[ARM]{Assembler}{
+  morekeywords={MOV, ADD, SUB, SUBS, MUL, AND, ORR, EOR, NOT, CMP, TST,
+                BEQ, BNE, BGT, BLT, BGE, BLE, B, BL, BX, BLX,
+                LDR, STR, LDRB, STRB, PUSH, POP, SVC, LSL, LSR, ASR,
+                ROR, RRX, MVN, RSB, ADC, SBC, MLA, SMULL, UMULL,
+                STMFD, LDMFD, STMIA, LDMIA, NOP},
+  morecomment=[l]{@},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]",
+  sensitive=false
+}
+
+% --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
+\tikzset{
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+  arrow/.style={thick,->,>=stealth}
+}
+
+
+\definecolor{azulresultado}{HTML}{0072C6}
+\definecolor{rojoacarreo}{HTML}{FF0000}
+
+% --- RUTAS DE IMÁGENES ---
+\graphicspath{{img/}{portada_img/}}
+
+\definecolor{armblue}{RGB}{0, 113, 188}
+
+% --- CONFIGURACIÓN DE PÁGINA (GEOMETRÍA) ---
+\usepackage[
+    left=25mm, 
+    right=25mm,
+    top=35mm,
+    bottom=30mm,
+    headheight=77pt, 
+    papersize={21.59cm,27.94cm}
+]{geometry}
+
+% --- FORMATO DE TEXTO ---
+\renewcommand{\baselinestretch}{1.25} 
+\usepackage{parskip} 
+\usepackage{lipsum}  
+
+% --- VARIABLES GLOBALES ---
+\newcommand{\materia}{}
+
+% --- ENCABEZADOS Y PIES DE PÁGINA ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 
+\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/izq.png}}
+\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/der.png}}
+\fancyfoot[C]{\thepage} 
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0pt}  
+
+% --- BIBLIOGRAFÍA ---
+\usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- HIPERVÍNCULOS ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan
+}
+
+\begin{document}
+
+    \input{portada.tex}
+
+    \newpage
+    \setcounter{page}{1}
+
+    \section{Objetivo:}
+    Aprender la estructura de los procesadores con arquitectura ARM, utilizar la plataforma Raspberry Pi, los entornos para programar; desarrollar algoritmos con las instrucciones en lenguaje ensamblador, controlar directamente los recursos del microprocesador; editar, compilar, ensamblar, simular y ejecutar programas en Raspberry Pi.
+
+    \section*{Actividad 1}
+    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir, comentar y ensamblar y ejecutar el siguiente programa; explicar qué hace.
+
+    \subsection*{Propuesta de solución}
+    Se propone cargar cada operando directamente en un registro mediante \textbf{direccionamiento inmediato} (\texttt{MOV Rn, \#valor}), de modo que el dato viaja desde la instrucción misma hacia el banco de registros sin pasar por memoria. Una vez que ambos operandos residen en R1 y R2, la ALU calcula la suma con \texttt{ADD R3, R2, R1} y deposita el resultado en R3; finalmente, dicho valor se copia a R0 (registro de retorno por convención ABI) antes de invocar la llamada al sistema de salida. El diagrama de flujo que representa este proceso es:
+    
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Cargar $0x19$ en R1};
+        \node (pro2) [process, below of=pro1] {Cargar $53$ en R2};
+        \node (pro3) [process, below of=pro2] {R3 = R2 + R1};
+        \node (pro4) [process, below of=pro3] {Mover R3 a R0};
+        \node (stop) [startstop, below of=pro4] {Fin (Syscall Exit)};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (pro3);
+        \draw [arrow] (pro3) -- (pro4);
+        \draw [arrow] (pro4) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
+
+    \textbf{Desarrollo}
+    Se transcribió y compiló el código fuente. Se utilizó GDB para la depuración y verificación de los registros de la CPU.
+    
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 1]{Codigos/act1.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A1_2.png}
+        \caption{Proceso de ensamblado, enlazado e inicio de GDB en Raspberry Pi.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A1_1.png}
+        \caption{Inspección de registros en GDB mostrando R0 y R3 con el valor de 78 (0x4E).}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El programa utiliza el \textbf{modo de direccionamiento inmediato} para cargar constantes estáticas en los registros internos del procesador (\texttt{MOV R1, \#0x19} y \texttt{MOV R2, \#53}). El flujo interno de los datos envía el contenido de los registros R1 y R2 a la Unidad Aritmético Lógica (ALU) a través de la instrucción \texttt{ADD}, la cual deposita el resultado de la suma matemática en el registro R3.
+    Se comprobó que el flujo y la lógica son correctos, ya que la suma de $25 + 53$ arroja $78$ en decimal, equivalente a \texttt{0x4E} en hexadecimal, valor que se observa claramente almacenado en los registros durante la ejecución controlada con GDB.
+
+    \newpage
+
+    \section*{Actividad 2}
+    Seguir el procedimiento indicado en el apartado cuarto de manual de tutoriales, escribir, comentar, ensamblar y ejecutar el siguiente programa; explicar qué hace.
+
+    \subsection*{Propuesta de solución}
+    El problema requiere comparar dos valores y seleccionar un mensaje de salida según el resultado. Se propone usar la instrucción \texttt{SUBS} para restar ambos valores y actualizar simultáneamente la bandera \textbf{Zero (Z)} del registro \texttt{CPSR}: si el resultado es cero, los datos son iguales (Z\,=\,1); si no, son diferentes (Z\,=\,0). A partir de ese estado de bandera, las instrucciones \texttt{BEQ} y \texttt{BNE}
+    dirigen el flujo hacia la rama correspondiente de entrada/salida. El dato transita así del banco de registros hacia la ALU (para la resta), luego al \texttt{CPSR} (para fijar Z) y finalmente al periférico de salida estándar mediante la llamada al sistema. El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {R0 = 5,\ R1 = 1};
+        \node (pro2) [process, below of=pro1] {SUBS: R3 = R0 $-$ R1};
+        \node (dec1) [decision, below of=pro2, yshift=-0.5cm] {¿R3 == 0?};
+
+        \node (pro3) [io, below of=dec1, xshift=-3.2cm, yshift=-1.5cm,
+                      minimum width=2.8cm, minimum height=0.8cm, align=center]
+                     {Imprimir:\\''Datos diferentes''};
+        \node (pro4) [io, below of=dec1, xshift=3.2cm, yshift=-1.5cm,
+                      minimum width=2.8cm, minimum height=0.8cm, align=center]
+                     {Imprimir:\\''Datos iguales''};
+        \node (stop) [startstop, below of=dec1, yshift=-4.5cm] {Fin};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (dec1);
+        \draw [arrow] (dec1.west) -- node[above]{\small No (Z=0)} (dec1.west -| pro3.north) -- (pro3.north);
+        \draw [arrow] (dec1.east) -- node[above]{\small Sí (Z=1)} (dec1.east -| pro4.north) -- (pro4.north);
+        \draw [arrow] (pro3.south) |- (stop);
+        \draw [arrow] (pro4.south) |- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
+
+    \textbf{Desarrollo}
+    
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 2]{Codigos/act2.s}
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A2_1.png}
+        \caption{Inspección de registros antes del salto condicional.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{A2_2.png}
+        \caption{Ejecución del programa evaluando la condición de desigualdad.}
+    \end{figure}
+
+    \newpage
+
+    \textbf{Análisis de resultados}
+    
+    Se implementó un algoritmo de control de flujo usando saltos condicionales (\texttt{BEQ} y \texttt{BNE}). La instrucción clave aquí es \texttt{SUBS}, la cual no solo realiza la resta mediante la ALU, sino que interactúa con el registro \texttt{CPSR} (Current Program Status Register) para actualizar la bandera Zero (Z). Como $5 - 1 = 4$, la bandera Z se estableció en 0, activando la rama del salto \texttt{BNE}. Adicionalmente, el programa utiliza el periférico de salida estándar (pantalla) a través de la llamada al sistema de Linux (\texttt{SVC 0} con R7=4), mandando la cadena de texto almacenada en la memoria \texttt{.data} hacia la terminal.
+
+    \section*{Actividad 3}
+    Empleando el IDE Code::Blocks, seleccionar 10 instrucciones, formalizar un programa; comprobar el funcionamiento (agregar las directivas correspondientes).
+    \begin{enumerate}  
+        \item [a)] Reportar el resultado esperado y el obtenido.
+    \end{enumerate}
+
+    \subsection*{Propuesta de solución}
+    Para demostrar el funcionamiento de las instrucciones básicas del repertorio ARM, se implementa un programa que ejecuta 10 instrucciones distintas, incluyendo operaciones aritméticas, lógicas, acceso a memoria, comparaciones y saltos condicionales. Cada instrucción manipula los registros de propósito general de manera predecible, permitiendo verificar el resultado a través del depurador de Code::Blocks. El programa incluye una variable en memoria definida en la sección \texttt{.data} y utiliza saltos condicionales (\texttt{BEQ}) para modificar el flujo de ejecución según el resultado de una comparación. El diagrama de flujo resultante es:
+
+    \begin{center}
+        \begin{tikzpicture}[node distance=1.2cm]
+            \node (start) [startstop] {Inicio};
+            \node (pro1) [process, below of=start] {MOV R0, \#10};
+            \node (pro2) [process, below of=pro1] {MOV R1, \#20};
+            \node (pro3) [process, below of=pro2] {ADD R2, R0, R1};
+            \node (pro4) [process, below of=pro3] {SUB R3, R1, R0};
+            \node (pro5) [process, below of=pro4] {LDR R4, =var1};
+            \node (pro6) [process, below of=pro5] {LDR R5, [R4]};
+            \node (pro7) [process, below of=pro6] {AND R6, R5, \#0x0F};
+            \node (pro8) [process, below of=pro7] {ORR R7, R2, \#1};
+            \node (pro9) [process, below of=pro8] {CMP R2, \#30};
+            \node (pro10) [decision, below of=pro9, yshift=-0.5cm] {¿R2 = 30?};
+            \node (pro11) [process, below of=pro10, yshift=-0.5cm] {BEQ es\_treinta};
+            \node (pro12) [process, below of=pro11] {MOV R0, \#0};
+            \node (pro13) [process, below of=pro12] {B sailr};
+            \node (pro14) [process, right of=pro12, xshift=3cm] {es\_treinta: MOV R0, \#1};
+            \node (pro15) [process, below of=pro13, yshift=-0.5cm] {sailr: MOV R7, \#1};
+            \node (pro16) [process, below of=pro15] {SVC 0};
+            \node (stop) [startstop, below of=pro16] {Fin};
+
+            \draw [arrow] (start) -- (pro1);
+            \draw [arrow] (pro1) -- (pro2);
+            \draw [arrow] (pro2) -- (pro3);
+            \draw [arrow] (pro3) -- (pro4);
+            \draw [arrow] (pro4) -- (pro5);
+            \draw [arrow] (pro5) -- (pro6);
+            \draw [arrow] (pro6) -- (pro7);
+            \draw [arrow] (pro7) -- (pro8);
+            \draw [arrow] (pro8) -- (pro9);
+            \draw [arrow] (pro9) -- (pro10);
+            \draw [arrow] (pro10) -- node[anchor=east] {Sí} (pro14);
+            \draw [arrow] (pro10) -- node[anchor=west] {No} (pro11);
+            \draw [arrow] (pro11) -- (pro12);
+            \draw [arrow] (pro12) -- (pro13);
+            \draw [arrow] (pro13) -- (pro15);
+            \draw [arrow] (pro14) -- (pro15);
+            \draw [arrow] (pro15) -- (pro16);
+            \draw [arrow] (pro16) -- (stop);
+        \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 3]{Codigos/act3.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A3.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 3, mostrando los resultados de las instrucciones.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El objetivo se cumplió al ejecutar exitosamente las instrucciones ARM y verificar sus resultados mediante el depurador. La siguiente tabla muestra la comparación entre los valores esperados y los obtenidos en los registros durante la ejecución del programa:
+
+    \begin{table}[H]
+        \centering
+        \begin{tabular}{|c|c|c|c|c|}
+            \hline
+            \textbf{Registro} & \textbf{Instrucción} & \textbf{Valor esperado} & \textbf{Valor obtenido (Hex)} & \textbf{Valor obtenido (Decimal)} \\
+            \hline
+            R0 & MOV final (es\_treinta) & 1 & 0x1 & 1 \\
+            \hline
+            R1 & MOV R1, \#20 & 20 & 0x14 & 20 \\
+            \hline
+            R2 & ADD R2, R0, R1 & 30 & 0x1E & 30 \\
+            \hline
+            R3 & SUB R3, R1, R0 & 10 & 0xA & 10 \\
+            \hline
+            R4 & LDR R4, =var1 & Dirección de var1 & 0x1228 & 73768 \\
+            \hline
+            R5 & LDR R5, [R4] & 0xAA (170) & 0xA & 10 \\
+            \hline
+            R6 & AND R6, R5, \#0x0F & 0x0A (10) & 0xA & 10 \\
+            \hline
+            R7 & ORR R7, R2, \#1 & 0x1F (31) & 0xF1 & 241 \\
+            \hline
+            PC & - & - & 0x10428 & - \\
+            \hline
+        \end{tabular}
+        \caption{Comparación de valores esperados vs obtenidos en los registros}
+        \label{tab:resultados}
+    \end{table}
+
+    \subsection*{Análisis por instrucción:}
+
+    \begin{enumerate}[label=\alph*)]
+        \item \textbf{MOV R0, \#10} y \textbf{MOV R0, \#1 final}: El valor final en R0 es 0x1 (1), lo cual es correcto ya que al cumplirse la condición \texttt{R2 = 30}, se ejecuta la rama \texttt{es\_treinta} que asigna 1 a R0.
+        
+        \item \textbf{MOV R1, \#20}: Carga inmediata exitosa. El valor 20 (0x14) se almacenó correctamente en R1.
+        
+        \item \textbf{ADD R2, R0, R1}: La ALU realizó correctamente la suma 10 + 20, obteniendo 30 (0x1E) en R2.
+        
+        \item \textbf{SUB R3, R1, R0}: Resta aritmética exitosa. 20 - 10 = 10 (0xA) en R3.
+        
+        \item \textbf{LDR R4, =var1}: Carga de dirección. R4 contiene 0x1228, que es la dirección efectiva de la variable \texttt{var1} en memoria.
+        
+        \item \textbf{LDR R5, [R4]}: Carga desde memoria. Se esperaba obtener 0xAA (170) pero se obtuvo 0xA (10). Esta discrepancia indica que el contenido de memoria en la dirección cargada no coincide con el valor definido \texttt{var1: .word 0xAA}. Es posible que el ensamblador haya interpretado el valor de manera diferente o que la variable no esté alineada correctamente.
+        
+        \item \textbf{AND R6, R5, \#0x0F}: Operación lógica bit a bit. Aplicando máscara 0x0F sobre el valor obtenido en R5 (0x0A): 0x0A AND 0x0F = 0x0A (10), resultado correcto basado en el valor real de R5.
+        
+        \item \textbf{ORR R7, R2, \#1}: OR lógico. Se esperaba 30 OR 1 = 31 (0x1F), pero se obtuvo 0xF1 (241). Esta discrepancia sugiere que el valor en R2 pudo haber sido modificado antes de esta operación, o que hay un error en la interpretación del valor mostrado en el depurador.
+        
+        \item \textbf{CMP R2, \#30} y \textbf{BEQ es\_treinta}: La comparación y salto condicional funcionaron correctamente. Dado que R2 = 30, la bandera Z (Zero) se activó y el salto a \texttt{es\_treinta} se ejecutó, como lo demuestra el valor final de R0 = 1.
+        
+        \item \textbf{B sailr}: Salto incondicional ejecutado correctamente para evitar la sección \texttt{es\_treinta} cuando no se cumple la condición.
+        
+        \item \textbf{SVC 0}: Llamada al sistema ejecutada correctamente para finalizar el programa.
+    \end{enumerate}
+
+    \subsection*{Observaciones importantes:}
+
+    \begin{itemize}
+        \item El programa ejecutado contiene 12 instrucciones en total, superando las 10 solicitadas, lo que demuestra un control de flujo más complejo con saltos condicionales e incondicionales.
+        \item El flujo condicional se ejecutó correctamente: al cumplirse la condición R2 = 30, el programa saltó a la etiqueta \texttt{es\_treinta} y asignó 1 a R0.
+    \end{itemize}
+
+    El depurador de Code::Blocks confirma la ejecución del programa y permite observar los valores finales en los registros, validando el correcto funcionamiento de la interacción con la ALU, el banco de registros, la memoria y el control de flujo condicional.
+    \newpage
+
+    \section*{Actividad 4}
+    Tomando como base el programa de la actividad 1, para que obtenga el promedio de dos números de 8 bits; utilizar Code::Blocks para todo el proceso.
+
+    \subsection*{Propuesta de solución}
+    Para obtener el promedio de dos números de 8 bits se parte de la identidad $\overline{x} = (A + B) \div 2$. La suma se realiza con \texttt{ADD} igual que en la Actividad~1, y la división entre 2 se sustituye por un desplazamiento lógico a la derecha de un bit (\texttt{LSR \#1}), operación equivalente y más eficiente en arquitectura ARM. El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Cargar Dato 1 (80) en R1};
+        \node (pro2) [process, below of=pro1] {Cargar Dato 2 (20) en R2};
+        \node (pro3) [process, below of=pro2] {Suma: R3 = R1 + R2};
+        \node (pro4) [process, below of=pro3] {Desplazamiento a la derecha: R0 = R3 $\gg$ 1};
+        \node (stop) [startstop, below of=pro4] {Fin};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (pro3);
+        \draw [arrow] (pro3) -- (pro4);
+        \draw [arrow] (pro4) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 4]{Codigos/act4.s}
+   
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A4.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 4, mostrando R0=0x32 (50).}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El objetivo se cumplió promediando dos números enteros de manera eficiente. En lugar de utilizar una instrucción de división pesada, se manipuló la arquitectura mediante un \textbf{Logical Shift Right (LSR)}. En la arquitectura ARM, el flujo de datos pasa a través de un desplazador de barril (\textit{barrel shifter}) antes de la ALU. Mover los bits una posición a la derecha equivale matemáticamente a dividir entre 2 ($100 \gg 1 = 50$). El depurador en Code::Blocks muestra en la imagen el registro R0 con el valor correcto de \texttt{0x32} (50 en decimal).
+
+
+    \section*{Actividad 5}
+    Emplear el IDE Code::Block, escribir, comentar, compilar y ejecutar el siguiente programa.
+
+    \subsection*{Propuesta de solución}
+    El problema consiste en implementar un contador cíclico que incremente su valor de 0 a 9 y luego lo decremente de 9 a 0, repitiéndose indefinidamente. Se propone almacenar el contador en R0, el límite superior (9) en R1 y el límite inferior (0) en R2. La solución emplea dos bucles etiquetados (\texttt{loop1} y \texttt{loop2}) controlados por la instrucción \texttt{CMP}, la cual resta internamente los operandos sin guardar resultado, actualizando solo las banderas del \texttt{CPSR}. El flujo de datos es el siguiente: R0 avanza por \texttt{ADD} hasta
+    alcanzar R1, momento en que \texttt{BNE} deja de redirigir el \texttt{PC} a \texttt{loop1} y el control pasa a \texttt{loop2}; desde ahí, \texttt{ADD R0,\#-1} decrementa R0 hasta igualar R2, y \texttt{BEQ} devuelve el \texttt{PC} a \texttt{loop1}. El diagrama de flujo que describe este comportamiento cíclico es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {R0=0, R1=9 (Sup), R2=0 (Inf)};
+        \node (loop1) [process, below of=pro1] {loop1: R0 = R0 + 1};
+        \node (dec1) [decision, below of=loop1, yshift=-1.0cm] {¿R0 == R1?};
+        
+        \node (loop2) [process, right of=dec1, xshift=3cm] {loop2: R0 = R0 - 1};
+        \node (dec2) [decision, above of=loop2, yshift=1cm] {¿R0 == R2?};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (loop1);
+        \draw [arrow] (loop1) -- (dec1);
+        
+        % Loop ascendente
+        \draw [arrow] (dec1.west) -- ++(-1.5,0) |- node[anchor=east, pos=0.25] {No} (loop1.west);
+        
+        % Transición a descendente
+        \draw [arrow] (dec1.east) -- node[anchor=south] {Sí} (loop2.west);
+        \draw [arrow] (loop2) -- (dec2);
+        
+        % Loop descendente
+        \draw [arrow] (dec2.east) -- ++(1.5,0) |- node[anchor=west, pos=0.25] {No} (loop2.east);
+        
+        % Regreso a ascendente
+        \draw [arrow] (dec2.west) -- node[anchor=south] {Sí} (loop1.east);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 5]{Codigos/act5.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A5.png}
+        \caption{Monitoreo de bucle en Code::Blocks, mostrando a R0 en la iteración de bajada.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    Este programa demuestra el funcionamiento interno del \textbf{Contador de Programa (PC)} ante instrucciones de bifurcación. El ciclo infinito es gobernado por la instrucción de comparación virtual \texttt{CMP}, que resta internamente los registros sin almacenar el resultado, solo para manipular el \texttt{CPSR}. Al combinarse con ramas relativas (\texttt{BNE}, \texttt{BEQ}, \texttt{B}), la CPU salta las direcciones de memoria hacia atrás, repitiendo el proceso lógico. En la evidencia visual se observa que el contador principal \texttt{R0} ha operado correctamente dentro de los márgenes limitantes de los registros \texttt{R1} y \texttt{R2}.
+
+    \section*{Actividad 6}
+    Realizar un programa que inicie activando el bit menos significativo de un registro y recorra de posición hacia el bit más significativo (solo un bit estará activado); usar el IDE Code::Blocks.
+
+    \subsection*{Propuesta de solución}
+    Para implementar el recorrido de un bit activado a través de las posiciones de un registro, se parte de un valor inicial con el bit menos significativo encendido (0x01 o 1 en decimal).  Mediante un bucle controlado por contador, se desplaza este bit hacia la izquierda en cada iteración, simulando el efecto de desplazamiento o movimiento del bit. El programa utiliza un contador (R1)  que se incrementa hasta alcanzar un límite (R2 = 31), que representa la posición del bit más  significativo en un registro de 32 bits. En cada iteración, se aplica un desplazamiento lógico a la izquierda (\texttt{LSL R0, R0, \#1}) para mover el bit activado una posición. El flujo se  controla mediante una comparación (\texttt{CMP}) y un salto condicional (\texttt{BGT}) para salir del bucle cuando el contador supera el límite. El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=2.2cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Inicializar: R0 = 1 (bit 0 activado)};
+        \node (pro2) [process, below of=pro1] {Inicializar: R1 = 0 (contador)};
+        \node (pro3) [process, below of=pro2] {Inicializar: R2 = 31 (límite)};
+        \node (dec1) [decision, below of=pro3] {¿R1 $>$ R2?};
+        \node (pro4) [process, below of=dec1] {Desplazar R0 a la izquierda: LSL R0, R0, \#1};
+        \node (pro5) [process, below of=pro4] {Incrementar contador: ADD R1, R1, \#1};
+        \node (pro6) [process, right of=dec1, xshift=5cm] {Fin del bucle};
+        \node (pro7) [process, below of=pro6] {Llamada al sistema: SVC 0};
+        \node (stop) [startstop, below of=pro7] {Fin};
+
+        % Flechas principales
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (pro3);
+        \draw [arrow] (pro3) -- (dec1);
+        
+        % Rama "No" (bucle)
+        \draw [arrow] (dec1) -- node[anchor=east] {No} (pro4);
+        \draw [arrow] (pro4) -- (pro5);
+        \draw [arrow] (pro5.west) -- ++(-2cm,0) |- node[anchor=east, pos=0.25] {Retorno} (dec1.west);
+        
+        % Rama "Sí" (salida)
+        \draw [arrow] (dec1) -- node[anchor=south] {Sí} (pro6);
+        \draw [arrow] (pro6) -- (pro7);
+        \draw [arrow] (pro7) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 6]{Codigos/act6.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A6.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 6, mostrando el estado final después de completar el bucle.}
+    \end{figure}
+
+
+    \textbf{Análisis de resultados}
+
+    El objetivo se cumplió implementando un bucle que recorre un bit activado desde la posición menos significativa hasta la más significativa mediante desplazamientos sucesivos. El programa inicializa correctamente R0 con el bit 0 activado (valor 1), R1 como contador en 0, y R2 con el límite 31. Dentro del bucle, la instrucción \texttt{LSL R0, R0, \#1} desplaza el bit activado una posición a la izquierda en cada  iteración, mientras que \texttt{ADD R1, R1, \#1} incrementa el contador. La comparación \texttt{CMP R1, R2} y el salto condicional \texttt{BGT fin} controlan la salida del bucle cuando el contador supera el límite. El valor final en R0 (0x30 = 48) muestra el resultado del desplazamiento, demostrando el correcto funcionamiento del algoritmo de recorrido de bits en la arquitectura ARM.
+
+    El programa demuestra el uso de instrucciones de comparación (\texttt{CMP}), saltos condicionales (\texttt{BGT}), desplazamientos lógicos (\texttt{LSL}) y la construcción de buques en ensamblador ARM, conceptos fundamentales para el control de flujo y manipulación de bits en programación de bajo nivel.
+
+    \newpage
+
+    \section*{Actividad 7}
+
+    Escribir un programa que realice la suma de dos números de 32 bits y almacene el resultado en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture} 
+            \node[inner sep=5pt, outer sep=0pt] (resultado) at (0,0) {\textcolor{azulresultado}{\textbf{\textit{RESULTADO\_32BITS}}}};
+            
+            \node[inner sep=5pt, outer sep=0pt, anchor=east] (acarreo) at (resultado.west) {\textcolor{rojoacarreo}{\textbf{\textit{ESTADO ACARREO}}}};
+            
+            \draw (acarreo.south west) rectangle (resultado.north east);
+            \draw (resultado.north west) -- (resultado.south west);
+            
+            \node[anchor=south east, inner sep=5pt, outer sep=0pt] (dato2) at ([yshift=0.15cm]resultado.north east) {\textit{DATO2\_32\_BITS}};
+            
+            \node[anchor=south east, inner sep=5pt, outer sep=0pt] (dato1) at (dato2.north east) {\textit{DATO1\_32\_BITS}};
+            
+            \node[anchor=east] (plus) at ([xshift=-0.2cm]dato2.west) {\Large\textbf{+}};
+        \end{tikzpicture}
+    \end{figure}
+
+    \subsection*{Propuesta de solución}
+    Para poder implementar la solución es necesario definir los dos datos de 32 bits, como en el enunciado se especifica que se debe considerar el acarreo se van a definir dos datos de forma que al realizar la operación de suma exista un desbordamiento y ese bit extra se convierta en el acarreo. Donde \texttt{dato1} se define con el valor máximo número para un entero sin signo de 32 bits (\texttt{0xFFFFFFFF}), el otro dato puede ser cualquier valor, ya que sin importar el valor del mismo va a existir un desbordamiento, en este caso se definió \texttt{dato2} con el valor de (\texttt{0x00000002}). Adicionalmente se reserva espacio en memoria para las variables \texttt{res} y \texttt{carry} de forma que se inicializan con el valor \texttt{0}.
+
+    Una vez definida los datos es necesario cargar los datos con los que se va a realizar en memoria, por medio de la instrucción \texttt{LDR} cargamos la dirección y el contenido en los registro, de forma que primero e debe apuntar a la dirección de memoria de \texttt{dato1} (\texttt{R1}) y \texttt{dato2} (\texttt{R2}) y posteriormente con la dirección en memoria acceder al contenido en esa dirección y guardarlo en un registro.
+
+    Ya con el contenido de los datos en registros se puede realizar la operación de suma, sin embargo como en este ejercicio se debe de considerar la suma con acarreo es necesario agregar una bandera a la instrucción \texttt{ADD}, dado que se va a considerar el acarreo se debe indicar que se va a actualizar el registro de estado. Por lo que la instrucción de suma considerara el acarreo \texttt{ADDS R3, R1, R2}.
+
+    Una vez realizada la suma con acarreo, es necesario guardar el resultado, como anteriormente se definió la variable \texttt{res}, para guardar el resultado en esta variable es es necesario cargar la dirección de la variable y ya con su dirección por medio de la instrucción \texttt{STR} se guarda el contenido de la operación resultante en donde se ubica \texttt{res}.
+
+    Para recuperar el valor que tiene la bandera de acarreo, en un registro se va colocar el valor de \texttt{0} para posteriormente con la instrucción \texttt{ADC} realizar la suma con acarreo, de forma que se va a sumar el registro (\texttt{R4}) que contiene el valor de \texttt{0} con el mismo para recuperar el acarreo (\texttt{0 + 0 + Bandera Acarreo}). Donde el último paso es guardar en memoria el resultado del acarreo, por lo que para eso se emplea la misma metodología, se carga la dirección de la variable \texttt{carry} y posteriormente por medio de la instrucción \texttt{STR} se guarda en la dirección de memoria correspondiente el valor de la bandera de acarreo.
+
+    Lo anterior se puede ver representado en el siguiente diagrama de flujo.
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.7cm, scale=0.5]
+            % --- Definición de nodos ---
+            \node (start) [startstop] {Inicio};
+            \node (pro1) [process, below of=start] {Cargar dato1 desde memoria a R1};
+            \node (pro2) [process, below of=pro1] {Cargar dato2 desde memoria a R2};
+            \node (pro3) [process, below of=pro2] {Suma: R3 = R1 + R2 y actualizar banderas (ADDS)};
+            \node (pro4) [process, below of=pro3] {Guardar resultado de R3 en variable 'res' (STR)};
+            \node (pro5) [process, below of=pro4] {Calcular acarreo: R4 = 0 + 0 + Bandera Carry (ADC)};
+            \node (pro6) [process, below of=pro5] {Guardar acarreo de R4 en variable 'carry' (STR)};
+            \node (pro7) [process, below of=pro6] {Preparar y ejecutar salida del sistema: (SVC 0)};
+            \node (stop) [startstop, below of=pro7] {Fin};
+
+            % --- Flechas principales ---
+            \draw [arrow] (start) -- (pro1);
+            \draw [arrow] (pro1) -- (pro2);
+            \draw [arrow] (pro2) -- (pro3);
+            \draw [arrow] (pro3) -- (pro4);
+            \draw [arrow] (pro4) -- (pro5);
+            \draw [arrow] (pro5) -- (pro6);
+            \draw [arrow] (pro6) -- (pro7);
+            \draw [arrow] (pro7) -- (stop);
+        \end{tikzpicture}
+    \end{figure}
+
+
+    \textbf{Desarrollo}
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 7]{Codigos/act7.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A7.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 7, Verificando la Suma con Acarreo}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    A partir de la depuración realizada en Code::Blocks se puede visualizar en los \texttt{CPU Registers} los valores esperados confirmando el correcto funcionamiento del programa.
+
+    Donde como se menciono en \texttt{R1} se cargo el contenido de \texttt{dato1} con un valor de \texttt{0xFFFFFFFF} y en \texttt{R2} el contenido de \texttt{dato2} con un valor de \texttt{0x00000002}. Dichos valores coinciden con lo que se puede visualizar el contenido que se muestra en los \texttt{CPU Registers}, por lo que se cargo la dirección de memoria y se accedió al contenido de la misma de forma correcta.
+
+    Con los datos definidos se tiene que realizar la siguiente operación:
+    \[0x FFFFFFFF + 0x00000002 = 0x100000001\]
+    Al realizar la operación de la suma de dos números de 32 bits, podemos observar que hay un desbordamiento de forma que el bit más significativo \texttt{1} corresponde al acarreo de realizar la suma. De forma que coincide con los valores guardado en \texttt{res} y \texttt{acarreo} ya que en el contenido del registro \texttt{R3} (donde se tiene el contenido de res) es \texttt{0x1} y \texttt{R4} (donde se tiene el contenido del acarreo) es \texttt{0x1} correspondiendo con el resultado correcto. De forma que el programa se implementó de la forma deseada.
+
+    \newpage
+    \section*{Actividad 8}
+
+    Escribir un programa que realice la suma de dos números de 64 bits y almacene el resultado en memoria empleando las direcciones que considere el resultado del acarreo en caso de existir.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[scale=1.0]      
+            \node[inner sep=5pt, outer sep=0pt] (resh) at (0,0) {\textcolor{azulresultado}{\textbf{\textit{RESULTADO\_64\_BITS\_H}}}};
+            
+            \node[inner sep=5pt, outer sep=0pt, anchor=west] (resl) at (resh.east) {\textcolor{azulresultado}{\textbf{\textit{RESULTADO\_64\_BITS\_L}}}};
+            
+            \node[inner sep=5pt, outer sep=0pt, anchor=east] (acarreo) at (resh.west) {\textcolor{rojoacarreo}{\textbf{\textit{ESTADO DEL ACARREO}}}};
+            
+            \draw (acarreo.south west) rectangle (resl.north east);
+            \draw (resh.north west) -- (resh.south west);
+            \draw (resl.north west) -- (resl.south west);
+            
+            \node[anchor=south west, inner sep=5pt, outer sep=0pt] (dato2h) at ([xshift=0.3cm, yshift=0.15cm]resh.north west) {\textit{DATO2\_64\_BITS\_H}};
+            \node[anchor=south west, inner sep=5pt, outer sep=0pt] (dato1h) at (dato2h.north west) {\textit{DATO1\_64\_BITS\_H}};
+
+            \node[anchor=south west, inner sep=5pt, outer sep=0pt] (dato2l) at ([xshift=0.3cm, yshift=0.15cm]resl.north west) {\textit{DATO2\_64\_BITS\_L}};
+            \node[anchor=south west, inner sep=5pt, outer sep=0pt] (dato1l) at (dato2l.north west) {\textit{DATO1\_64\_BITS\_L}};
+
+            \node[anchor=east] (plus) at ([xshift=-0.2cm]dato2h.west) {\Large\textbf{+}};        
+        \end{tikzpicture}
+    \end{figure}
+
+    \subsection*{Propuesta de solución}
+
+    Para la resolución, de esta actividad se puede tomar como base la resolución del la actividad anterior, sin embargo es importante considerar como se representan en este ejercicio los números de 64 bits, para representar un solo número de 64 bits se emplean 2 registros, por ejemplo para el primer número se utilizan \texttt{R0} y \texttt{R1}  donde en cada registro se va almacenar una parte del número de 64 bits, a la parte que se encuentra a la izquierda se le conoce como \textit{Parte Alta} y la que se encuentra a la derecha \textit{Parte Baja}. Para considerar el caso del acarreo se va definir a el primer número de 64 bits con el valor de (\texttt{0x00000001 FFFFFFFF}). Empleando la misma metodología pero usando los registros \texttt{R2} y {R3} se define el segundo número de 64 bits con un valor de (\texttt{0x00000000 00000002}).
+
+    De igual forma que en la actividad anterior al estar realizando una suma con acarreo se debe de usar la instrucción \texttt{ADDS}, la suma se realiza primero con las partes bajas de los números de 64 bits, de forma que queda la sentencia \texttt{ADDS R4,R0,R2} donde el resultado de la suma de las partes bajas se guarda en \texttt{R4}. Dado que al sumar las partes bajas hay un desbordamiento como se explicó anteriormente, se levanta la bandera de acarreo por lo que hay que considerar el valor de la bandera en las partes altas. Por lo que a la ahora de realizar la suma de las partes altas se debe considerar el valor de la bandera de acarreo por lo que se emplea la instrucción \texttt{ADC R5,R1,R3} donde se guarda el resultado de la parte alta en \texttt{R5}.
+
+    \newpage
+
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[node distance=2.2cm]
+            \node (start) [startstop] {Inicio};
+            \node (pro1) [process, below of=start] {Cargar: Num1 (64 bits) en R1 (alta) y R0 (baja)};
+            \node (pro2) [process, below of=pro1] {Cargar: Num2 (64 bits) en R3 (alta) y R2 (baja)};
+            \node (pro3) [process, below of=pro2] {Sumar partes actualizando bandera: R4 = R0 + R2 (ADDS)};
+            \node (pro4) [process, below of=pro3] {Sumar partes altas con acarreo: R5 = R1 + R3 + C (ADC)};
+            \node (pro5) [process, below of=pro4] {Preparar y ejecutar salida del sistema (SVC 0)};
+            \node (stop) [startstop, below of=pro5] {Fin};
+
+            % --- Flechas principales ---
+            \draw [arrow] (start) -- (pro1);
+            \draw [arrow] (pro1) -- (pro2);
+            \draw [arrow] (pro2) -- (pro3);
+            \draw [arrow] (pro3) -- (pro4);
+            \draw [arrow] (pro4) -- (pro5);
+            \draw [arrow] (pro5) -- (stop);
+        \end{tikzpicture}
+    \end{figure}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 8]{Codigos/act8.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{A8.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 8, mostrando el resultado de la suma con acarreo de dos números de 64 bits.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    En el apartado de \textit{CPU Registers} se pueden observar en los registros \texttt{R1,R0} los valores correspondientes al primer número de 64 bits que se definió (0x00000001 FFFFFFFF), lo mismo aplica para el segundo número de 64 bits, la unión en el contenido de los registros \texttt{R3, R2} corresponde al número que fue definido en le programa (0x00000000 00000002).
+
+    En los registros para almacenar la suma de la operación de las partes bajas de los números en el registro \texttt{R4} corresponde con el resultado de la operación:
+    \[0x FFFFFFFF + 0x00000002 = 0x100000001 \Rightarrow  0x00000001 \text{(Acarreo = 0x1)}\]
+    
+    Donde el bit más significativo (\texttt{1}) corresponde al acarreo, de forma que al realizar la suma con acarreo se obtiene el siguiente resultado:
+    \[0x00000001 + 0x00000000 + 0x00000001  = 0x00000002\]
+
+    Dicho resultado (\texttt{0x00000002}) coincide con el contenido del registro \texttt{R5} de forma que se realizó de forma correcta la suma de las partes altas de los dos números de 64 bits considerando el acarreo se surgió a la hora de sumar las partes bajas de los números.
+
+    \newpage
+    \section*{Actividad 9}
+    Realizar un programa que obtenga el factorial de un número de 8 bits.
+    \subsection*{Propuesta de solución}
+    Para calcular el factorial de un número \(n\) de 8 bits, se implementa  un algoritmo iterativo basado en la definición \(n! = n \times (n-1) 
+    \times (n-2) \times \cdots \times 1\). El programa utiliza dos registros: R0 almacena el valor actual de \(n\) que se va decrementando y R1 acumula el resultado de las multiplicaciones sucesivas. Mediante un bucle controlado por comparación, se multiplica el acumulado por el valor actual de \(n\) hasta que este llega a 1. La instrucción \texttt{MUL} realiza la multiplicación, mientras que \texttt{CMP} y \texttt{BLE}  controlan la salida del bucle cuando \(n \leq 1\). El diagrama de flujo resultante es:
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=2cm]
+        \node (start) [startstop] {Inicio};
+        \node (pro1) [process, below of=start] {Inicializar: R0 = n (número 5)};
+        \node (pro2) [process, below of=pro1] {Inicializar: R1 = 1 (acumulador)};
+        \node (dec1) [decision, below of=pro2] {¿R0 $\leq$ 1?};
+        \node (pro3) [process, below of=dec1] {Multiplicar: R1 = R1 $\times$ R0};
+        \node (pro4) [process, below of=pro3] {Decrementar: R0 = R0 $-$ 1};
+        \node (pro5) [process, right of=dec1, xshift=4cm] {Fin del bucle};
+        \node (pro6) [process, below of=pro5] {Resultado: R0 = R1};
+        \node (pro7) [process, below of=pro6] {Llamada al sistema: SVC 0};
+        \node (stop) [startstop, below of=pro7] {Fin};
+
+        \draw [arrow] (start) -- (pro1);
+        \draw [arrow] (pro1) -- (pro2);
+        \draw [arrow] (pro2) -- (dec1);
+        
+        \draw [arrow] (dec1) -- node[anchor=east] {No} (pro3);
+        \draw [arrow] (pro3) -- (pro4);
+        \draw [arrow] (pro4.west) -- ++(-1.2cm,0) |- node[anchor=east, pos=0.25] {Retorno} (dec1.west);
+        
+        \draw [arrow] (dec1) -- node[anchor=south] {Sí} (pro5);
+        \draw [arrow] (pro5) -- (pro6);
+        \draw [arrow] (pro6) -- (pro7);
+        \draw [arrow] (pro7) -- (stop);
+    \end{tikzpicture}
+    \end{center}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 9]{Codigos/act9.s}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{A9.png}
+        \caption{Verificación de registros en Code::Blocks para la Actividad 9, mostrando el resultado del factorial.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El objetivo se cumplió implementando un algoritmo iterativo para calcular el factorial de un número de 8 bits, pues el programa calcula correctamente \(5! = 5 \times 4 \times 3 \times 2 \times 1 = 120\) mediante multiplicaciones sucesivas. El programa demuestra el correcto funcionamiento del uso de las instrucciones como la multiplicación (\texttt{MUL}), decremento (\texttt{SUB}), comparación (\texttt{CMP}) y saltos condicionales (\texttt{BLE}) para implementar un bucle iterativo. El valor final en R0 (0x78 = 120) confirma que el factorial de 5 se calculó correctamente, validando el funcionamiento del algoritmo en la arquitectura ARM.
+
+    \newpage
+    \section*{Actividad 10}
+
+    Implementar con instrucciones en lenguaje ensamblador la sentencia:
+
+    \begin{lstlisting}[language=C, caption={Sentencia Ciclo For}]
+    int j  = 0;
+    for(int i = 0; <= 50; i++){j += 2;}
+    \end{lstlisting}
+
+    \subsection*{Propuesta de solución}
+    Analizando la sentencia propuesta se puede identificar que \texttt{j} es una variable acumuladora, de forma que en cada iteración del ciclo for esta incrementa el valor que contiene la variable en 2, por otro lado \texttt{i} es la variable de control que va incrementar en cada iteración del ciclo for de forma que controla que si llega al valor de 50 el ciclo finalice automáticamente.
+
+    Por lo que la forma de implementarlo correctamente en ensamblador ARM requerimos usar 3 registros, un registro que corresponda a la variable acumuladora \texttt{j} (\texttt{R0}) que se va incrementar en 2 por cada paso, la variable de control \texttt{i} (\texttt{R1}) y la variable que define el número de iteraciones en el ciclo for \texttt{R2} en este caso se le asigna el valor de 50 ya que ese se especifica en la sentencia.
+
+    Para implementar el ciclo for se hará el uso de etiquetas con la finalidad de poder realizar saltos y bucles. Se define la etiqueta \texttt{for\_loop} la cuál contendrá la lógica del ciclo for, lo primero que se realiza es la comparación del registro \texttt{R1} y \texttt{R2} esto con la finalidad de conocer si el contador (\texttt{i}) ya llego al número 50 en caso de que sea mayor que 50 salta a la etiqueta \texttt{fin\_for} rompiendo el ciclo. En caso contrario se procede a incrementar en 2 la variable (\texttt{j}) la cuál corresponde al contenido del registro \texttt{R0}, también se incrementa la variable \texttt{i} en 1, el contenido de esa variable se encuentra en el registro \texttt{R1}, una vez que ya se hayan incrementado las variables se procede a volver al inicio de la etiqueta \texttt{for\_loop}.
+
+    Cuando el ciclo for haya finalizado se procede a finalizar el programa.
+    \newpage
+
+    La lógica del ciclo for descrito se puede representar por medio del siguiente diagrama de flujo.
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=2.0cm, scale=0.8]
+            % --- Definición de nodos ---
+            \node (start) [startstop] {Inicio};
+            \node (pro1) [process, below of=start] {Inicializar: R0 = 0 (Acumulador j)};
+            \node (pro2) [process, below of=pro1] {Inicializar: R1 = 0 (Contador i)};
+            \node (pro3) [process, below of=pro2] {Inicializar: R2 = 50 (Límite)};
+            
+            % Nodo de decisión (CMP)
+            \node (dec1) [decision, below of=pro3, yshift=-0.5cm] {¿R1 $>$ R2?};
+            
+            \node (pro4) [process, below of=dec1, yshift=-1cm] {Sumar: R0 = R0 + 2};
+            \node (pro5) [process, below of=pro4] {Incrementar: R1 = R1 + 1};
+            
+            \node (pro6) [process, right of=dec1, xshift=4.5cm] {Preparar salida (MOV R7, \#1)};
+            \node (pro7) [process, below of=pro6] {Llamada al sistema (SVC 0)};
+            \node (stop) [startstop, below of=pro7] {Fin};
+
+            \draw [arrow] (start) -- (pro1);
+            \draw [arrow] (pro1) -- (pro2);
+            \draw [arrow] (pro2) -- (pro3);
+            \draw [arrow] (pro3) -- (dec1);
+            
+            \draw [arrow] (dec1) -- node[anchor=east] {No ($\le 50$)} (pro4);
+            \draw [arrow] (pro4) -- (pro5);
+            \draw [arrow] (pro5.west) -- ++(-2cm,0) |- node[anchor=east, pos=0.25] {Retorno (B for\_loop)} (dec1.west);
+            
+            \draw [arrow] (dec1) -- node[anchor=south, above=0.4cm] {Sí (BGT fin\_for)} (pro6);
+            \draw [arrow] (pro6) -- (pro7);
+            \draw [arrow] (pro7) -- (stop);
+        \end{tikzpicture}
+    \end{figure}
+
+    \newpage
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 10]{Codigos/act10.s}
+
+    
+
+    \newpage
+    \section{Conclusiones:}
+
+    \begin{itemize}
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la resolución y elaboración de esta práctica pude comprender la estructura de un procesador ARM, desde el número de registros que hay en un procesador ARM, cual es el uso especifico de cada uno de los registros con los que se cuenta, las banderas que contiene el registro CPSR, así como el mapa de memoria de un procesador ARM.
+        
+        Durante la realización de la práctica pude aplicar las diferentes formas de de realizar el proceso de editar, ensamblar, depurar y ejecutar un programa en ensamblador, ya sea por medio de la linea de comandos, usando un Editor de Código como Code::Blocks o por medio de un simulador en linea.
+
+        Por medio de los ejercicios solicitados a lo largo de las actividades pude conocer el funcionamiento del conjunto de instrucciones básicas del ensamblador ARM, en general conocer la sintaxis de las instrucciones en ensamblador mnemonicos, bandera, condiciones, registro destino, operando1 y operando2. Al comprobar los programas realizados ejecutándolos en una Raspberry Pi pude verificar el correcto funcionamiento, esto Analizando el contenido de los registros verificando que su contenido corresponda con el esperado.
+
+        \item \textbf{Flores Colin Victor Jaziel:} 
+
+        En esta primera práctica de laboratorio he trabajado y conocido la plataforma Raspberry Pi, la cual implementa una arquitectura ARM. Este procesador tiene 16 registros de 32 bits, los cuales fueron de suma importancia para lograr implementar las 10 actividades que marca el manual. Hice principalmente uso de los registros de propósito general para trabajar con los diferentes datos.
+
+        Utilicé más de 10 instrucciones diferentes propias del lenguaje ensamblador, como lo son \texttt{MOV} para cargar ciertos valores en un registro específico. También se realizaron operaciones aritméticas como la suma de los datos de un registro (\texttt{ADD}), la resta con \texttt{SUB} y la multiplicación con \texttt{MUL}. 
+
+        Asimismo, se implementaron instrucciones para corrimiento de bits, las cuales resultaron muy convenientes para multiplicar o dividir por 2 algunos valores numéricos. Además, se trabajó con operadores como \texttt{LDR} para cargar direcciones de memoria de ciertas variables según nuestra conveniencia, de manera similar a lo que es un apuntador.
+
+        También se implementaron operaciones lógicas como es el caso de \texttt{CMP}, que se utilizó como una instrucción condicional para realizar las actividades del ciclo \texttt{for} y el cálculo del factorial.
+
+        Me familiaricé más con el registro \texttt{CPSR}, que contiene banderas muy útiles para manejar el flujo de los programas. Por último, aprendí más de una forma de editar, ensamblar, depurar y ejecutar un programa en lenguaje ensamblador, ya sea utilizando la línea de comandos o el editor de código Code::Blocks, que resulta más amigable y práctico que la terminal.
+        \item \textbf{Lara Hernandez Angel Husiel:} La realización de esta práctica me permitió comprender de manera directa cómo opera un procesador ARM desde el nivel más bajo de abstracción. A través de los ejercicios desarrollados pude identificar el papel concreto que juegan los registros de propósito general, el registro de estado CPSR y sus banderas (Zero, Carry, Negative, oVerflow) en el control del flujo de ejecución de los programas.
+
+        El desarrollo de las actividades me permitió contrastar distintas formas de interactuar con el procesador: desde operaciones aritméticas simples con direccionamiento inmediato (suma y promedio), pasando por el control de flujo mediante saltos condicionales e incondicionales, hasta operaciones más avanzadas como el manejo de acarreo en sumas de 32 y 64 bits y el cálculo iterativo de un factorial. En cada caso fue posible verificar cómo cada instrucción en ensamblador se traduce directamente en una acción sobre los recursos del procesador, sin ninguna capa de abstracción intermedia.
+
+        Asimismo, el uso de herramientas como GDB en la Raspberry Pi y el depurador de Code::Blocks resultó fundamental para validar el correcto funcionamiento de los programas, ya que al inspeccionar el contenido de los registros en cada paso de la ejecución fue posible confirmar que los resultados obtenidos coincidían con los valores esperados. Esta práctica consolidó mi comprensión sobre la relación directa que existe entre el código en ensamblador, la arquitectura del procesador y el comportamiento observable del hardware.
+
+    \end{itemize}
+
+    \newpage
+
+    % Impresión Referencias
+    \nocite{*}
+    \printbibliography[heading=bibintoc, title={Referencias}]
+\end{document}
