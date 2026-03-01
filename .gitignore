@@ -18,6 +18,7 @@
 *.glg
 *.glo
 *.gls
+*.pdf
 /%OUTDIR%
 main.bbl-SAVE-ERROR
 /.vscode

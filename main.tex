@@ -347,14 +347,101 @@
 
     \subsection*{Propuesta de solución}
 
+    Para realizar un programa que resuelva la actividad planteada, primero se debe conocer el espacio que es necesario reservar para su correcto funcionamiento, de forma que el enunciado requiere un arreglo $A$ de 20, elementos, dado que cada entero (\texttt{word}) ocupa \texttt{4 bytes} es necesario reservar 80 bytes consecutivos para el arreglo de 20 elementos (\texttt{A}). Por otro lado se requiere una variable para almacenar el resultado, de forma que se reserva un espacio de \texttt{4 bytes} y se inicializa en cero (\texttt{SUMA}).
+
+    Una vez reservado el espacio es necesario cargar las direcciones de memoria para el correcto funcionamiento del programa, de forma que es necesario cargar la dirección de memoria donde empieza el arreglo \texttt{A}, esta dirección de memoria se guardará en el registro \texttt{R0}, posteriormente en el registro \texttt{R1} se indicara el valor de \texttt{i}, en este caso le asignamos el valor de 3, por otro lado en el registro \texttt{R2} se tendrá como contenido el valor del contador necesario para recorrer todo el arreglo, es decir ira de 0 a 20 y por último en el registro \texttt{R3} se tendrá el contenido del acumulador, el resultado de ir sumando cada elemento generado.
+
+    Una vez con las direcciones de memoria e iniciado el contenido de los registros para el funcionamiento del programa, se ejecuta la etiqueta \texttt{loop\_potencias} donde se evalúa la condición de salida, la cál verifica si el contador ya llego a los 20 elementos (\texttt{CMP R2, \#20}) en caso de que no haya llegado al último elemento se procede a ir recorriendo el arreglo \texttt{A}, para esto guardamos el valor del registro \texttt{R1} en la dirección apuntada por \texttt{R0} (Arreglo \texttt{A}) y a su vez realizamos un post indexado sumándole \texttt{4}, es mediante este post indexado (\texttt{str r1, [r0], \#4}) que en cada ciclo recorremos el arreglo, se le suma \texttt{4} debido a que cada elemento del arreglo ocupa 4 bytes. Una vez que ya guardamos el valor, procedemos a sumar el valor recién guardado a la variable acumuladora que se encuentra en \texttt{R3} (\texttt{add r3, r3, r1}). Por último es necesario generar la serie con la forma $i, 2i, 4i, 8i, ...$ para obtener esta forma se observo que en cada iteración se multiplica la constante or dos, de forma que se puede implementar por medio de un desplazamiento lógico a la izquierda, por lo que en cada ciclo incrementa la constante en 2, una vez finalizado esta secuencia de pasos se incrementa el contador \texttt{R2} y se repite el ciclo evaluando la condición de salida.
+
+    Cuando la condición de salida es verdadera, en el contenido del registro \texttt{R3} se tiene resultado de almacenar en memoria el resultado del arreglo, sin embargo la actividad indica que se debe almacenar el resultado, de forma que apuntamos a la dirección de memoria de \texttt{SUMA} (\texttt{ldr r0, =SUMA}), posteriormente guardamos el total acumulado en esa dirección de memoria (\texttt{str r3, [r0]}) finalmente se llama al sistema para finalizar el programa de forma segura.
+
+    El procedimiento descrito se pude representar en el siguiente diagrama de flujo.
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.5cm]
+            % --- Nodos ---
+            \node (inicio) [startstop] {INICIO};
+
+            \node (init) [process, below of=inicio, yshift=-0.5cm, minimum width=8cm, align=center] {
+                \texttt{R0} $\leftarrow$ dir. base de \texttt{A} \\
+                \texttt{R1} $\leftarrow$ 3 ($i$ inicial) \\
+                \texttt{R2} $\leftarrow$ 0 (contador de elementos) \\
+                \texttt{R3} $\leftarrow$ 0 (acumulador sumatoria)
+            };
+
+            % Punto de retorno del bucle
+            \node (cond) [decision, below of=init, yshift=-1cm, aspect=2.5] {
+                \texttt{R2} = 20?
+            };
+
+            \node (store_total) [process, right of=cond, xshift=5cm, minimum width=4cm, align=center] {
+                \texttt{Mem[SUMA]} $\leftarrow$ \texttt{R3} \\
+                (Fin del programa)
+            };
+
+            \node (fin) [startstop, below of=store_total] {FIN};
+
+            \node (body) [process, below of=cond, yshift=-1.5cm, minimum width=8cm, align=center] {
+                \texttt{Mem[R0]} $\leftarrow$ \texttt{R1} \\
+                \texttt{R0} $\leftarrow$ \texttt{R0} + 4 (Post-indexado) \\
+                \texttt{R3} $\leftarrow$ \texttt{R3} + \texttt{R1} (suma total) \\
+                \texttt{R1} $\leftarrow$ \texttt{R1} $\ll$ 1 (multiplicar por 2) \\
+                \texttt{R2} $\leftarrow$ \texttt{R2} + 1 (incrementar contador)
+            };
+
+            % --- Conexiones (Flechas) ---
+            \draw [arrow] (inicio) -- (init);
+            \draw [arrow] (init) -- (cond);
+            
+            % Salida del bucle (Sí)
+            \draw [arrow] (cond) -- node[anchor=south] {\textbf{Sí}} (store_total);
+            \draw [arrow] (store_total) -- (fin);
+            
+            % Cuerpo del bucle (No)
+            \draw [arrow] (cond) -- node[anchor=east] {\textbf{No}} (body);
+            
+            % Retorno al inicio del bucle
+            \draw [arrow] (body.west) -- ++(-1.5,0) |- (cond.west);
+        \end{tikzpicture}
+    \end{figure}
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 4]{Codigos/act4.s}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image1.png}
+        \caption{Estado de los registros. Dirección de memoria inicial del arreglo \texttt{A}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image2.png}
+        \caption{Estado de los registros. Inicio de la etiqueta \texttt{loop\_potencias}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image3.png}
+        \caption{Estado de los registros. Iteración número 3 de \texttt{loop\_potencias}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/image4.png}
+        \caption{Estado de los registros. Fin de Iteraciones, resultado final}
+    \end{figure}
 
     \textbf{Análisis de resultados}
 
+    A partir de las capturas de pantalla podemos observar paso a paso el funcionamiento del programa que acabamos de implementar, de forma que en la primer captura podemos observar que en el registro \texttt{R0} se tiene la dirección de memoria inicial del arreglo \texttt{A}, así como en \texttt{R1} es valor de $i$ que especificamos \texttt{3} así como la variable contadora \texttt{R2} en \texttt{0}.
+
+    En la imagen que corresponde al inicio de la etiqueta \texttt{loop\_potencias} se puede comprobar como se evalúa si la variable contador \texttt{R2} llego al valor de \texttt{20} en caso que sea falso entra en el loop procediendo a realizar las operaciones dentro del ciclo. En la imagen posterior se puede corroborar el correcto funcionamiento de cada iteración, como estamos en la iteración número 3, vemos que en el \texttt{R1} se tiene el contenido de \texttt{12} lo cuál corresponde al resultado correcto de esa iteración $4 \times 3$ de forma que hasta este momento en memoria se tendría en el contenido del arreglo
+    \[A = [i, 2i, 4i]\]
+    \[A = [3, 2 \times 3, 4 \times 3] = [3, 6, 12]\]
+    
+    En la imagen donde se muestra el fin del ciclo, se puede observar que la variable contadora \texttt{R2} llegó a 20 de forma que la condición se ejecuta de forma correcta, de igual forma se puede observar que el resultado final en \texttt{R1} es correcta coincide con la sucesión planteada y se almacena en memoria el resultado final.
 
     \section*{Actividad 5}
     Realizar un programa que multiplique dos matrices de 2x2; los datos podrán ser de 8 bits.
@@ -375,13 +462,178 @@
 
     \subsection*{Propuesta de solución}
 
+    Para la solución de la multiplicación de matriz de tamaño $2 \times 2$, se definen tres arreglos con 4 elementos de 8 bits, para esto se considera que un arreglo almacena los contenidos de una matriz de la siguiente forma $M = [a_1, a_2, a_3, a_4]$ por lo que se considera que los datos se almacenan de forma continua. Una vez mencionando esto se indica que cada elemento es de 8 bits por medio de la \texttt{.byte} ya que se indica que cada numero solo ocupa 8 bits (\texttt{1 byte}) de forma que \texttt{M1} y \texttt{M2} contiene los valores de las matrices de entrada y \texttt{MR} es la matriz resultante de realizar la multiplicación entre ambas matrices por lo que se inicializa con \texttt{0} los elementos.
+
+    Una vez que ya se reservo la memoria de cada arreglo correspondiente a las matrices, es necesario guardar las direcciones de memoria de cada matriz, de forma que en el registro \texttt{R0} se tiene la dirección inicial del arreglo de correspondiente a la matriz \texttt{M1}, \texttt{R1} para la matriz \texttt{M2} y \texttt{R3} para la resultante \texttt{MR}. Una vez ya con los valores iniciales de la dirección de memoria, en los registros (\texttt{R3,R4,R5,R6}) se procede a cargar cada elemento de la matriz \texttt{M1}, los elementos se cargan por medio de la instrucción \texttt{LDRB}, el cual extrae únicamente 8 bits, ya que los elementos de cada matriz es de \texttt{8 bits}, para desplazarnos en el arreglo se emplea la sintaxis de \texttt{LDRB Rd, [Rn, \#offset]} donde al registro que contiene la dirección de inicio del arreglo (\texttt{Rd}) se le indica cuantos bytes moverse (\texttt{\#offset}) para encontrar el dato solicitado. Se emplean los registros  (\texttt{R7,R8,R9,R10}) para los elementos de la matriz \texttt{M2} con la misma lógica descrita
+    
+    Dado que se tienen matrices de tamaño fijo, se pueden calcular los elementos de la matriz por medio de las siguientes expresiones:
+    \[I = (A \times E) +  (B \times G)\]
+    \[J = (A \times F) +  (B \times H)\]
+    \[K = (C \times E) +  (D \times G)\]
+    \[L = (C \times F) +  (D \times H)\]
+
+    Una vez que se conocen las expresiones para calcular cada elemento de la matriz resultante se pueden escribir en lenguaje ensamblador, para esto se tienen que realizar 3 operaciones, 2 multiplicaciones y la suma ambas multiplicaciones, por lo que para optimizar el código se hace uso de las instrucciones \texttt{MLA} y \texttt{MUL}. Por ejemplo considerando el cálculo del elemento $I$ se emplearía el siguiente procedimiento. Multiplicar $A \times E$ y guardarlo en el registro \texttt{R11} (\texttt{mul r11, r3, r7}), posteriormente multiplicamos $B \times G$ y le sumamos el resultado de multiplicar $A \times E$ y sobre escribimos el resultado, para hacer todo esto por medio de una instrucción se emplea la instrucción \texttt{MLA} (\texttt{mla r11, r4, r9, r11}). De forma que ya en \texttt{R11} tenemos el resultado final del elemento por lo que solo queda guardar ese byte en la posición correspondiente de \texttt{MR} (\texttt{strb r11, [r2, \#0]}). Esta lógica se emplea para cada elemento de la matriz con los respectivos registros que contienen los elementos de cada matriz.
+
+    Una vez que ya se termino de realizar las operaciones necesarias para calcular cada elemento de la matriz resultante se procede a ejecutar la llamada para terminar el proceso.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.8cm, scale=0.7, transform shape]
+
+            % --- Nodos del Flujo ---
+            \node (inicio) [startstop] {INICIO};
+
+            \node (punteros) [process, below of=inicio, minimum width=8cm, align=center] {
+                \texttt{R0} $\leftarrow$ dir. \texttt{M1}, \quad \texttt{R1} $\leftarrow$ dir. \texttt{M2} \\
+                \texttt{R2} $\leftarrow$ dir. \texttt{MR} (Resultado)
+            };
+
+            \node (loadM1) [process, below of=punteros, minimum width=8cm, align=center] {
+                \textbf{Cargar Matriz 1 (8 bits):} \\
+                \texttt{R3=A, R4=B, R5=C, R6=D}
+            };
+
+            \node (loadM2) [process, below of=loadM1, minimum width=8cm, align=center] {
+                \textbf{Cargar Matriz 2 (8 bits):} \\
+                \texttt{R7=E, R8=F, R9=G, R10=H}
+            };
+
+            \node (calcI) [process, below of=loadM2, yshift=-0.3cm, minimum width=8cm, align=center] {
+                \textbf{Calcular I:} \texttt{R11} $\leftarrow$ (\texttt{R3}$\times$\texttt{R7}) + (\texttt{R4}$\times$\texttt{R9}) \\
+                \texttt{Mem[R2 + 0]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcJ) [process, below of=calcI, minimum width=8cm, align=center] {
+                \textbf{Calcular J:} \texttt{R11} $\leftarrow$ (\texttt{R3}$\times$\texttt{R8}) + (\texttt{R4}$\times$\texttt{R10}) \\
+                \texttt{Mem[R2 + 1]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcK) [process, below of=calcJ, minimum width=8cm, align=center] {
+                \textbf{Calcular K:} \texttt{R11} $\leftarrow$ (\texttt{R5}$\times$\texttt{R7}) + (\texttt{R6}$\times$\texttt{R9}) \\
+                \texttt{Mem[R2 + 2]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcL) [process, below of=calcK, minimum width=8cm, align=center] {
+                \textbf{Calcular L:} \texttt{R11} $\leftarrow$ (\texttt{R5}$\times$\texttt{R8}) + (\texttt{R6}$\times$\texttt{R10}) \\
+                \texttt{Mem[R2 + 3]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (fin) [startstop, below of=calcL] {FIN};
+
+            % --- Flechas ---
+            \draw [arrow] (inicio) -- (punteros);
+            \draw [arrow] (punteros) -- (loadM1);
+            \draw [arrow] (loadM1) -- (loadM2);
+            \draw [arrow] (loadM2) -- (calcI);
+            \draw [arrow] (calcI) -- (calcJ);
+            \draw [arrow] (calcJ) -- (calcK);
+            \draw [arrow] (calcK) -- (calcL);
+            \draw [arrow] (calcL) -- (fin);
+
+        \end{tikzpicture}
+    \end{figure}
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 5]{Codigos/act5.s}
 
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image1.png}
+        \caption{Estado de los registros. Dirección de memoria inicial de las matrices \texttt{M1},\texttt{M2}, \texttt{MR}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image2.png}
+        \caption{Estado de los registros. Carga del contenido correspondiente a los elementos de \texttt{M1}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image3.png}
+        \caption{Estado de los registros. Carga del contenido correspondiente a los elementos de \texttt{M2}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image4.png}
+        \caption{Estado de los registros. Calculo de los elementos correspondientes de la matriz \texttt{MR}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad5/image5.png}
+        \caption{Estado de los registros. Fin de calculo multiplicación de las matrices \texttt{M1 x M2}}
+    \end{figure}
+
     \textbf{Análisis de resultados}
+
+    En la primer imagen de la depuración correspondiente a la actividad 6, se pude observar de manera correcta como se apunta para cada matriz a la dirección inicial de cada arreglo que corresponde a las matrices \texttt{M1,M2,MR}, dichas direcciones se pueden ver que están en el contenido de los registros \texttt{R0,R1,R2}.
+    
+    Al cargar el contenido de los elementos de \texttt{8 bits} que hay en esa dirección de memoria con los desplazamientos correspondientes para acceder a los 4 elementos que hay en ese arreglo, en los \texttt{CPU\_Registers} se puede observar que coinciden con los valores que se definieron al inicio del programa a la hora de reservar memoria. En la imagen siguiente ya se pueden observar los elementos correspondientes a la matriz \texttt{M2} de forma que se puede afirmar que se reservo de forma correcta la memoria para cada una de las matrices, ya que se accedieron a esas direcciones de memoria y el contenido corresponde con los elementos de las matrices.
+
+    En la penúltima imagen se puede observar el resultado de calcular el elemento \texttt{K} de la matriz resultante, para verificar que el resultado es correcto se realizó el cálculo de las multiplicaciones para las matrices que se definieron:
+
+    \[\begin{bmatrix}
+        A & B \\
+        C & D
+    \end{bmatrix}
+    \begin{bmatrix}
+        E & F \\
+        G & H
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        I & J \\
+        K & L
+    \end{bmatrix}\]
+
+    \[\begin{bmatrix}
+        A & B \\
+        C & D
+    \end{bmatrix}
+    \begin{bmatrix}
+        E & F \\
+        G & H
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        (A \times E) + (B \times G) & (A \times F) + (B \times H) \\
+        (C \times E) + (D \times G) & (C \times F) + (D \times H)
+    \end{bmatrix}\]
+
+
+    \[\begin{bmatrix}
+        2 & 1 \\
+        3 & 4
+    \end{bmatrix}
+    \begin{bmatrix}
+        1 & 5 \\
+        2 & 1
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        (2 \times 1) + (1 \times 2) & (2 \times 5) + (1 \times 1) \\
+        (3 \times 1) + (4 \times 2) & (3 \times 5) + (4 \times 1)
+    \end{bmatrix}\]
+
+    \[\begin{bmatrix}
+        2 & 1 \\
+        3 & 4
+    \end{bmatrix}
+    \begin{bmatrix}
+        1 & 5 \\
+        2 & 1
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        4 & 11 \\
+        11 & 19
+    \end{bmatrix}\]
+
+    De forma que el elemento \texttt{K} calculado corresponde con el contenido del registro \texttt{R11}, finalmente cuando acaba de realizarse la multiplicación de matrices el contenido del registro \texttt{R11} debe corresponder al último elemento que se cálculo, este caso para la matriz de $2 \times 2$ es el elemento \texttt{L} que coincide su contenido con el resultado esperado. Por lo que el programa realiza de forma correcta la multiplicación de matrices de tamaño $2 \times 2$
 
     \section*{Actividad 6}
     Realizar un programa que encuentre el número con valor mayor en un arreglo de 20 elementos que serán almacenados en memoria; para lo cual:
@@ -772,7 +1024,7 @@
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Gracias a la realización de la práctica así como de las actividades planteadas a desarrollar a lo largo de la misma, pude conocer y aplicar las diferentes variantes del modo de direccionamiento indirecto que existen en los procesadores ARM, siendo este conoccimiento fundamental para la programación de procesaroes ARM ya que emplear estas instrucciones permite tener un código más eficiente y legible cuando se trabaja con arreglos, siendo una estructura de datos fundamental a la hora de implementar cualquier solución por medio de la programación. El hacer uso de la variantes pre-indezadas y post-indexadas permite realizar dos operaciones diferentes, acceder a la memoria y actualizar el puntero, por lo que emplear dichas instrucciones ayuda a reducir el tamaño del código del CPU lo cual se puede ver reflejado en el rendimiento del programa. Adicionalmente se tiene otra variante la cual es el offset simple la cuál aunque no actualiza el registro base, son de gran utilidad para desplazarse en bloques continuos de memoria de forma fácil.
         
         \item \textbf{Flores Colin Victor Jaziel:} 
         
