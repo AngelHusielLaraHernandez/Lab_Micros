@@ -151,33 +151,194 @@
     Programar las variantes del modo de direccionamiento indirecto existentes para los procesadores ARM.
 
     \section*{Actividad 1}
-    Escribir, comentar, compilar y comprobar el funcionamiento del siguiente programa.
+
+    Escribir, comentar, compilar y comprobar el funcionamiento del siguiente programa, cuyo objetivo es guardar el valor de un contador en un arreglo de 16 posiciones de 32 bits utilizando desplazamientos lógicos.
 
     \subsection*{Propuesta de solución}
 
+    El programa implementa una estructura de bucle para llenar un bloque de memoria reservado de forma dinámica de 64 bytes lo que equivale a 16 palabras de 4 bytes cada una y el eje principal del cálculo se basa en el desplazamiento de registros para corriemientos de bits. 
+
+    Para acceder a cada posición del arreglo sin modificar el apuntador base (\texttt{R1}), se emplea la instrucción \texttt{ADD} con un desplazamiento lógico a la izquierda (\textbf{LSL \#2}). Dado que cada elemento ocupa 4 bytes ($2^2$), desplazar el índice contenido en el contador \texttt{R2} dos bits a la izquierda equivale matemáticamente a multiplicarlo por 4 y este valor resultante se suma a la dirección base para obtener la dirección exacta de destino en \texttt{R3}, donde se almacena el valor del contador mediante la instrucción \texttt{STR}.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo correspondiente al algoritmo descrito:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop] 
+            {INICIO};
+
+        \node (loadR1) [process, below of=inicio, minimum width=8cm] 
+            {\texttt{R1} $\leftarrow$ direcci\'{o}n base de \texttt{i}};
+
+        \node (initR2) [process, below of=loadR1, minimum width=8cm] 
+            {Contador \texttt{R2} $\leftarrow$ 0};
+
+        \node (cond) [decision, below of=initR2, yshift=-0.6cm, aspect=2.5] 
+            {$\texttt{R2} = 16$\,?};
+
+        \node (fin) [startstop, right of=cond, xshift=5.2cm] 
+            {FIN};
+
+        \node (calc) [process, below of=cond, yshift=-0.9cm, 
+                      minimum width=8cm, align=center] 
+            {Calcular direcci\'{o}n: \\ \texttt{R3} $\leftarrow$ \texttt{R1} + (\texttt{R2} $\ll$ 2)};
+
+        \node (escribir) [process, below of=calc, 
+                          minimum width=8cm, align=center] 
+            {Escribir en memoria: \\ \texttt{Mem[R3]} $\leftarrow$ \texttt{R2}};
+
+        \node (incr) [process, below of=escribir, minimum width=8cm] 
+            {Incrementar contador: \texttt{R2} $\leftarrow$ \texttt{R2} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)    -- (loadR1);
+        \draw [arrow] (loadR1)    -- (initR2);
+        \draw [arrow] (initR2)    -- (cond);
+        \draw [arrow] (cond)      -- node[anchor=east]  {\textbf{No}} (calc);
+        \draw [arrow] (calc)      -- (escribir);
+        \draw [arrow] (escribir)  -- (incr);
+        \draw [arrow] (cond.east) -- node[anchor=south] {\textbf{S\'{\i}}} (fin.west);
+
+        % Retorno del ciclo
+        \draw [arrow] (incr.west) -- ++(-3.8,0) |- (cond.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 1]{Codigos/act1.s}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image1.png}
+        \caption{Punto de interrupción inicial. Se observa la carga de la dirección base del arreglo en \texttt{R1}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image2.png}
+        \caption{Inicio del bucle. El contador \texttt{R2} inicia en 0 y se evalúa la condición de salto.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image3.png}
+        \caption{Proceso de incremento. El registro \texttt{PC} apunta al retorno del ciclo tras aumentar \texttt{R2}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image4.png}
+        \caption{Finalización de la ejecución. El contador que es R2 alcanza el valor \texttt{0x10} (16) y el programa sale del ciclo.}
+    \end{figure}
 
     \textbf{Análisis de resultados}
 
+    Al iniciar la ejecución, como se muestra en la \textbf{Figura 1}, el registro \texttt{R1} recibe la dirección base del arreglo \texttt{i}, la cual corresponde a \texttt{0x418122F4} en la memoria del sistema y el contador \texttt{R2} se inicializa en \texttt{0} para controlar las 16 iteraciones propuestas.
+
+    Una vez dentro de la etiqueta \texttt{loop}, el programa realiza la  primera iteración y al ser \texttt{R2 = 0} y utiliza un direccionamiento calculado mediante \textbf{Barrel Shifter} donde ocurre el primer desplazamiento \texttt{LSL \#2} que no altera el valor base, por lo que \texttt{R3} apunta directamente al inicio del arreglo. Sin embargo, en iteraciones posteriores (como se sugiere en la \textbf{Figura 3}), cuando \texttt{R2} incrementa, el desplazamiento permite saltar de 4 en 4 bytes. Por ejemplo, cuando \texttt{R2 = 1}, la operación calcula $\texttt{R1} + (1 \times 4)$, posicionando \texttt{R3} en la siguiente palabra de memoria.
+
+    Finalmente, como se ve en la \textbf{Figura 4}, el ciclo termina correctamente cuando \texttt{R2} alcanza el valor hexadecimal \texttt{0x10}. La bandera de cero (Z) se activa tras la comparación \texttt{CMP} lo que permite que la instrucción \texttt{BEQ} transfiera el control a la etiqueta \texttt{fin} y el programa concluye invocando la llamada al sistema \texttt{SVC 0} con el código de salida \texttt{1} en \texttt{R7}, garantizando que los 16 valores (del 0 al 15) han sido almacenados secuencialmente en la memoria reservada.
 
     \newpage
 
-    \section*{Actividad 2}
-    Modificar el programa de la actividad 1, para usar el direccionamiento indexado de su preferencia con el doble de datos.
+ \section*{Actividad 2}
+    Modificar el programa de la actividad 1 para utilizar un modo de direccionamiento indexado distinto, aumentando la capacidad de almacenamiento al doble de datos (32 elementos).
 
     \subsection*{Propuesta de solución}
 
+    Para esta actividad se tomó como base el código de la actividad 1 y se aplicó un \textbf{direccionamiento post-indexado} y a diferencia de la Actividad 1, donde se calculaba la dirección en un registro auxiliar mediante desplazamientos, el direccionamiento post-indexado permite realizar la escritura en memoria y la actualización del apuntador en una sola instrucción. 
+    
+    En esta ocación se reservan 128 bytes de memoria en vex de 64  en la sección \texttt{.data} para albergar 32 elementos de 4 bytes cada uno. El algoritmo utiliza el registro \texttt{R1} como apuntador base y \texttt{R2} como contador. En cada iteración, la instrucción \texttt{STR R2, [R1], \#4} realiza dos acciones: primero, almacena el valor del contador en la dirección actual de \texttt{R1}; segundo, suma inmediatamente un valor inmediato de 4 a \texttt{R1} para que apunte a la siguiente palabra lo que reduce el número de instrucciones aritméticas necesarias dentro del ciclo y simplifica la lógica del programa.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo que describe el funcionamiento del programa con direccionamiento post-indexado:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop] 
+            {INICIO};
+
+        \node (loadR1) [process, below of=inicio, minimum width=8cm] 
+            {\texttt{R1} $\leftarrow$ direcci\'{o}n base de \texttt{i}};
+
+        \node (initR2) [process, below of=loadR1, minimum width=8cm] 
+            {Contador \texttt{R2} $\leftarrow$ 0};
+
+        \node (cond) [decision, below of=initR2, yshift=-0.6cm, aspect=2.5] 
+            {$\texttt{R2} = 32$\,?};
+
+        \node (fin) [startstop, right of=cond, xshift=5.2cm] 
+            {FIN};
+
+        \node (escribir) [process, below of=cond, yshift=-0.9cm, 
+                          minimum width=8cm, align=center] 
+            {Escribir y Auto-incrementar: \\ \texttt{Mem[R1]} $\leftarrow$ \texttt{R2} \\ \texttt{R1} $\leftarrow$ \texttt{R1} + 4};
+
+        \node (incr) [process, below of=escribir, minimum width=8cm] 
+            {Incrementar contador: \texttt{R2} $\leftarrow$ \texttt{R2} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)    -- (loadR1);
+        \draw [arrow] (loadR1)    -- (initR2);
+        \draw [arrow] (initR2)    -- (cond);
+        \draw [arrow] (cond)      -- node[anchor=east]  {\textbf{No}} (escribir);
+        \draw [arrow] (escribir)  -- (incr);
+        \draw [arrow] (cond.east) -- node[anchor=south] {\textbf{S\'{\i}}} (fin.west);
+
+        % Retorno del ciclo
+        \draw [arrow] (incr.west) -- ++(-3.8,0) |- (cond.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
 
     \textbf{Desarrollo}
     
     \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 2]{Codigos/act2.s}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image1.png}
+        \caption{Estado inicial de la depuración. \texttt{R1} contiene la dirección del arreglo i \texttt{0x40011040} }
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image2.png}
+        \caption{El contador del programa que es el registro \texttt{R2} inicia en 0.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image3.png}
+        \caption{Quinta iteración del ciclo. El contador \texttt{R2} tiene el valor \texttt{0x5} y el puntero \texttt{R1} ha avanzado proporcionalmente a \texttt{0x40011054}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image4.png}
+        \caption{Fin de la ejecución. El contador \texttt{R2} alcanza \texttt{0x20} (32 decimal), rompiendo la condición y finalizando el programa.}
+    \end{figure}
 
     \textbf{Análisis de resultados}
+
+    El análisis dinámico mediante el depurador confirma la eficiencia del direccionamiento post-indexado. Como se observa en la \textbf{Figura 1} el programa al inicio tiene el registro \texttt{R1} apuntando a la dirección de memoria \texttt{0x40011040} que corresponde al arreglo i. A diferencia de la actividad anterior, donde se requería un registro adicional (\texttt{R3}) para calcular la dirección de cada elemento, aquí se trabaja directamente sobre el puntero base.
+
+    Al ejecutar la instrucción \texttt{str r2, [r1], \#4}, el procesador realiza la escritura del valor contenido en \texttt{R2} y, acto seguido actualiza \texttt{R1}. Este comportamiento se verifica en la \textbf{Figura 3}, donde tras varias iteraciones el valor de \texttt{R1} ha incrementado constantemente en saltos de 4 bytes. Por ejemplo, cuando el contador \texttt{R2} llega a 5, el puntero \texttt{R1} ya se ha desplazado 20 bytes desde su posición original (\texttt{0x40011054}), demostrando el auto-incremento exitoso.
+
+    Finalmente, como se aprecia en la \textbf{Figura 4}, el bucle se rompe en el momento en que \texttt{R2} iguala a \texttt{32} o (\texttt{0x20} en hexadecimal). En este punto, la instrucción \texttt{BEQ} detecta que la comparación es verdadera y salta a la etiqueta \texttt{salir}. El resultado en memoria es un arreglo de 32 elementos que contiene la secuencia numérica del 0 al 31, logrando el doble de datos que la práctica anterior con un código más compacto y optimizado.
 
     \newpage
 
@@ -1026,7 +1187,11 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} Gracias a la realización de la práctica así como de las actividades planteadas a desarrollar a lo largo de la misma, pude conocer y aplicar las diferentes variantes del modo de direccionamiento indirecto que existen en los procesadores ARM, siendo este conoccimiento fundamental para la programación de procesaroes ARM ya que emplear estas instrucciones permite tener un código más eficiente y legible cuando se trabaja con arreglos, siendo una estructura de datos fundamental a la hora de implementar cualquier solución por medio de la programación. El hacer uso de la variantes pre-indezadas y post-indexadas permite realizar dos operaciones diferentes, acceder a la memoria y actualizar el puntero, por lo que emplear dichas instrucciones ayuda a reducir el tamaño del código del CPU lo cual se puede ver reflejado en el rendimiento del programa. Adicionalmente se tiene otra variante la cual es el offset simple la cuál aunque no actualiza el registro base, son de gran utilidad para desplazarse en bloques continuos de memoria de forma fácil.
         
-        \item \textbf{Flores Colin Victor Jaziel:} 
+        \item \textbf{Flores Colin Victor Jaziel:} En esta segunda práctica de laboratorio mediante la realización de las actividades propuestas por el manual me permitió validar la eficiencia de la arquitectura ARM al manipular estructuras de datos complejas mediante el uso de los modos de direccionamiento indirecto, pre-indexado y post-indexado por medio de la implmentación y experimentación de las instrucciones LDR y STR.
+        
+        El uso del modo post-indexado (usado en la Actividad 2 y 3) demostró vas versatilidad en el recorrido de arreglos ya que integrar la actualización del puntero (auto-incremento de ±4 bytes) se pudó reducir el número de instrucciones.
+        
+        El uso de la instrucción LSL me facilitó el acceso aleatorio y el cálculo de direcciones en estructuras bidimensionales como matrices y los apuntadores indirectos optimizaron la búsqueda y ordenamiento de datos al permitir comparaciones fluidas entre elementos en las últimas 2 actividades.
         
         \item \textbf{Lara Hernandez Angel Husiel:} 
     \end{itemize}
