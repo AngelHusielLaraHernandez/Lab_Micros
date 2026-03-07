@@ -1,0 +1,1207 @@
+\documentclass[letterpaper,12pt]{article}
+
+% --- PAQUETES DE IDIOMA
+\usepackage[spanish,mexico]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+
+% --- PAQUETES MATEMÁTICOS --
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cancel}
+\usepackage{mathrsfs}
+
+% --- PAQUETES GRÁFICOS Y DE DISEÑO ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.multipart, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
+
+% --- LISTAS ---
+\usepackage{enumitem}
+
+% --- PAQUETES DE CÓDIGO ---
+\usepackage{listings}
+% Configuración del estilo de listings
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}   
+\definecolor{keyword}{rgb}{0.0,0.2,0.6}     
+\definecolor{comment}{rgb}{0.25,0.5,0.35}   
+\definecolor{string}{rgb}{0.6,0.0,0.0}      
+\definecolor{number}{rgb}{0.5,0.0,0.5}      
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+\lstset{
+  backgroundcolor=\color{backcolour},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codepurple},
+  commentstyle=\color{codegray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false,
+  literate={á}{{\'a}}1
+           {é}{{\'e}}1
+           {í}{{\'i}}1
+           {ó}{{\'o}}1
+           {ú}{{\'u}}1
+           {Á}{{\'A}}1
+           {É}{{\'E}}1
+           {Í}{{\'I}}1
+           {Ó}{{\'O}}1
+           {Ú}{{\'U}}1
+           {ñ}{{\~n}}1
+           {Ñ}{{\~N}}1
+           {¿}{{\textquestiondown}}1
+           {¡}{{\textexclamdown}}1
+}
+
+% Definición del lenguaje ARM Assembler para listings
+\lstdefinelanguage[ARM]{Assembler}{
+  morekeywords={MOV, ADD, SUB, SUBS, MUL, AND, ORR, EOR, NOT, CMP, TST,
+                BEQ, BNE, BGT, BLT, BGE, BLE, B, BL, BX, BLX,
+                LDR, STR, LDRB, STRB, PUSH, POP, SVC, LSL, LSR, ASR,
+                ROR, RRX, MVN, RSB, ADC, SBC, MLA, SMULL, UMULL,
+                STMFD, LDMFD, STMIA, LDMIA, NOP},
+  morecomment=[l]{@},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]",
+  sensitive=false
+}
+
+% --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
+\tikzset{
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+  arrow/.style={thick,->,>=stealth}
+}
+
+
+\definecolor{azulresultado}{HTML}{0072C6}
+\definecolor{rojoacarreo}{HTML}{FF0000}
+
+% --- RUTAS DE IMÁGENES ---
+\graphicspath{{img/}{portada_img/}}
+
+\definecolor{armblue}{RGB}{0, 113, 188}
+
+% --- CONFIGURACIÓN DE PÁGINA (GEOMETRÍA) ---
+\usepackage[
+    left=25mm, 
+    right=25mm,
+    top=35mm,
+    bottom=30mm,
+    headheight=77pt, 
+    papersize={21.59cm,27.94cm}
+]{geometry}
+
+% --- FORMATO DE TEXTO ---
+\renewcommand{\baselinestretch}{1.25} 
+\usepackage{parskip} 
+\usepackage{lipsum}  
+
+% --- VARIABLES GLOBALES ---
+\newcommand{\materia}{}
+
+% --- ENCABEZADOS Y PIES DE PÁGINA ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 
+\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/izq.png}}
+\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/der.png}}
+\fancyfoot[C]{\thepage} 
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0pt}  
+
+% --- BIBLIOGRAFÍA ---
+\usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- HIPERVÍNCULOS ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan
+}
+
+\begin{document}
+
+    \input{portada.tex}
+
+    \newpage
+    \setcounter{page}{1}
+
+    \section{Objetivo:}
+    Programar las variantes del modo de direccionamiento indirecto existentes para los procesadores ARM.
+
+    \section*{Actividad 1}
+
+    Escribir, comentar, compilar y comprobar el funcionamiento del siguiente programa, cuyo objetivo es guardar el valor de un contador en un arreglo de 16 posiciones de 32 bits utilizando desplazamientos lógicos.
+
+    \subsection*{Propuesta de solución}
+
+    El programa implementa una estructura de bucle para llenar un bloque de memoria reservado de forma dinámica de 64 bytes lo que equivale a 16 palabras de 4 bytes cada una y el eje principal del cálculo se basa en el desplazamiento de registros para corriemientos de bits. 
+
+    Para acceder a cada posición del arreglo sin modificar el apuntador base (\texttt{R1}), se emplea la instrucción \texttt{ADD} con un desplazamiento lógico a la izquierda (\textbf{LSL \#2}). Dado que cada elemento ocupa 4 bytes ($2^2$), desplazar el índice contenido en el contador \texttt{R2} dos bits a la izquierda equivale matemáticamente a multiplicarlo por 4 y este valor resultante se suma a la dirección base para obtener la dirección exacta de destino en \texttt{R3}, donde se almacena el valor del contador mediante la instrucción \texttt{STR}.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo correspondiente al algoritmo descrito:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop] 
+            {INICIO};
+
+        \node (loadR1) [process, below of=inicio, minimum width=8cm] 
+            {\texttt{R1} $\leftarrow$ direcci\'{o}n base de \texttt{i}};
+
+        \node (initR2) [process, below of=loadR1, minimum width=8cm] 
+            {Contador \texttt{R2} $\leftarrow$ 0};
+
+        \node (cond) [decision, below of=initR2, yshift=-0.6cm, aspect=2.5] 
+            {$\texttt{R2} = 16$\,?};
+
+        \node (fin) [startstop, right of=cond, xshift=5.2cm] 
+            {FIN};
+
+        \node (calc) [process, below of=cond, yshift=-0.9cm, 
+                      minimum width=8cm, align=center] 
+            {Calcular direcci\'{o}n: \\ \texttt{R3} $\leftarrow$ \texttt{R1} + (\texttt{R2} $\ll$ 2)};
+
+        \node (escribir) [process, below of=calc, 
+                          minimum width=8cm, align=center] 
+            {Escribir en memoria: \\ \texttt{Mem[R3]} $\leftarrow$ \texttt{R2}};
+
+        \node (incr) [process, below of=escribir, minimum width=8cm] 
+            {Incrementar contador: \texttt{R2} $\leftarrow$ \texttt{R2} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)    -- (loadR1);
+        \draw [arrow] (loadR1)    -- (initR2);
+        \draw [arrow] (initR2)    -- (cond);
+        \draw [arrow] (cond)      -- node[anchor=east]  {\textbf{No}} (calc);
+        \draw [arrow] (calc)      -- (escribir);
+        \draw [arrow] (escribir)  -- (incr);
+        \draw [arrow] (cond.east) -- node[anchor=south] {\textbf{S\'{\i}}} (fin.west);
+
+        % Retorno del ciclo
+        \draw [arrow] (incr.west) -- ++(-3.8,0) |- (cond.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 1]{Codigos/act1.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image1.png}
+        \caption{Punto de interrupción inicial. Se observa la carga de la dirección base del arreglo en \texttt{R1}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image2.png}
+        \caption{Inicio del bucle. El contador \texttt{R2} inicia en 0 y se evalúa la condición de salto.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image3.png}
+        \caption{Proceso de incremento. El registro \texttt{PC} apunta al retorno del ciclo tras aumentar \texttt{R2}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/image4.png}
+        \caption{Finalización de la ejecución. El contador que es R2 alcanza el valor \texttt{0x10} (16) y el programa sale del ciclo.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    Al iniciar la ejecución, como se muestra en la \textbf{Figura 1}, el registro \texttt{R1} recibe la dirección base del arreglo \texttt{i}, la cual corresponde a \texttt{0x418122F4} en la memoria del sistema y el contador \texttt{R2} se inicializa en \texttt{0} para controlar las 16 iteraciones propuestas.
+
+    Una vez dentro de la etiqueta \texttt{loop}, el programa realiza la  primera iteración y al ser \texttt{R2 = 0} y utiliza un direccionamiento calculado mediante \textbf{Barrel Shifter} donde ocurre el primer desplazamiento \texttt{LSL \#2} que no altera el valor base, por lo que \texttt{R3} apunta directamente al inicio del arreglo. Sin embargo, en iteraciones posteriores (como se sugiere en la \textbf{Figura 3}), cuando \texttt{R2} incrementa, el desplazamiento permite saltar de 4 en 4 bytes. Por ejemplo, cuando \texttt{R2 = 1}, la operación calcula $\texttt{R1} + (1 \times 4)$, posicionando \texttt{R3} en la siguiente palabra de memoria.
+
+    Finalmente, como se ve en la \textbf{Figura 4}, el ciclo termina correctamente cuando \texttt{R2} alcanza el valor hexadecimal \texttt{0x10}. La bandera de cero (Z) se activa tras la comparación \texttt{CMP} lo que permite que la instrucción \texttt{BEQ} transfiera el control a la etiqueta \texttt{fin} y el programa concluye invocando la llamada al sistema \texttt{SVC 0} con el código de salida \texttt{1} en \texttt{R7}, garantizando que los 16 valores (del 0 al 15) han sido almacenados secuencialmente en la memoria reservada.
+
+    \newpage
+
+ \section*{Actividad 2}
+    Modificar el programa de la actividad 1 para utilizar un modo de direccionamiento indexado distinto, aumentando la capacidad de almacenamiento al doble de datos (32 elementos).
+
+    \subsection*{Propuesta de solución}
+
+    Para esta actividad se tomó como base el código de la actividad 1 y se aplicó un \textbf{direccionamiento post-indexado} y a diferencia de la Actividad 1, donde se calculaba la dirección en un registro auxiliar mediante desplazamientos, el direccionamiento post-indexado permite realizar la escritura en memoria y la actualización del apuntador en una sola instrucción. 
+    
+    En esta ocación se reservan 128 bytes de memoria en vex de 64  en la sección \texttt{.data} para albergar 32 elementos de 4 bytes cada uno. El algoritmo utiliza el registro \texttt{R1} como apuntador base y \texttt{R2} como contador. En cada iteración, la instrucción \texttt{STR R2, [R1], \#4} realiza dos acciones: primero, almacena el valor del contador en la dirección actual de \texttt{R1}; segundo, suma inmediatamente un valor inmediato de 4 a \texttt{R1} para que apunte a la siguiente palabra lo que reduce el número de instrucciones aritméticas necesarias dentro del ciclo y simplifica la lógica del programa.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo que describe el funcionamiento del programa con direccionamiento post-indexado:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop] 
+            {INICIO};
+
+        \node (loadR1) [process, below of=inicio, minimum width=8cm] 
+            {\texttt{R1} $\leftarrow$ direcci\'{o}n base de \texttt{i}};
+
+        \node (initR2) [process, below of=loadR1, minimum width=8cm] 
+            {Contador \texttt{R2} $\leftarrow$ 0};
+
+        \node (cond) [decision, below of=initR2, yshift=-0.6cm, aspect=2.5] 
+            {$\texttt{R2} = 32$\,?};
+
+        \node (fin) [startstop, right of=cond, xshift=5.2cm] 
+            {FIN};
+
+        \node (escribir) [process, below of=cond, yshift=-0.9cm, 
+                          minimum width=8cm, align=center] 
+            {Escribir y Auto-incrementar: \\ \texttt{Mem[R1]} $\leftarrow$ \texttt{R2} \\ \texttt{R1} $\leftarrow$ \texttt{R1} + 4};
+
+        \node (incr) [process, below of=escribir, minimum width=8cm] 
+            {Incrementar contador: \texttt{R2} $\leftarrow$ \texttt{R2} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)    -- (loadR1);
+        \draw [arrow] (loadR1)    -- (initR2);
+        \draw [arrow] (initR2)    -- (cond);
+        \draw [arrow] (cond)      -- node[anchor=east]  {\textbf{No}} (escribir);
+        \draw [arrow] (escribir)  -- (incr);
+        \draw [arrow] (cond.east) -- node[anchor=south] {\textbf{S\'{\i}}} (fin.west);
+
+        % Retorno del ciclo
+        \draw [arrow] (incr.west) -- ++(-3.8,0) |- (cond.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
+
+    \textbf{Desarrollo}
+    
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 2]{Codigos/act2.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image1.png}
+        \caption{Estado inicial de la depuración. \texttt{R1} contiene la dirección del arreglo i \texttt{0x40011040} }
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image2.png}
+        \caption{El contador del programa que es el registro \texttt{R2} inicia en 0.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image3.png}
+        \caption{Quinta iteración del ciclo. El contador \texttt{R2} tiene el valor \texttt{0x5} y el puntero \texttt{R1} ha avanzado proporcionalmente a \texttt{0x40011054}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/image4.png}
+        \caption{Fin de la ejecución. El contador \texttt{R2} alcanza \texttt{0x20} (32 decimal), rompiendo la condición y finalizando el programa.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    El análisis dinámico mediante el depurador confirma la eficiencia del direccionamiento post-indexado. Como se observa en la \textbf{Figura 1} el programa al inicio tiene el registro \texttt{R1} apuntando a la dirección de memoria \texttt{0x40011040} que corresponde al arreglo i. A diferencia de la actividad anterior, donde se requería un registro adicional (\texttt{R3}) para calcular la dirección de cada elemento, aquí se trabaja directamente sobre el puntero base.
+
+    Al ejecutar la instrucción \texttt{str r2, [r1], \#4}, el procesador realiza la escritura del valor contenido en \texttt{R2} y, acto seguido actualiza \texttt{R1}. Este comportamiento se verifica en la \textbf{Figura 3}, donde tras varias iteraciones el valor de \texttt{R1} ha incrementado constantemente en saltos de 4 bytes. Por ejemplo, cuando el contador \texttt{R2} llega a 5, el puntero \texttt{R1} ya se ha desplazado 20 bytes desde su posición original (\texttt{0x40011054}), demostrando el auto-incremento exitoso.
+
+    Finalmente, como se aprecia en la \textbf{Figura 4}, el bucle se rompe en el momento en que \texttt{R2} iguala a \texttt{32} o (\texttt{0x20} en hexadecimal). En este punto, la instrucción \texttt{BEQ} detecta que la comparación es verdadera y salta a la etiqueta \texttt{salir}. El resultado en memoria es un arreglo de 32 elementos que contiene la secuencia numérica del 0 al 31, logrando el doble de datos que la práctica anterior con un código más compacto y optimizado.
+
+    \newpage
+
+    \section*{Actividad 3}
+
+    Realizar un programa almacene en memoria un arreglo de datos de 32 bits con 16 elementos; una vez transferidos, realizar la copia en sentido inverso en otro arreglo.
+    
+    \begin{center}
+
+    \[A = [\, \text{dato}_1,\, \text{dato}_2,\, \text{dato}_3,\, \text{dato}_4,\, \ldots,\, \text{dato}_{15},\, \text{dato}_{16} \,] \quad @\text{Original}\]
+
+    \[B = [\, \text{dato}_{16},\, \text{dato}_{15},\, \text{dato}_{14},\, \text{dato}_{13},\, \ldots,\, \text{dato}_2,\, \text{dato}_1 \,] \quad @\text{Copia}\]
+    \end{center}
+
+
+    \subsection*{Propuesta de solución}
+
+    Para resolver el problema se emplea una estrategia basada en dos apuntadores que recorren los
+    arreglos en sentidos opuestos, aprovechando el modo de direccionamiento \textbf{post-indexado}
+    de la arquitectura ARM. El apuntador de lectura \texttt{R1} se inicializa en el primer elemento
+    del arreglo \texttt{A} y avanza de forma \textbf{ascendente} ($+4$ bytes por iteración), mientras
+    que el apuntador de escritura \texttt{R2} se posiciona en la \textit{última celda reservada}
+    del arreglo destino \texttt{B} desplazándose 60 bytes desde su base, y retrocede de forma
+    \textbf{descendente} ($-4$ bytes por iteración). Un contador \texttt{R3}, inicializado en cero,
+    controla el número de iteraciones del ciclo; cuando su valor alcanza 16, la instrucción
+    \texttt{CMP} activa la bandera $Z$ del registro de estado y la instrucción \texttt{BEQ}
+    transfiere el control fuera del bucle, finalizando la ejecución mediante una llamada al sistema
+    (\texttt{SVC 0}). De esta forma, cada elemento leído secuencialmente de \texttt{A} se escribe en
+    la posición inversa correspondiente de \texttt{B}, logrando la copia invertida sin consumir
+    registros adicionales para el cálculo de direcciones.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo correspondiente al algoritmo descrito:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop]
+            {INICIO};
+
+        \node (loadR1) [process, below of=inicio, minimum width=8cm]
+            {\texttt{R1} $\leftarrow$ direcci\'{o}n base del arreglo \texttt{A}};
+
+        \node (loadR2) [process, below of=loadR1, minimum width=8cm]
+            {\texttt{R2} $\leftarrow$ direcci\'{o}n base de \texttt{B} $+\;60$};
+
+        \node (initR3) [process, below of=loadR2, minimum width=8cm]
+            {Contador \texttt{R3} $\leftarrow$ 0};
+
+        \node (cond) [decision, below of=initR3, yshift=-0.6cm, aspect=2.5]
+            {$\texttt{R3} = 16$\,?};
+
+        \node (fin) [startstop, right of=cond, xshift=5.2cm]
+            {FIN};
+
+        \node (leer) [process, below of=cond, yshift=-0.9cm,
+                      minimum width=8cm, align=center]
+            {Leer dato: \texttt{R4} $\leftarrow$ \texttt{Mem[R1]}\\
+             Post-incremento: \texttt{R1} $\leftarrow$ \texttt{R1} $+ 4$};
+
+        \node (escribir) [process, below of=leer,
+                          minimum width=8cm, align=center]
+            {Escribir dato: \texttt{Mem[R2]} $\leftarrow$ \texttt{R4}\\
+             Post-decremento: \texttt{R2} $\leftarrow$ \texttt{R2} $- 4$};
+
+        \node (incr) [process, below of=escribir, minimum width=8cm]
+            {Incrementar contador: \texttt{R3} $\leftarrow$ \texttt{R3} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)    -- (loadR1);
+        \draw [arrow] (loadR1)    -- (loadR2);
+        \draw [arrow] (loadR2)    -- (initR3);
+        \draw [arrow] (initR3)    -- (cond);
+        \draw [arrow] (cond)      -- node[anchor=east]  {\textbf{No}} (leer);
+        \draw [arrow] (leer)      -- (escribir);
+        \draw [arrow] (escribir)  -- (incr);
+        \draw [arrow] (cond.east) -- node[anchor=south] {\textbf{S\'{\i}}} (fin.west);
+
+        % Flecha de retorno del ciclo (desde incr hacia la condicion por la izquierda)
+        \draw [arrow] (incr.west) -- ++(-3.8,0) |- (cond.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
+
+    Se cargan las direcciones base de los arreglos mediante \texttt{LDR}: \texttt{R1} queda apuntando
+    al primer elemento de \texttt{A}; \texttt{R2} recibe la dirección base de \texttt{B} y se
+    desplaza $+60$ bytes para posicionarse en la última celda (índice 15), y el contador \texttt{R3}
+    se pone a cero. A continuación inicia el \textbf{ciclo principal}: al comienzo de cada
+    iteración se evalúa la condición de salida $\texttt{R3} = 16$; si es \textbf{falsa}, la
+    instrucción \texttt{LDR} con post-incremento lee el siguiente dato de \texttt{A} en \texttt{R4}
+    y adelanta \texttt{R1} en $+4$ bytes, luego la instrucción \texttt{STR} con post-decremento
+    escribe \texttt{R4} en la posición actual de \texttt{B} y retrocede \texttt{R2} en $-4$ bytes,
+    efectuando el espejeo del arreglo elemento a elemento. Tras la escritura, el contador
+    \texttt{R3} se incrementa en uno y el flujo regresa a la condición. Cuando \texttt{R3}
+    alcanza el valor $16$ (los 16 elementos han sido copiados en orden inverso).
+
+    \vspace{0.5cm}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 3]{Codigos/act3.s}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image1.png}
+        \caption{Entorno Code::Blocks preparado para iniciar la depuración del código fuente.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image2.png}
+        \caption{Inicialización de apuntadores. Se observa que \texttt{R1} apunta al inicio de A (\texttt{0x40011040}) y \texttt{R2} apunta al final de B (\texttt{0x400110bc}). El contador \texttt{R3} inicia en 0.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image3.png}
+        \caption{Evaluación de la condición de salida (\texttt{CMP r3, \#16}) en las primeras fases del ciclo. La ejecución entra al bloque de copiado.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image4.png}
+        \caption{Cuarta iteración. El contador \texttt{R3} tiene el valor de 3, y en \texttt{R4} se puede observar cargado el valor \texttt{0x4}, demostrando que los apuntadores \texttt{R1} y \texttt{R2} se han actualizado correctamente.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image5.png}
+        \caption{Octava iteración del ciclo. El contador \texttt{R3} llega a 7 y en \texttt{R4} se carga el valor \texttt{0x7}, confirmando la constancia y estabilidad del bucle.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/image6.png}
+        \caption{Fin de la ejecución. El contador \texttt{R3} alcanza el valor de \texttt{0x10} (16 en decimal). El programa sale del ciclo y ejecuta la llamada al sistema (\texttt{SVC 0}).}
+    \end{figure}
+
+
+    \textbf{Análisis de resultados}
+
+    En una primera instancia, antes de ingresar al ciclo principal, es necesario cargar las direcciones base de los arreglos definidos en memoria. Por medio de la instrucción \texttt{LDR}, se carga en el registro \texttt{R1} la dirección de inicio del arreglo original \texttt{A}, la cual corresponde al valor \texttt{0x40011040}. De la misma forma, se carga en \texttt{R2} la dirección base del arreglo vacío \texttt{B} (\texttt{0x40011080}). Sin embargo, dado que la copia debe realizarse en sentido inverso, se emplea la instrucción \texttt{ADD R2, R2, \#60} para desplazar el apuntador de escritura hacia el final del espacio reservado para \texttt{B}. Como cada uno de los 16 datos es de 32 bits (4 bytes), el desplazamiento total es de 60 bytes, lo que posiciona correctamente a \texttt{R2} en la dirección \texttt{0x400110BC}. Adicionalmente, se inicializa el registro \texttt{R3} con el valor de \texttt{0} para fungir como la variable de control (contador) del ciclo. Todos estos valores iniciales coinciden exactamente con lo que se muestra en los registros de la CPU en las primeras etapas de la depuración.
+
+    Una vez dentro de la etiqueta \texttt{loop\_copia}, el programa ejecuta la lógica central del copiado haciendo uso del direccionamiento indirecto con post-indexado. La instrucción \texttt{LDR R4, [R1], \#4} accede a la dirección de memoria que contiene \texttt{R1}, extrae el dato y lo guarda en el registro temporal \texttt{R4}; inmediatamente después de la lectura, el procesador incrementa automáticamente el valor de \texttt{R1} en 4 bytes para apuntar al siguiente dato del arreglo \texttt{A}. Posteriormente, la instrucción \texttt{STR R4, [R2], \#-4} toma el dato recién cargado en \texttt{R4} y lo guarda en la dirección de memoria apuntada por \texttt{R2}; una vez almacenado, el apuntador \texttt{R2} se decrementa automáticamente en 4 bytes. Este emparejamiento de instrucciones permite leer el arreglo original de inicio a fin mientras se escribe simultáneamente en el arreglo destino de fin a inicio, sin necesidad de emplear instrucciones aritméticas extra para recalcular las direcciones.
+
+    Al analizar la evolución dinámica a través de las iteraciones capturadas, se verifica que los datos se transfieren correctamente. Por ejemplo, en las primeras iteraciones se observa que \texttt{R4} adquiere los valores de \texttt{0x1} y posteriormente \texttt{0x4}, reflejando la extracción secuencial de los datos. De forma concurrente, el apuntador de lectura \texttt{R1} incrementa progresivamente (pasando por \texttt{0x40011044}, \texttt{0x40011050}, hasta \texttt{0x4001105C}), mientras que el apuntador de escritura \texttt{R2} decrementa su valor (pasando por \texttt{0x400110B8}, \texttt{0x400110AC}, hasta \texttt{0x400110A0}). En cada vuelta, la instrucción \texttt{ADD R3, R3, \#1} incrementa el contador, lo que permite llevar el control exacto de los elementos transferidos.
+
+    Finalmente, el ciclo se rompe gracias a la instrucción de comparación \texttt{CMP R3, \#16}. Cuando el contador \texttt{R3} alcanza el valor de \texttt{0x10} (16 en decimal), la comparación resulta en cero, lo que actualiza el registro de estado (\texttt{CPSR}) levantando la bandera de cero (Z). Al detectarse esta bandera, se cumple la condición de la instrucción \texttt{BEQ fin\_copia}, realizando el salto fuera del bucle. Al finalizar el programa, los registros muestran que \texttt{R1} terminó en la dirección \texttt{0x40011080} (habiendo recorrido exactamente los 64 bytes del arreglo A) y \texttt{R2} terminó en \texttt{0x4001107C} (habiendo retrocedido 64 bytes desde su punto de inicio). 
+
+    \section*{Actividad 4}
+
+    Realizar un programa que forme un arreglo de 20 elementos, con el siguiente criterio:
+
+    \[A = [\, i,\, 2i,\, 4i,\, 8i,\, 16i,\, \ldots,\, ni \,]\]
+
+    Donde $i$ es un número considerado como valor inicial.
+
+    \begin{enumerate}
+        \item [a)] Enviar a memoria cada uno de ellos.
+        \item [b)] Sumar y almacenar en memoria el resultado.
+    \end{enumerate}
+
+    \subsection*{Propuesta de solución}
+
+    Para realizar un programa que resuelva la actividad planteada, primero se debe conocer el espacio que es necesario reservar para su correcto funcionamiento, de forma que el enunciado requiere un arreglo $A$ de 20, elementos, dado que cada entero (\texttt{word}) ocupa \texttt{4 bytes} es necesario reservar 80 bytes consecutivos para el arreglo de 20 elementos (\texttt{A}). Por otro lado se requiere una variable para almacenar el resultado, de forma que se reserva un espacio de \texttt{4 bytes} y se inicializa en cero (\texttt{SUMA}).
+
+    Una vez reservado el espacio es necesario cargar las direcciones de memoria para el correcto funcionamiento del programa, de forma que es necesario cargar la dirección de memoria donde empieza el arreglo \texttt{A}, esta dirección de memoria se guardará en el registro \texttt{R0}, posteriormente en el registro \texttt{R1} se indicara el valor de \texttt{i}, en este caso le asignamos el valor de 3, por otro lado en el registro \texttt{R2} se tendrá como contenido el valor del contador necesario para recorrer todo el arreglo, es decir ira de 0 a 20 y por último en el registro \texttt{R3} se tendrá el contenido del acumulador, el resultado de ir sumando cada elemento generado.
+
+    Una vez con las direcciones de memoria e iniciado el contenido de los registros para el funcionamiento del programa, se ejecuta la etiqueta \texttt{loop\_potencias} donde se evalúa la condición de salida, la cál verifica si el contador ya llego a los 20 elementos (\texttt{CMP R2, \#20}) en caso de que no haya llegado al último elemento se procede a ir recorriendo el arreglo \texttt{A}, para esto guardamos el valor del registro \texttt{R1} en la dirección apuntada por \texttt{R0} (Arreglo \texttt{A}) y a su vez realizamos un post indexado sumándole \texttt{4}, es mediante este post indexado (\texttt{str r1, [r0], \#4}) que en cada ciclo recorremos el arreglo, se le suma \texttt{4} debido a que cada elemento del arreglo ocupa 4 bytes. Una vez que ya guardamos el valor, procedemos a sumar el valor recién guardado a la variable acumuladora que se encuentra en \texttt{R3} (\texttt{add r3, r3, r1}). Por último es necesario generar la serie con la forma $i, 2i, 4i, 8i, ...$ para obtener esta forma se observo que en cada iteración se multiplica la constante or dos, de forma que se puede implementar por medio de un desplazamiento lógico a la izquierda, por lo que en cada ciclo incrementa la constante en 2, una vez finalizado esta secuencia de pasos se incrementa el contador \texttt{R2} y se repite el ciclo evaluando la condición de salida.
+
+    Cuando la condición de salida es verdadera, en el contenido del registro \texttt{R3} se tiene resultado de almacenar en memoria el resultado del arreglo, sin embargo la actividad indica que se debe almacenar el resultado, de forma que apuntamos a la dirección de memoria de \texttt{SUMA} (\texttt{ldr r0, =SUMA}), posteriormente guardamos el total acumulado en esa dirección de memoria (\texttt{str r3, [r0]}) finalmente se llama al sistema para finalizar el programa de forma segura.
+
+    El procedimiento descrito se pude representar en el siguiente diagrama de flujo.
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.5cm]
+            % --- Nodos ---
+            \node (inicio) [startstop] {INICIO};
+
+            \node (init) [process, below of=inicio, yshift=-0.5cm, minimum width=8cm, align=center] {
+                \texttt{R0} $\leftarrow$ dir. base de \texttt{A} \\
+                \texttt{R1} $\leftarrow$ 3 ($i$ inicial) \\
+                \texttt{R2} $\leftarrow$ 0 (contador de elementos) \\
+                \texttt{R3} $\leftarrow$ 0 (acumulador sumatoria)
+            };
+
+            % Punto de retorno del bucle
+            \node (cond) [decision, below of=init, yshift=-1cm, aspect=2.5] {
+                \texttt{R2} = 20?
+            };
+
+            \node (store_total) [process, right of=cond, xshift=5cm, minimum width=4cm, align=center] {
+                \texttt{Mem[SUMA]} $\leftarrow$ \texttt{R3} \\
+                (Fin del programa)
+            };
+
+            \node (fin) [startstop, below of=store_total] {FIN};
+
+            \node (body) [process, below of=cond, yshift=-1.5cm, minimum width=8cm, align=center] {
+                \texttt{Mem[R0]} $\leftarrow$ \texttt{R1} \\
+                \texttt{R0} $\leftarrow$ \texttt{R0} + 4 (Post-indexado) \\
+                \texttt{R3} $\leftarrow$ \texttt{R3} + \texttt{R1} (suma total) \\
+                \texttt{R1} $\leftarrow$ \texttt{R1} $\ll$ 1 (multiplicar por 2) \\
+                \texttt{R2} $\leftarrow$ \texttt{R2} + 1 (incrementar contador)
+            };
+
+            % --- Conexiones (Flechas) ---
+            \draw [arrow] (inicio) -- (init);
+            \draw [arrow] (init) -- (cond);
+            
+            % Salida del bucle (Sí)
+            \draw [arrow] (cond) -- node[anchor=south] {\textbf{Sí}} (store_total);
+            \draw [arrow] (store_total) -- (fin);
+            
+            % Cuerpo del bucle (No)
+            \draw [arrow] (cond) -- node[anchor=east] {\textbf{No}} (body);
+            
+            % Retorno al inicio del bucle
+            \draw [arrow] (body.west) -- ++(-1.5,0) |- (cond.west);
+        \end{tikzpicture}
+    \end{figure}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 4]{Codigos/act4.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image1.png}
+        \caption{Estado de los registros. Dirección de memoria inicial del arreglo \texttt{A}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image2.png}
+        \caption{Estado de los registros. Inicio de la etiqueta \texttt{loop\_potencias}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad4/image3.png}
+        \caption{Estado de los registros. Iteración número 3 de \texttt{loop\_potencias}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/image4.png}
+        \caption{Estado de los registros. Fin de Iteraciones, resultado final}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    A partir de las capturas de pantalla podemos observar paso a paso el funcionamiento del programa que acabamos de implementar, de forma que en la primer captura podemos observar que en el registro \texttt{R0} se tiene la dirección de memoria inicial del arreglo \texttt{A}, así como en \texttt{R1} es valor de $i$ que especificamos \texttt{3} así como la variable contadora \texttt{R2} en \texttt{0}.
+
+    En la imagen que corresponde al inicio de la etiqueta \texttt{loop\_potencias} se puede comprobar como se evalúa si la variable contador \texttt{R2} llego al valor de \texttt{20} en caso que sea falso entra en el loop procediendo a realizar las operaciones dentro del ciclo. En la imagen posterior se puede corroborar el correcto funcionamiento de cada iteración, como estamos en la iteración número 3, vemos que en el \texttt{R1} se tiene el contenido de \texttt{12} lo cuál corresponde al resultado correcto de esa iteración $4 \times 3$ de forma que hasta este momento en memoria se tendría en el contenido del arreglo
+    \[A = [i, 2i, 4i]\]
+    \[A = [3, 2 \times 3, 4 \times 3] = [3, 6, 12]\]
+    
+    En la imagen donde se muestra el fin del ciclo, se puede observar que la variable contadora \texttt{R2} llegó a 20 de forma que la condición se ejecuta de forma correcta, de igual forma se puede observar que el resultado final en \texttt{R1} es correcta coincide con la sucesión planteada y se almacena en memoria el resultado final.
+
+    \section*{Actividad 5}
+    Realizar un programa que multiplique dos matrices de 2x2; los datos podrán ser de 8 bits.
+
+    \[\begin{bmatrix}
+        A & B \\
+        C & D
+    \end{bmatrix}
+    \begin{bmatrix}
+        E & F \\
+        G & H
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        I & J \\
+        K & L
+    \end{bmatrix}\]
+
+    \subsection*{Propuesta de solución}
+
+    Para la solución de la multiplicación de matriz de tamaño $2 \times 2$, se definen tres arreglos con 4 elementos de 8 bits, para esto se considera que un arreglo almacena los contenidos de una matriz de la siguiente forma $M = [a_1, a_2, a_3, a_4]$ por lo que se considera que los datos se almacenan de forma continua. Una vez mencionando esto se indica que cada elemento es de 8 bits por medio de la \texttt{.byte} ya que se indica que cada numero solo ocupa 8 bits (\texttt{1 byte}) de forma que \texttt{M1} y \texttt{M2} contiene los valores de las matrices de entrada y \texttt{MR} es la matriz resultante de realizar la multiplicación entre ambas matrices por lo que se inicializa con \texttt{0} los elementos.
+
+    Una vez que ya se reservo la memoria de cada arreglo correspondiente a las matrices, es necesario guardar las direcciones de memoria de cada matriz, de forma que en el registro \texttt{R0} se tiene la dirección inicial del arreglo de correspondiente a la matriz \texttt{M1}, \texttt{R1} para la matriz \texttt{M2} y \texttt{R3} para la resultante \texttt{MR}. Una vez ya con los valores iniciales de la dirección de memoria, en los registros (\texttt{R3,R4,R5,R6}) se procede a cargar cada elemento de la matriz \texttt{M1}, los elementos se cargan por medio de la instrucción \texttt{LDRB}, el cual extrae únicamente 8 bits, ya que los elementos de cada matriz es de \texttt{8 bits}, para desplazarnos en el arreglo se emplea la sintaxis de \texttt{LDRB Rd, [Rn, \#offset]} donde al registro que contiene la dirección de inicio del arreglo (\texttt{Rd}) se le indica cuantos bytes moverse (\texttt{\#offset}) para encontrar el dato solicitado. Se emplean los registros  (\texttt{R7,R8,R9,R10}) para los elementos de la matriz \texttt{M2} con la misma lógica descrita
+    
+    Dado que se tienen matrices de tamaño fijo, se pueden calcular los elementos de la matriz por medio de las siguientes expresiones:
+    \[I = (A \times E) +  (B \times G)\]
+    \[J = (A \times F) +  (B \times H)\]
+    \[K = (C \times E) +  (D \times G)\]
+    \[L = (C \times F) +  (D \times H)\]
+
+    Una vez que se conocen las expresiones para calcular cada elemento de la matriz resultante se pueden escribir en lenguaje ensamblador, para esto se tienen que realizar 3 operaciones, 2 multiplicaciones y la suma ambas multiplicaciones, por lo que para optimizar el código se hace uso de las instrucciones \texttt{MLA} y \texttt{MUL}. Por ejemplo considerando el cálculo del elemento $I$ se emplearía el siguiente procedimiento. Multiplicar $A \times E$ y guardarlo en el registro \texttt{R11} (\texttt{mul r11, r3, r7}), posteriormente multiplicamos $B \times G$ y le sumamos el resultado de multiplicar $A \times E$ y sobre escribimos el resultado, para hacer todo esto por medio de una instrucción se emplea la instrucción \texttt{MLA} (\texttt{mla r11, r4, r9, r11}). De forma que ya en \texttt{R11} tenemos el resultado final del elemento por lo que solo queda guardar ese byte en la posición correspondiente de \texttt{MR} (\texttt{strb r11, [r2, \#0]}). Esta lógica se emplea para cada elemento de la matriz con los respectivos registros que contienen los elementos de cada matriz.
+
+    Una vez que ya se termino de realizar las operaciones necesarias para calcular cada elemento de la matriz resultante se procede a ejecutar la llamada para terminar el proceso.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.8cm, scale=0.7, transform shape]
+
+            % --- Nodos del Flujo ---
+            \node (inicio) [startstop] {INICIO};
+
+            \node (punteros) [process, below of=inicio, minimum width=8cm, align=center] {
+                \texttt{R0} $\leftarrow$ dir. \texttt{M1}, \quad \texttt{R1} $\leftarrow$ dir. \texttt{M2} \\
+                \texttt{R2} $\leftarrow$ dir. \texttt{MR} (Resultado)
+            };
+
+            \node (loadM1) [process, below of=punteros, minimum width=8cm, align=center] {
+                \textbf{Cargar Matriz 1 (8 bits):} \\
+                \texttt{R3=A, R4=B, R5=C, R6=D}
+            };
+
+            \node (loadM2) [process, below of=loadM1, minimum width=8cm, align=center] {
+                \textbf{Cargar Matriz 2 (8 bits):} \\
+                \texttt{R7=E, R8=F, R9=G, R10=H}
+            };
+
+            \node (calcI) [process, below of=loadM2, yshift=-0.3cm, minimum width=8cm, align=center] {
+                \textbf{Calcular I:} \texttt{R11} $\leftarrow$ (\texttt{R3}$\times$\texttt{R7}) + (\texttt{R4}$\times$\texttt{R9}) \\
+                \texttt{Mem[R2 + 0]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcJ) [process, below of=calcI, minimum width=8cm, align=center] {
+                \textbf{Calcular J:} \texttt{R11} $\leftarrow$ (\texttt{R3}$\times$\texttt{R8}) + (\texttt{R4}$\times$\texttt{R10}) \\
+                \texttt{Mem[R2 + 1]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcK) [process, below of=calcJ, minimum width=8cm, align=center] {
+                \textbf{Calcular K:} \texttt{R11} $\leftarrow$ (\texttt{R5}$\times$\texttt{R7}) + (\texttt{R6}$\times$\texttt{R9}) \\
+                \texttt{Mem[R2 + 2]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (calcL) [process, below of=calcK, minimum width=8cm, align=center] {
+                \textbf{Calcular L:} \texttt{R11} $\leftarrow$ (\texttt{R5}$\times$\texttt{R8}) + (\texttt{R6}$\times$\texttt{R10}) \\
+                \texttt{Mem[R2 + 3]} $\leftarrow$ \texttt{R11}
+            };
+
+            \node (fin) [startstop, below of=calcL] {FIN};
+
+            % --- Flechas ---
+            \draw [arrow] (inicio) -- (punteros);
+            \draw [arrow] (punteros) -- (loadM1);
+            \draw [arrow] (loadM1) -- (loadM2);
+            \draw [arrow] (loadM2) -- (calcI);
+            \draw [arrow] (calcI) -- (calcJ);
+            \draw [arrow] (calcJ) -- (calcK);
+            \draw [arrow] (calcK) -- (calcL);
+            \draw [arrow] (calcL) -- (fin);
+
+        \end{tikzpicture}
+    \end{figure}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 5]{Codigos/act5.s}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image1.png}
+        \caption{Estado de los registros. Dirección de memoria inicial de las matrices \texttt{M1},\texttt{M2}, \texttt{MR}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image2.png}
+        \caption{Estado de los registros. Carga del contenido correspondiente a los elementos de \texttt{M1}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image3.png}
+        \caption{Estado de los registros. Carga del contenido correspondiente a los elementos de \texttt{M2}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.99\textwidth]{img/Actividad5/image4.png}
+        \caption{Estado de los registros. Calculo de los elementos correspondientes de la matriz \texttt{MR}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad5/image5.png}
+        \caption{Estado de los registros. Fin de calculo multiplicación de las matrices \texttt{M1 x M2}}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    En la primer imagen de la depuración correspondiente a la actividad 6, se pude observar de manera correcta como se apunta para cada matriz a la dirección inicial de cada arreglo que corresponde a las matrices \texttt{M1,M2,MR}, dichas direcciones se pueden ver que están en el contenido de los registros \texttt{R0,R1,R2}.
+    
+    Al cargar el contenido de los elementos de \texttt{8 bits} que hay en esa dirección de memoria con los desplazamientos correspondientes para acceder a los 4 elementos que hay en ese arreglo, en los \texttt{CPU\_Registers} se puede observar que coinciden con los valores que se definieron al inicio del programa a la hora de reservar memoria. En la imagen siguiente ya se pueden observar los elementos correspondientes a la matriz \texttt{M2} de forma que se puede afirmar que se reservo de forma correcta la memoria para cada una de las matrices, ya que se accedieron a esas direcciones de memoria y el contenido corresponde con los elementos de las matrices.
+
+    En la penúltima imagen se puede observar el resultado de calcular el elemento \texttt{K} de la matriz resultante, para verificar que el resultado es correcto se realizó el cálculo de las multiplicaciones para las matrices que se definieron:
+
+    \[\begin{bmatrix}
+        A & B \\
+        C & D
+    \end{bmatrix}
+    \begin{bmatrix}
+        E & F \\
+        G & H
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        I & J \\
+        K & L
+    \end{bmatrix}\]
+
+    \[\begin{bmatrix}
+        A & B \\
+        C & D
+    \end{bmatrix}
+    \begin{bmatrix}
+        E & F \\
+        G & H
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        (A \times E) + (B \times G) & (A \times F) + (B \times H) \\
+        (C \times E) + (D \times G) & (C \times F) + (D \times H)
+    \end{bmatrix}\]
+
+
+    \[\begin{bmatrix}
+        2 & 1 \\
+        3 & 4
+    \end{bmatrix}
+    \begin{bmatrix}
+        1 & 5 \\
+        2 & 1
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        (2 \times 1) + (1 \times 2) & (2 \times 5) + (1 \times 1) \\
+        (3 \times 1) + (4 \times 2) & (3 \times 5) + (4 \times 1)
+    \end{bmatrix}\]
+
+    \[\begin{bmatrix}
+        2 & 1 \\
+        3 & 4
+    \end{bmatrix}
+    \begin{bmatrix}
+        1 & 5 \\
+        2 & 1
+    \end{bmatrix}
+        =
+    \begin{bmatrix}
+        4 & 11 \\
+        11 & 19
+    \end{bmatrix}\]
+
+    De forma que el elemento \texttt{K} calculado corresponde con el contenido del registro \texttt{R11}, finalmente cuando acaba de realizarse la multiplicación de matrices el contenido del registro \texttt{R11} debe corresponder al último elemento que se cálculo, este caso para la matriz de $2 \times 2$ es el elemento \texttt{L} que coincide su contenido con el resultado esperado. Por lo que el programa realiza de forma correcta la multiplicación de matrices de tamaño $2 \times 2$
+
+    \section*{Actividad 6}
+    Realizar un programa que encuentre el número con valor mayor en un arreglo de 20 elementos que serán almacenados en memoria; para lo cual:
+
+    \begin{enumerate}
+        \item [a)] Indicar cuál fue el valor mayor.
+        \item [b)] Ubicar la dirección donde se encontró este número.
+        \item [c)] Usar las direcciones que requiera para cumplir lo solicitado.
+    \end{enumerate}
+
+
+    \subsection*{Propuesta de solución}
+
+    Se emplea un recorrido lineal sobre el arreglo de 20 elementos,
+    comparando cada valor contra un máximo registrado. Se inicializa el registro \texttt{R2} con el
+    primer elemento del arreglo, asumiendo que este es el mayor, y \texttt{R3} con su dirección
+    de memoria correspondiente. A partir del segundo elemento, un ciclo iterativo controlado por
+    el contador \texttt{R4} recorre las posiciones restantes: en cada paso, la instrucción
+    \texttt{LDR} carga el valor actual en \texttt{R5} y la instrucción \texttt{CMP} lo compara
+    contra el máximo almacenado en \texttt{R2}. Si el nuevo valor supera al registrado, las
+    instrucciones \texttt{MOV} actualizan tanto el valor máximo como su dirección. Cuando el
+    contador \texttt{R4} iguala al límite de 20, el programa sale del ciclo y almacena el
+    resultado final en las variables de memoria \texttt{MAX\_VAL} y \texttt{MAX\_DIR} mediante
+    instrucciones \texttt{STR}, cumpliendo así con los tres incisos solicitados.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo correspondiente al algoritmo descrito:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+
+        % --- Nodos ---
+        \node (inicio) [startstop]
+            {INICIO};
+
+        \node (init1) [process, below of=inicio, minimum width=9cm, align=center]
+            {\texttt{R0} $\leftarrow$ dir.\ base de \texttt{ARREGLO}\\
+             \texttt{R1} $\leftarrow$ 20 (l\'{i}mite de elementos)};
+
+        \node (init2) [process, below of=init1, minimum width=9cm, align=center]
+            {\texttt{R2} $\leftarrow$ \texttt{Mem[R0]} (m\'{a}ximo inicial)\\
+             \texttt{R3} $\leftarrow$ \texttt{R0} (direcci\'{o}n del m\'{a}ximo)};
+
+        \node (init3) [process, below of=init2, minimum width=9cm]
+            {\texttt{R4} $\leftarrow$ 1, \quad \texttt{R0} $\leftarrow$ \texttt{R0} $+ 4$};
+
+        \node (cond1) [decision, below of=init3, yshift=-0.5cm, aspect=2.5]
+            {$\texttt{R4} = \texttt{R1}$\,?};
+
+        \node (store) [process, right of=cond1, xshift=5.5cm, minimum width=5cm, align=center]
+            {\texttt{Mem[MAX\_VAL]} $\leftarrow$ \texttt{R2}\\
+             \texttt{Mem[MAX\_DIR]} $\leftarrow$ \texttt{R3}};
+
+        \node (fin) [startstop, below of=store]
+            {FIN};
+
+        \node (load) [process, below of=cond1, yshift=-0.7cm, minimum width=9cm]
+            {\texttt{R5} $\leftarrow$ \texttt{Mem[R0]} (valor actual)};
+
+        \node (cond2) [decision, below of=load, yshift=-0.5cm, aspect=2.5]
+            {$\texttt{R5} > \texttt{R2}$\,?};
+
+        \node (update) [process, below of=cond2, yshift=-0.7cm, minimum width=9cm, align=center]
+            {\texttt{R2} $\leftarrow$ \texttt{R5} (nuevo m\'{a}ximo)\\
+             \texttt{R3} $\leftarrow$ \texttt{R0} (nueva direcci\'{o}n)};
+
+        \node (next) [process, below of=update, minimum width=9cm]
+            {\texttt{R0} $\leftarrow$ \texttt{R0} $+ 4$, \quad \texttt{R4} $\leftarrow$ \texttt{R4} $+ 1$};
+
+        % --- Flechas ---
+        \draw [arrow] (inicio)     -- (init1);
+        \draw [arrow] (init1)      -- (init2);
+        \draw [arrow] (init2)      -- (init3);
+        \draw [arrow] (init3)      -- (cond1);
+        \draw [arrow] (cond1)      -- node[anchor=east]  {\textbf{No}} (load);
+        \draw [arrow] (cond1.east) -- node[anchor=south] {\textbf{S\'{i}}} (store.west);
+        \draw [arrow] (store)      -- (fin);
+        \draw [arrow] (load)       -- (cond2);
+        \draw [arrow] (cond2)      -- node[anchor=east]  {\textbf{S\'{i}}} (update);
+        \draw [arrow] (update)     -- (next);
+
+        % No de cond2: saltar actualizaci\'{o}n
+        \draw [arrow] (cond2.east) -- ++(2.5,0) |- (next.east);
+        \node at ($(cond2.east)+(1.0,0.3)$) {\textbf{No}};
+
+        % Flecha de retorno del ciclo
+        \draw [arrow] (next.west) -- ++(-3.8,0) |- (cond1.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
+
+    El diagrama inicia cargando la dirección base del arreglo en \texttt{R0} y estableciendo
+    el límite de 20 elementos en \texttt{R1}. Se asume que el primer dato es el mayor, por lo
+    que \texttt{R2} almacena su valor y \texttt{R3} su dirección de memoria. El contador
+    \texttt{R4} se inicializa en 1 y el puntero \texttt{R0} avanza al segundo elemento
+    ($+4$ bytes). En cada iteración del ciclo principal se evalúa primero si el contador ha
+    alcanzado el límite: cuando $\texttt{R4} = \texttt{R1}$ (20), el flujo se dirige al bloque
+    de almacenamiento donde se escriben los resultados en las variables \texttt{MAX\_VAL} y
+    \texttt{MAX\_DIR}, finalizando el programa. Si la condición no se cumple, se carga el valor
+    actual de memoria en \texttt{R5} y se compara con el máximo registrado en \texttt{R2}. Si
+    \texttt{R5} resulta mayor, los registros \texttt{R2} y \texttt{R3} se actualizan con el
+    nuevo valor y su dirección; en caso contrario, se omite la actualización saltando directamente
+    al avance del puntero. Finalmente, se incrementa \texttt{R0} en 4 bytes y \texttt{R4} en una
+    unidad, regresando el flujo al inicio del ciclo.
+
+    \vspace{0.5cm}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 6]{Codigos/act6.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad6/image1.png}
+        \caption{Estado de los registros inmediatamente después de la inicialización de variables. Se asume que el índice 0 es el máximo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad6/image2.png}
+        \caption{Interrupción dentro del bloque de actualización (\texttt{mov r3, r0}) durante la segunda iteración, al encontrar un número mayor que el inicial.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad6/image3.png}
+        \caption{El ciclo cursando la iteración 6 (\texttt{R4 = 0x6}). El programa ya ha registrado el verdadero número máximo (\texttt{0x69}).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad6/image4.png}
+        \caption{Iteración 8 del ciclo (\texttt{R4 = 0x8}). La condición de salto evita que los números menores sobreescriban el valor máximo ya encontrado.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad6/image5.png}
+        \caption{Fin de la ejecución (\texttt{SVC 0}). El valor máximo y su dirección se han almacenado en memoria correctamente.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    Antes de entrar al ciclo de evaluación, el programa establece las condiciones iniciales cargando la dirección base del arreglo en el registro \texttt{R0}, la cual corresponde a \texttt{0x40011040}. Se carga el límite de iteraciones en \texttt{R1} con el valor de \texttt{0x14} (20 en decimal). Asumiendo que el primer dato es el mayor por defecto, la instrucción \texttt{LDR R2, [R0]} extrae el valor almacenado en esa primera dirección, cargando un \texttt{0x5} (5) en el registro \texttt{R2}, mientras que \texttt{R3} guarda la dirección \texttt{0x40011040}. El contador \texttt{R4} se inicializa en \texttt{0x1} y el puntero \texttt{R0} se incrementa en 4 bytes para apuntar al siguiente elemento (\texttt{0x40011044}). Todos estos valores se confirman en los registros de la CPU mostrados en la primera captura.
+
+    Al entrar al bucle \texttt{buscar\_mayor}, se evalúan secuencialmente los datos mediante la instrucción \texttt{LDR R5, [R0]}. En la segunda iteración, el puntero se encuentra en \texttt{0x40011044} y carga el valor \texttt{0xC} (12) en \texttt{R5}. La instrucción \texttt{CMP R5, R2} compara este \texttt{0xC} contra el \texttt{0x5} registrado. Como 12 es mayor que 5, no se activa la condición de salto de \texttt{BLE siguiente}, permitiendo que el flujo entre al bloque de actualización. En este punto, \texttt{R2} adopta el nuevo valor máximo (\texttt{0xC}) y \texttt{R3} adopta su respectiva dirección (\texttt{0x40011044}), tal como se evidencia en la segunda captura donde el PC está detenido justo en la reasignación de direcciones.
+
+    A medida que el ciclo avanza, el programa detecta el verdadero valor máximo del arreglo. En la captura de la iteración 6 (\texttt{R4 = 0x6}), se observa que el registro \texttt{R2} contiene el valor \texttt{0x69} (105 en decimal). Este número corresponde al sexto elemento del arreglo original. Consecuentemente, el registro \texttt{R3} preserva la dirección exacta de este dato, indicando \texttt{0x40011054} (calculado como la dirección base \texttt{0x40011040} + 5 desplazamientos de 4 bytes). A partir de este punto, en las iteraciones subsecuentes (como se observa en la iteración 8 de la cuarta captura), los valores leídos en \texttt{R5} resultan ser menores a \texttt{0x69}. Esto provoca que la instrucción \texttt{BLE siguiente} se cumpla de forma continua, saltando la actualización y manteniendo intactos los registros \texttt{R2} y \texttt{R3}.
+
+    El ciclo iterativo finaliza cuando el contador \texttt{R4} alcanza el valor de \texttt{0x14}, activando el salto condicional \texttt{BEQ fin\_busqueda}. En esta última sección, el programa cumple con los incisos solicitados trasladando los resultados retenidos en el procesador hacia la memoria principal. Se carga la dirección de la variable \texttt{MAX\_VAL} en \texttt{R6} (\texttt{0x40011090}) y mediante \texttt{STR R2, [R6]} se escribe permanentemente el valor \texttt{0x69}. A continuación, se carga la dirección de \texttt{MAX\_DIR} en \texttt{R6} (\texttt{0x40011094}) y se guarda el contenido de \texttt{R3} (\texttt{0x40011054}). La última captura valida que el registro \texttt{R2} retuvo satisfactoriamente el número \texttt{105} y el registro \texttt{R3} su ubicación exacta, demostrando que el manejo de punteros y los saltos condicionales operaron con total precisión sobre la memoria estática.
+
+
+    \newpage
+
+    \section*{Actividad 7}
+
+    Realizar un programa que ordene de manera ascendente un arreglo de 32 elementos de 32 bits; deberá:
+    \begin{itemize}
+        \item [a)] Mantener el arreglo original.
+        \item [b)] Generar otro arreglo con el ordenamiento del original.
+    \end{itemize}
+
+    \vspace{0.5cm}
+
+    \textbf{Arreglo original.}
+
+    \[\begin{array}{|c|c|c|c|c|}
+        \hline
+        A[0] & A[1] & A[2] & \cdots & A[31] \\
+        \hline
+    \end{array}\]
+
+    \vspace{0.5cm}
+
+    \textbf{Arreglo ordenado.}
+
+    \[\begin{array}{|c|c|}
+        \hline
+        \text{Menor } A[x] & \text{Mayor } A[y] \\
+        \hline
+    \end{array}\]
+
+    \subsection*{Propuesta de solución}
+
+    La solución se estructura en dos fases secuenciales. En la \textbf{primera fase} se realiza
+    una copia íntegra del arreglo original \texttt{A} hacia un arreglo auxiliar \texttt{B},
+    recorriendo los 32 elementos mediante un ciclo con post-indexado que lee de \texttt{A} y
+    escribe en \texttt{B}, avanzando ambos apuntadores en 4 bytes por iteración y decrementando
+    un contador hasta llegar a cero. Una vez completada la copia, la \textbf{segunda fase} aplica
+    el algoritmo de ordenamiento burbuja sobre el arreglo \texttt{B}, preservando intacto el
+    arreglo original. El algoritmo utiliza dos bucles anidados: el bucle externo decrementa el
+    límite de comparaciones en cada pasada (de 32 hasta 0), mientras que el bucle interno recorre
+    los elementos adyacentes de \texttt{B} comparándolos entre sí; cuando el elemento izquierdo
+    es mayor que el derecho, se efectúa un intercambio cruzado mediante instrucciones \texttt{STR}
+    que escriben los valores en posiciones invertidas. Este proceso se repite hasta que el bucle
+    externo agota sus pasadas, dejando el arreglo \texttt{B} completamente ordenado de menor a mayor.
+
+    \vspace{0.4cm}
+    A continuación se presenta el diagrama de flujo correspondiente al algoritmo descrito:
+    \vspace{0.3cm}
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.3cm, scale=0.82, every node/.style={scale=0.82}]
+
+        % === FASE 1: COPIADO (columna izquierda) ===
+        \node (inicio) [startstop]
+            {INICIO};
+
+        \node (initcopy) [process, below of=inicio, minimum width=8cm, align=center]
+            {\texttt{R0} $\leftarrow$ dir.\ base de \texttt{A}\\
+             \texttt{R1} $\leftarrow$ dir.\ base de \texttt{B}\\
+             \texttt{R2} $\leftarrow$ 32 (contador de copia)};
+
+        \node (condcopy) [decision, below of=initcopy, yshift=-0.5cm, aspect=2.5]
+            {$\texttt{R2} = 0$\,?};
+
+        \node (copybody) [process, below of=condcopy, yshift=-0.6cm, minimum width=8cm, align=center]
+            {\texttt{R3} $\leftarrow$ \texttt{Mem[R0]},\; \texttt{R0} $\leftarrow$ \texttt{R0} $+ 4$\\
+             \texttt{Mem[R1]} $\leftarrow$ \texttt{R3},\; \texttt{R1} $\leftarrow$ \texttt{R1} $+ 4$\\
+             \texttt{R2} $\leftarrow$ \texttt{R2} $- 1$};
+
+        % === FASE 2: BURBUJA (columna derecha) ===
+        \node (initbub) [process, right of=condcopy, xshift=5.5cm]
+            {\texttt{R4} $\leftarrow$ 32 (pasadas)};
+
+        \node (decN) [process, below of=initbub]
+            {\texttt{R4} $\leftarrow$ \texttt{R4} $- 1$};
+
+        \node (condouter) [decision, below of=decN, yshift=-0.3cm, aspect=2.5]
+            {$\texttt{R4} = 0$\,?};
+
+        \node (fin) [startstop, right of=condouter, xshift=3.5cm]
+            {FIN};
+
+        \node (initinner) [process, below of=condouter, yshift=-0.4cm, minimum width=5.5cm, align=center]
+            {\texttt{R1} $\leftarrow$ dir.\ base de \texttt{B}\\
+             \texttt{R5} $\leftarrow$ 0 (\'{i}ndice interno)};
+
+        \node (condinner) [decision, below of=initinner, yshift=-0.3cm, aspect=2.5]
+            {$\texttt{R5} = \texttt{R4}$\,?};
+
+        \node (loadpair) [process, below of=condinner, yshift=-0.4cm, minimum width=5.5cm, align=center]
+            {\texttt{R6} $\leftarrow$ \texttt{Mem[R1]}\\
+             \texttt{R7} $\leftarrow$ \texttt{Mem[R1+4]}};
+
+        \node (condswap) [decision, below of=loadpair, yshift=-0.3cm, aspect=2.5]
+            {$\texttt{R6} > \texttt{R7}$\,?};
+
+        \node (swap) [process, below of=condswap, yshift=-0.4cm, minimum width=5.5cm, align=center]
+            {\texttt{Mem[R1]} $\leftarrow$ \texttt{R7}\\
+             \texttt{Mem[R1+4]} $\leftarrow$ \texttt{R6}};
+
+        \node (advance) [process, below of=swap, minimum width=5.5cm]
+            {\texttt{R1} $\leftarrow$ \texttt{R1} $+ 4$, \quad \texttt{R5} $\leftarrow$ \texttt{R5} $+ 1$};
+
+        % --- Flechas Fase 1 ---
+        \draw [arrow] (inicio)    -- (initcopy);
+        \draw [arrow] (initcopy)  -- (condcopy);
+        \draw [arrow] (condcopy)  -- node[anchor=east]  {\textbf{No}} (copybody);
+        \draw [arrow] (condcopy.east) -- node[anchor=south] {\textbf{S\'{i}}} (initbub.west);
+
+        % Retorno del ciclo de copia
+        \draw [arrow] (copybody.west) -- ++(-2.5,0) |- (condcopy.west);
+
+        % --- Flechas Fase 2 ---
+        \draw [arrow] (initbub)  -- (decN);
+        \draw [arrow] (decN)     -- (condouter);
+        \draw [arrow] (condouter.east) -- node[anchor=south] {\textbf{S\'{i}}} (fin.west);
+        \draw [arrow] (condouter) -- node[anchor=east] {\textbf{No}} (initinner);
+        \draw [arrow] (initinner) -- (condinner);
+
+        % condinner S\'{i} -> retorno al bucle externo (decN)
+        \draw [arrow] (condinner.east) -- ++(5.5,0) |- (decN.east);
+        \node at ($(condinner.east)+(1.2,0.3)$) {\textbf{S\'{i}}};
+
+        \draw [arrow] (condinner) -- node[anchor=east] {\textbf{No}} (loadpair);
+        \draw [arrow] (loadpair)  -- (condswap);
+        \draw [arrow] (condswap)  -- node[anchor=east] {\textbf{S\'{i}}} (swap);
+        \draw [arrow] (swap)      -- (advance);
+
+        % condswap No -> saltar intercambio, ir directo a avance
+        \draw [arrow] (condswap.east) -- ++(2.5,0) |- (advance.east);
+        \node at ($(condswap.east)+(0.8,0.3)$) {\textbf{No}};
+
+        % Retorno del bucle interno
+        \draw [arrow] (advance.west) -- ++(-2.5,0) |- (condinner.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.3cm}
+
+    El diagrama se divide en dos fases claramente diferenciadas. En la \textbf{Fase~1} se
+    inicializan los apuntadores \texttt{R0} (origen en \texttt{A}) y \texttt{R1} (destino en
+    \texttt{B}) junto con el contador \texttt{R2} con valor 32. El ciclo de copia evalúa si
+    \texttt{R2} ha llegado a cero; mientras no lo sea, se lee un dato de \texttt{A} mediante
+    post-indexado (incrementando \texttt{R0}), se escribe en \texttt{B} (incrementando \texttt{R1}),
+    y se decrementa el contador, repitiendo el proceso. Cuando \texttt{R2} alcanza cero, los 32
+    elementos han sido transferidos y el flujo pasa a la Fase~2.
+
+    En la \textbf{Fase~2} se inicializa \texttt{R4} con 32 para controlar las pasadas del
+    algoritmo burbuja. Al inicio de cada pasada se decrementa \texttt{R4}; si llega a cero, el
+    ordenamiento está completo y el programa termina. En caso contrario, se reinicializa el
+    apuntador \texttt{R1} a la base de \texttt{B} y el índice interno \texttt{R5} a cero. El
+    bucle interno compara \texttt{R5} con \texttt{R4}: si son iguales, la pasada terminó y se
+    regresa al bucle externo para decrementar \texttt{R4} nuevamente. De lo contrario, se cargan
+    los dos elementos adyacentes \texttt{B[i]} y \texttt{B[i+1]} en \texttt{R6} y \texttt{R7}
+    respectivamente. Si \texttt{R6} es mayor que \texttt{R7}, se ejecuta el intercambio cruzado
+    escribiendo los valores en posiciones invertidas; si no, se omite el intercambio. Finalmente,
+    se avanza el apuntador \texttt{R1} en 4 bytes y se incrementa \texttt{R5}, repitiendo el
+    bucle interno hasta completar la pasada.
+
+    \vspace{0.5cm}
+
+    \textbf{Desarrollo}
+
+    \lstinputlisting[language={[ARM]Assembler}, caption=Código de la Actividad 7]{Codigos/act7.s}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image1.png}
+        \caption{Fase 1 (Copiado). Inicialización de los apuntadores base para el arreglo original (\texttt{R0}) y el arreglo copia (\texttt{R1}).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image2.png}
+        \caption{Primera iteración del ciclo de copiado. El registro \texttt{R3} extrae el primer valor a transferir.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image3.png}
+        \caption{Avance del ciclo de copiado en la iteración correspondiente al quinto elemento transferido (\texttt{R2 = 0x1C}).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image4.png}
+        \caption{Fin de la fase 1 e inicio de la fase 2. Los apuntadores han recorrido 128 bytes en memoria.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image5.png}
+        \caption{Inicialización del bucle externo del algoritmo de burbuja. \texttt{R1} se reinicia a la dirección base de la copia.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image6.png}
+        \caption{Carga de elementos adyacentes en \texttt{R6} y \texttt{R7} para su respectiva comparación.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image7.png}
+        \caption{Ejecución del intercambio (\textit{swap}) al detectar que el elemento izquierdo es mayor que el derecho.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image8.png}
+        \caption{Actualización del apuntador interno \texttt{R1} y del contador interno \texttt{R5} antes de la siguiente comparación.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/image9.png}
+        \caption{Finalización del programa. Los contadores de ambos bucles agotaron sus iteraciones.}
+    \end{figure}
+
+    \textbf{Análisis de resultados}
+
+    La ejecución inicia configurando la transferencia de datos. Las instrucciones \texttt{LDR R0, =A} y \texttt{LDR R1, =B} asignan las direcciones base de ambos arreglos. Como se observa en la primera captura, \texttt{R0} almacena la dirección \texttt{0x40011040} (inicio de \texttt{A}) y \texttt{R1} almacena \texttt{0x400110C0} (inicio de \texttt{B}). Se establece el límite de 32 elementos en \texttt{R2} (\texttt{0x20}). Al entrar a la etiqueta \texttt{copiar}, la instrucción \texttt{LDR R3, [R0], \#4} carga el primer elemento del arreglo (\texttt{0x20} o 32 en decimal) en \texttt{R3} y avanza el apuntador original a \texttt{0x40011044}. Seguidamente, \texttt{STR R3, [R1], \#4} guarda este valor en la dirección apuntada por \texttt{R1} y desplaza dicho apuntador a \texttt{0x400110C4}. Este avance coordinado de ambos apuntadores se mantiene constante, comprobándose en las capturas 2 y 3, hasta que el contador \texttt{R2} llega a cero, momento en el que \texttt{R1} alcanza la dirección \texttt{0x40011140} (exactamente 128 bytes de desplazamiento, calculados como $32 \times 4$).
+
+    Una vez completada la copia intacta, inicia la fase de ordenamiento bajo la etiqueta \texttt{iniciar\_orden}. Se carga la constante de 32 elementos en \texttt{R4} para fungir como el límite decreciente del bucle externo. La instrucción \texttt{SUBS R4, R4, \#1} resta una unidad en cada pasada general y actualiza la bandera de estado para verificar si se alcanzó el límite. En la captura 5, se observa que \texttt{R4} adquiere el valor de \texttt{0x1F} (31). Es vital notar la instrucción \texttt{LDR R1, =B}, la cual reinicializa el apuntador \texttt{R1} a la dirección base \texttt{0x400110C0} al inicio de cada pasada, mientras que \texttt{R5} se limpia con \texttt{0x0} para funcionar como el índice del bucle interno.
+
+    Dentro del \texttt{bucle\_interno}, las instrucciones \texttt{LDR R6, [R1]} y \texttt{LDR R7, [R1, \#4]} acceden simultáneamente a dos valores adyacentes en la memoria de la copia. En la primera evaluación (captura 6), \texttt{R6} carga el valor \texttt{0x20} (32) correspondiente a \texttt{B[0]}, y \texttt{R7} carga \texttt{0x1F} (31) correspondiente a \texttt{B[1]}. La instrucción \texttt{CMP R6, R7} compara ambos registros. Puesto que 32 es mayor que 31, no se cumple la condición \texttt{BLE no\_cambiar}, por lo que el programa prosigue a intercambiar los datos en memoria. 
+
+    El intercambio se efectúa de manera cruzada: la instrucción \texttt{STR R7, [R1]} toma el valor menor (31) y lo sobreescribe en la dirección inferior, mientras que \texttt{STR R6, [R1, \#4]} toma el valor mayor (32) y lo aloja en la dirección superior inmediata. Esto se observa en progreso en la captura 7. Después del intercambio, bajo la etiqueta \texttt{no\_cambiar}, se incrementa el apuntador base con \texttt{ADD R1, R1, \#4} (desplazando a \texttt{0x400110C4} como se ve en la captura 8) y se aumenta el índice interno \texttt{R5} en una unidad. Este patrón de comparación y desplazamiento en la memoria se repite iterativamente hasta que el bucle interno alcanza al bucle externo, empujando los valores más altos hacia las direcciones de memoria más elevadas, lo que a nivel del procesador cumple satisfactoriamente el algoritmo de burbuja y satisface todas las directrices establecidas.
+
+
+    \newpage
+    \section{Conclusiones:}
+
+    \begin{itemize}
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Gracias a la realización de la práctica así como de las actividades planteadas a desarrollar a lo largo de la misma, pude conocer y aplicar las diferentes variantes del modo de direccionamiento indirecto que existen en los procesadores ARM, siendo este conoccimiento fundamental para la programación de procesaroes ARM ya que emplear estas instrucciones permite tener un código más eficiente y legible cuando se trabaja con arreglos, siendo una estructura de datos fundamental a la hora de implementar cualquier solución por medio de la programación. El hacer uso de la variantes pre-indezadas y post-indexadas permite realizar dos operaciones diferentes, acceder a la memoria y actualizar el puntero, por lo que emplear dichas instrucciones ayuda a reducir el tamaño del código del CPU lo cual se puede ver reflejado en el rendimiento del programa. Adicionalmente se tiene otra variante la cual es el offset simple la cuál aunque no actualiza el registro base, son de gran utilidad para desplazarse en bloques continuos de memoria de forma fácil.
+        
+        \item \textbf{Flores Colin Victor Jaziel:} En esta segunda práctica de laboratorio mediante la realización de las actividades propuestas por el manual me permitió validar la eficiencia de la arquitectura ARM al manipular estructuras de datos complejas mediante el uso de los modos de direccionamiento indirecto, pre-indexado y post-indexado por medio de la implmentación y experimentación de las instrucciones LDR y STR.
+        
+        El uso del modo post-indexado (usado en la Actividad 2 y 3) demostró vas versatilidad en el recorrido de arreglos ya que integrar la actualización del puntero (auto-incremento de ±4 bytes) se pudó reducir el número de instrucciones.
+        
+        El uso de la instrucción LSL me facilitó el acceso aleatorio y el cálculo de direcciones en estructuras bidimensionales como matrices y los apuntadores indirectos optimizaron la búsqueda y ordenamiento de datos al permitir comparaciones fluidas entre elementos en las últimas 2 actividades.
+        
+        \item \textbf{Lara Hernandez Angel Husiel:} Trabajar con los modos post-indexado y pre-indexado me dejó ver cómo una sola instrucción se encarga de acceder a la memoria y actualizar el apuntador al mismo tiempo, lo que ahorra bastantes instrucciones al recorrer arreglos y estructuras de datos.
+
+        Implementar el algoritmo de burbuja y copiar arreglos me sirvió mucho para entender mejor cómo se relacionan las instrucciones \texttt{LDR}/\texttt{STR} con los apuntadores y las banderas de condición para controlar el flujo del programa. También vi que usar desplazamientos lógicos con \texttt{LSL} para calcular direcciones es un excelente truco para no tener que multiplicar explícitamente. En resumen, esta práctica me dio bases muy buenas para entender cómo el procesador ARM maneja la memoria de forma más directa y optimizada.
+    
+    \end{itemize}
+
+    \newpage
+
+    % Impresión Referencias
+    \nocite{*}
+    \printbibliography[heading=bibintoc, title={Referencias}]
+\end{document}
