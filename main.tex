@@ -157,29 +157,122 @@
     Usando el IDE Thonny; escribir el siguiente código y comentar cada instrucción:
 
     \subsection*{Propuesta de solución}
+    Para lograr el parpadeo básico de un LED, se propone un script en MicroPython que manipula directamente los registros de hardware del microcontrolador. La solución requiere importar el módulo \texttt{machine} para tener acceso a la configuración de los pines físicos, y el módulo \texttt{utime} para generar bloqueos de tiempo en el procesador. Se configura el pin GPIO 0 como una salida digital. Posteriormente, mediante un bucle infinito \texttt{while True}, se alterna el estado lógico del pin enviando un nivel alto (1) y un nivel bajo (0), intercalando retardos de 500 milisegundos entre cada cambio de estado para hacer el parpadeo perceptible al ojo humano.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.5cm]
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below of=start] {Importar \texttt{machine}, \texttt{utime}};
+            \node (config) [io, below of=import] {Configurar GPIO 0 como salida};
+            \node (on) [process, below of=config] {\texttt{LED.value(1)} — Encender LED};
+            \node (delay1) [process, below of=on] {Esperar 500 ms};
+            \node (off) [process, below of=delay1] {\texttt{LED.value(0)} — Apagar LED};
+            \node (delay2) [process, below of=off] {Esperar 500 ms};
+
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (config);
+            \draw [arrow] (config) -- (on);
+            \draw [arrow] (on) -- (delay1);
+            \draw [arrow] (delay1) -- (off);
+            \draw [arrow] (off) -- (delay2);
+            \draw [arrow] (delay2.east) -- ++(2,0) |- (on.east);
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo — Actividad 1}
+    \end{figure}
+
+     
+    El programa inicia importando las bibliotecas necesarias para el control de hardware (\texttt{machine}) y la gestión de temporización (\texttt{utime}). A continuación, se configura el pin GPIO~0 como una salida digital, lo que permite al microcontrolador enviar señales eléctricas a través de este terminal. El flujo entra entonces en un ciclo infinito donde se ejecutan cuatro operaciones secuenciales de forma ininterrumpida: primero se establece el nivel lógico alto (3.3\,V) en el pin, encendiendo el LED; luego el procesador se bloquea durante 500\,ms; después se establece el nivel lógico bajo (0\,V), apagando el LED; y finalmente se ejecuta otro bloqueo de 500\,ms. Al concluir estas cuatro instrucciones, el flujo retorna al inicio del ciclo, generando una señal cuadrada periódica de 1\,Hz que se refleja como un parpadeo constante del LED.
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1]{Code/act1.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad1/Act1.jpeg}
+        \caption{Estado de encendido (Nivel lógico alto). El microcontrolador Raspberry Pi Pico envía una señal de 3.3V a través del pin configurado como GPIO 0, lo que resulta en el encendido del indicador físico (LED8 color verde).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad1/Act1_2.jpeg}
+        \caption{Estado de apagado (Nivel lógico bajo). Al cumplirse el retardo establecido de 500 milisegundos, la instrucción drena el voltaje del GPIO 0 hacia 0V, apagando el LED.}
+    \end{figure}
+
     \textbf{Análisis de resultados}
 
+    La ejecución del script confirma el control directo sobre el hardware del microcontrolador. La instrucción \texttt{machine.Pin(0, machine.Pin.OUT)} configura correctamente el pin físico asociado al GPIO 0, estableciendo sus registros internos para operar como salida digital. 
+
+    Al entrar en el ciclo \texttt{while True}, la instrucción \texttt{LED.value(1)} satura la salida, colocando un voltaje de 3.3V (nivel lógico alto) en el pin GPIO 0, lo que enciende el LED. Inmediatamente después, \texttt{utime.sleep\_ms(500)} detiene la ejecución del procesador durante exactamente 500 milisegundos. Transcurrido este tiempo, \texttt{LED.value(0)} drena el voltaje a 0V (nivel lógico bajo), apagando el componente, seguido de otra pausa de 500 milisegundos. Este comportamiento secuencial y cíclico genera una onda cuadrada perfecta con un periodo total de 1000 milisegundos (1 segundo), logrando una frecuencia de parpadeo estable de 1 Hz.
 
     \newpage
 
     \section*{Actividad 2}
 
-    Realizar las modificaciones necesarias para que los tiempos sean más pequeños y más grandes que el código anterior
+    Realizar las modificaciones necesarias para que los tiempos sean más pequeños y más grandes que el código anterior.
 
      \subsection*{Propuesta de solución}
+    Para alterar la frecuencia de parpadeo dentro de un mismo ciclo de ejecución, se mantiene la configuración inicial del pin GPIO 0 como salida digital, pero se expande la lógica dentro del bucle principal. La propuesta divide el ciclo en dos fases: una de alta frecuencia y otra de baja frecuencia. Para los tiempos más pequeños, se establecen los cambios de estado del pin con retardos de 100 milisegundos. Para los tiempos más grandes, se añaden instrucciones idénticas de cambio de estado, pero acompañadas de retardos extendidos de 2000 milisegundos (2 segundos). Ambas fases se ejecutan secuencialmente dentro del bucle infinito.
 
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.4cm]
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below of=start] {Importar \texttt{machine}, \texttt{utime}};
+            \node (config) [io, below of=import] {Configurar GPIO 0 como salida};
+            \node (label1) [startstop, below of=config, fill=yellow!30, rounded corners] {\textit{Fase rápida}};
+            \node (on1) [process, below of=label1] {\texttt{LED.value(1)} — Encender LED};
+            \node (d1) [process, below of=on1] {Esperar 100 ms};
+            \node (off1) [process, below of=d1] {\texttt{LED.value(0)} — Apagar LED};
+            \node (d2) [process, below of=off1] {Esperar 100 ms};
+            \node (label2) [startstop, below of=d2, fill=yellow!30, rounded corners] {\textit{Fase lenta}};
+            \node (on2) [process, below of=label2] {\texttt{LED.value(1)} — Encender LED};
+            \node (d3) [process, below of=on2] {Esperar 2000 ms};
+            \node (off2) [process, below of=d3] {\texttt{LED.value(0)} — Apagar LED};
+            \node (d4) [process, below of=off2] {Esperar 2000 ms};
+
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (config);
+            \draw [arrow] (config) -- (label1);
+            \draw [arrow] (label1) -- (on1);
+            \draw [arrow] (on1) -- (d1);
+            \draw [arrow] (d1) -- (off1);
+            \draw [arrow] (off1) -- (d2);
+            \draw [arrow] (d2) -- (label2);
+            \draw [arrow] (label2) -- (on2);
+            \draw [arrow] (on2) -- (d3);
+            \draw [arrow] (d3) -- (off2);
+            \draw [arrow] (off2) -- (d4);
+            \draw [arrow] (d4.east) -- ++(2.5,0) |- (label1.east);
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo — Actividad 2}
+    \end{figure}
+
+     
+    TEl programa ingresa a un bucle infinito dividido en dos fases claramente diferenciadas. En la \textit{fase rápida}, el pin alterna entre nivel alto y nivel bajo con retardos de apenas 100\,ms, produciendo un parpadeo veloz con un periodo de 200\,ms (5\,Hz). Inmediatamente después, sin interrumpir el flujo, se ejecuta la \textit{fase lenta}, donde los mismos cambios de estado se acompañan de retardos de 2000\,ms, generando un periodo de 4000\,ms (0.25\,Hz). Dado que ambas fases están concatenadas dentro del mismo \texttt{while True}, el flujo de datos es estrictamente secuencial: el microcontrolador completa la fase rápida antes de iniciar la lenta, y al finalizar la fase lenta, retorna al inicio del ciclo repitiendo la secuencia indefinidamente.
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/act2.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad2/Act2.jpeg}
+        \caption{Fase de activación durante el ciclo asimétrico. El pin GPIO 0 se encuentra saturado a nivel lógico alto, encendiendo el LED durante las pausas cortas (100 ms) y largas (2000 ms).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad2/Act2_2.jpeg}
+        \caption{Fase de desactivación. El pin GPIO 0 corta el suministro de voltaje al indicador visual, respetando los bloqueos de tiempo instruidos al procesador antes de reiniciar el bucle principal.}
+    \end{figure}
+    
     \textbf{Análisis de resultados}
 
+    La modificación de los parámetros en la función \texttt{utime.sleep\_ms()} evidencia la naturaleza bloqueante de esta instrucción sobre el hilo de ejecución principal del microcontrolador. Durante la primera fase del bucle, los retardos de 100 milisegundos fuerzan al pin GPIO 0 a conmutar rápidamente entre 3.3V y 0V. Esto genera un tren de pulsos muy corto con un periodo de 200 milisegundos, visualizándose físicamente como un parpadeo o estrobo rápido.
+
+    Posteriormente, el flujo del programa avanza a la segunda fase, donde las instrucciones \texttt{utime.sleep\_ms(2000)} obligan al procesador a mantener el estado lógico actual del pin durante 2 segundos completos antes de ejecutar la siguiente línea de código. Esto crea un periodo de 4000 milisegundos (4 segundos), resultando en un encendido y apagado prolongado. La combinación de ambas rutinas en el mismo \texttt{while True} demuestra que los tiempos de retardo dictan absolutamente la anchura de los pulsos generados, permitiendo crear secuencias asimétricas de temporización sobre el mismo componente de hardware sin necesidad de usar temporizadores (\textit{timers}) por interrupción.
 
     \newpage
 
@@ -188,14 +281,54 @@
     Realizar las modificaciones requeridas para que el efecto se muestre en otro GPIO (podrá usar GPIO1 al GPIO 7); usar retardos a conveniencia.
 
     \subsection*{Propuesta de solución}
+    La solución a este requerimiento implica una reasignación del hardware. En lugar de inicializar el objeto pin en el GPIO 0, se modifica el constructor para apuntar al GPIO 5, el cual está físicamente conectado a un LED rojo según las especificaciones del circuito. La variable controladora se renombra a \texttt{LED\_ROJO} para mantener claridad en el código. Adicionalmente, se ajusta la función de retardo a un valor intermedio de conveniencia, fijando la pausa en 300 milisegundos tanto para el estado alto como para el bajo.
 
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.5cm]
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below of=start] {Importar \texttt{machine}, \texttt{utime}};
+            \node (config) [io, below of=import] {Configurar GPIO 5 como salida};
+            \node (on) [process, below of=config] {\texttt{LED\_ROJO.value(1)} — Encender};
+            \node (delay1) [process, below of=on] {Esperar 300 ms};
+            \node (off) [process, below of=delay1] {\texttt{LED\_ROJO.value(0)} — Apagar};
+            \node (delay2) [process, below of=off] {Esperar 300 ms};
+
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (config);
+            \draw [arrow] (config) -- (on);
+            \draw [arrow] (on) -- (delay1);
+            \draw [arrow] (delay1) -- (off);
+            \draw [arrow] (off) -- (delay2);
+            \draw [arrow] (delay2.east) -- ++(2,0) |- (on.east);
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo — Actividad 3}
+    \end{figure}
+
+     
+    Este programa sigue una estructura análoga a la Actividad~1, con la diferencia fundamental en el canal de salida utilizado. Tras importar las bibliotecas, se instancia el pin GPIO~5 como salida digital, redirigiendo las señales de control hacia un terminal físico distinto donde se conecta un LED rojo. El bucle infinito ejecuta la misma lógica de conmutación: se establece un nivel alto (3.3\,V) para encender el LED, se pausa 300\,ms, se establece un nivel bajo (0\,V) para apagarlo, y se pausa otros 300\,ms. La flecha de retorno en el diagrama indica que el flujo regresa al inicio del ciclo de forma perpetua, generando una señal cuadrada con un periodo de 600\,ms ($\approx$1.67\,Hz). Este diagrama demuestra que el algoritmo es completamente modular: el cambio de un solo parámetro en la configuración inicial (el número de GPIO) es suficiente para trasladar toda la secuencia de operaciones a un pin diferente del microcontrolador.
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3]{Code/act3.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad3/Act3.jpeg}
+        \caption{Estado de encendido (Nivel lógico alto). El microcontrolador redirige la señal de 3.3V hacia el pin configurado como GPIO 5, encendiendo exitosamente el indicador físico correspondiente (LED color rojo).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad3/Act3_2.jpeg}
+        \caption{Estado de apagado (Nivel lógico bajo). Al transcurrir el retardo asignado de 300 milisegundos, el procesador corta el suministro de voltaje en el terminal GPIO 5, desactivando el componente visual.}
+    \end{figure}
     \textbf{Análisis de resultados}
 
+    El cambio más significativo en la ejecución radica en el mapeo de los periféricos internos del microcontrolador. Al modificar el primer argumento de la clase a \texttt{machine.Pin(5, machine.Pin.OUT)}, el compilador de MicroPython redirige las señales de control digital hacia el pin físico correspondiente al GPIO 5, dejando inactivo el GPIO 0 utilizado en las actividades previas. 
+
+    La lógica del bucle infinito permanece estructuralmente idéntica, conmutando los niveles de voltaje por medio de \texttt{LED\_ROJO.value(1)} y \texttt{LED\_ROJO.value(0)}. El ajuste del retardo a \texttt{utime.sleep\_ms(300)} genera una onda cuadrada constante con un periodo de 600 milisegundos. Este resultado comprueba que el algoritmo de parpadeo es modular e independiente del pin seleccionado; basta con instanciar correctamente el canal de salida al inicio del programa para que cualquier terminal GPIO del microcontrolador ejecute la secuencia de señales eléctricas programada.
+    
     \section*{Actividad 4}
 
     Realizar un programa que genere las siguientes salidas:
@@ -400,12 +533,14 @@
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
-        
-        \item \textbf{Flores Colin Victor Jaziel:} 
-        
-        \item \textbf{Lara Hernandez Angel Husiel:} 
-    
+        \item \textbf{Espinoza Matamoros Percival Ulises:}
+
+        \item \textbf{Flores Colin Victor Jaziel:}
+
+        \item \textbf{Lara Hernandez Angel Husiel:} Las instrucciones de alto nivel en Python se traducen en control directo sobre los pines GPIO, pudiendo manipular voltajes y estados lógicos con métodos tan simples como \texttt{value(1)} y \texttt{value(0)}, lo que reduce drásticamente la complejidad comparado con programar a nivel de registros.
+
+        Implementar secuencias como el efecto corredor, el encendido acumulativo y el contador binario de 8 bits me sirvió mucho para entender cómo los bucles \texttt{for} y \texttt{while} se combinan con las funciones de temporización para generar patrones precisos en hardware. También vi que usar operaciones bit a bit para extraer cada bit del contador y asignarlo a un GPIO específico es un recurso muy eficiente para representar valores numéricos en hardware. En resumen, esta práctica me dio bases muy buenas para entender cómo se programa un microcontrolador de forma estructurada, aprovechando las ventajas de un lenguaje interpretado sin perder el control fino sobre el hardware.
+
     \end{itemize}
 
     \newpage
