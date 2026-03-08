@@ -377,8 +377,6 @@
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5]{Code/act5.py}
 
-
-
     \textbf{Análisis de resultados}
 
 
@@ -467,11 +465,78 @@
 
     \subsection*{Propuesta de solución}
 
+    Al igual que en actividades anteriores dado que se requiere interactuar con el hardware, en este caso los pines GPIO así como gestionar pausas en la ejecución del programa es necesario importar las librerías \texttt{machine} y \texttt{utime}. 
+
+    Como en la actividad se solicita usar de los \texttt{GPIO0} al \texttt{GPIO7} es necesario realizar la configuración de cada uno de los GPIO, sin embargo esto se puede simplificar por recorriendo los números de del 0 al 7, donde en cada iteración (\texttt{i}) se crea un objeto del tipo \texttt{machine.Pin(i,machine.Pin.OUT)} donde estos objetos se guardaran en una lista llamada \texttt{leds} de forma que para interactuar con los pines GPIO se debe acceder al elemento correspondiente de la lista \texttt{leds} teniendo así un mejor control y organización de los pines GPIO.
+
+    Dado que queremos que la secuencia de encendido de leds se repita de forma indefinida, se debe colocar la lógica de la secuencia dentro de un bucle \texttt{while} infinito, para que este se encuentre repitiéndose aca vez que finalize la secuencia. De acuerdo a la tabla de la actividad podemos ver que la secuencia consiste es que en cada paso se va encendido un led adicional, es decir en la primera iteración se enciende el primer led, en la segunda iteración el primer y segundo led, así hasta los 8 leds.
+
+    Para lograr las secuencia descrita, se debe de implementar un ciclo iterativo de 8 ciclos, con la finalidad que en cada ciclo se encienda el led correspondiente, dicho ciclo iterativo se implementa con un \texttt{for}, donde en cada iteración enciende el led correspondiente, como se encuentra en la lista de pines que anteriormente se definió simplemente se debe acceder al indice de la lista que coincide con la iteración y asignarles el valor de \texttt{1} para que asi se encienda el led, antes de pasar a la siguiente iteración es necesario poner una pausa, para que sea visible el encendido de los leds, en este caso de indico que la pausa debe ser de 100[ms], de esta forma se consigue la secuencia descrita en la tabla.
+
+    Por último como se debe repetir la secuencia, es necesaria que una vez que se enciendan todos los leds, se deben volver a apagar todos para que Posteriormente se vuelva a ejecutar la secuencia de encendido y sea visible el cambio de estado de apagado a encendido.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=2cm]
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below of=start] {Importar \texttt{machine} y \texttt{utime}};
+            \node (config) [io, below of=import] {Configurar GPIO 0 a 7 como \texttt{OUT}};
+
+            \node (loop_point) [below of=config, node distance=1.2cm] {};
+
+            \node (for_i) [decision, below of=loop_point] {¿\texttt{i < 8}?};
+            
+            \node (encender) [process, align=center, right of=for_i, xshift=3.5cm] {
+                \texttt{leds[i].value(1)} \\ 
+                Esperar 100 ms
+            };
+
+            \node (apagar) [process, below of=for_i, yshift=-1.5cm] {Apagar todos los LEDs};
+            \node (delay) [process, below of=apagar] {Esperar 500 ms};
+
+            % --- Conexiones ---
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (config);
+            \draw [arrow] (config) -- (for_i);
+            
+            \draw [arrow] (for_i) -- node[anchor=south] {Sí} (encender);
+            \draw [arrow] (encender.north) |- ++(0,0.5) -| (for_i.north);
+            
+            \draw [arrow] (for_i) -- node[right] {No} (apagar); 
+            
+            \draw [arrow] (apagar) -- (delay);
+            \draw [arrow] (delay.west) -- ++(-1,0) |- (loop_point);
+
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo: Secuencia de llenado GPIO0-GPIO7}
+    \end{figure}
+
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 8]{Code/act8.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/Actividad8/Act8.jpeg}
+        \caption{Estado de encendido de los \texttt{GPIO0-GPIO5} Iteración número 6}
+    \end{figure}
+
     \textbf{Análisis de resultados}
+
+    En la imagen se puede observar el correcto funcionamiento de la secuencia descrita en la actividad justo en la iteración número 6. Como se describe por cada iteración se debe de encender un nuevo led manteniendo los anteriores. De forma que la imagen corresponde con la iteración descrita
+
+    \begin{itemize}
+        \item Iteración 1: Encendido de los leds correspondientes a los pines \texttt{GPIO0}
+        \item Iteración 2: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO1}
+        \item Iteración 3: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO2}
+        \item Iteración 4: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO3}
+        \item Iteración 5: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO4}
+        \item Iteración 6: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO5}
+        \item Iteración 7: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO6}
+        \item Iteración 8: Encendido de los leds correspondientes a los pines \texttt{GPIO0-GPIO7}
+    \end{itemize}
+
+    Coincidiendo los leds encendido con los encendido de los pines de \texttt{GPIO0-GPIO5}, por lo que se implemento de forma correcta la secuencia descrita.
 
     \section*{Actividad 9}
 
@@ -483,8 +548,8 @@
             \hline
             GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 \\ \hline
             0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-            0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-            0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+            0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ \hline
+            0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ \hline
             $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\ \hline
             $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\ \hline
             1 & 1 & 1 & 1 & 1 & 1 & 0 & 1 \\ \hline
@@ -496,11 +561,108 @@
 
     \subsection*{Propuesta de solución}
 
+    La metodología es la misma dado que se van a ocupar 8 pines GPIO donde cada uno corresponde a un led, y cada led representa un led, de forma que al ser necesario interactuar el hardware así como gestionar retardos se importan las librerías \texttt{machine} y \texttt{utime}. Se genera con la misma lógica que en el ejercicio anterior una lista de objetos del tipo \texttt{machine.Pin} con la finalidad de tener en una sola estructura todos los pines, sin embargo dado que se va a realizar un contador, es importante destacar que el elemento \texttt{led[0]} es el bit menos significativo (correspondiente al LED 8 en la Raspberry) mientras que el elemento \texttt{led[7]} es el bit más significativo (correspondiente al LED 1 en la Raspberry).
+
+    Dado que se busca que el contador se reinicie una vez llegue a su valor máximo y este vuelva a comenzar desde cero, se debe colocar la lógica del contador dentro de un bucle infinito. Para el bucle que corresponde al contador se debe indicar un ciclo que vaya desde \texttt{0} a \texttt{255} ya que esos los números que se pueden representar con 8 bits, de forma que cuando el contador llegue a \texttt{255} se reinicie el contador.
+
+    Para cada iteración del contador es necesario indicar que leds se deben encender para representar el número que corresponde al contador. Para conocer que leds se deben de encender se realizan operaciones matemáticas a nivel bits, donde se itera el valor de cada led, donde considerando el valor del contador se realiza un desplazamiento a la derecha de acuerdo al valor del bit, con la finalidad de llevar el bit de interés a la posición 0 para posteriormente realizar una operación \texttt{AND} con el valor de \texttt{1} garantizando que el resultado solo pueda ser \texttt{0} o \texttt{1}. Una vez que obtenemos el estado del bit correspondiente se le asigna el valor correspondiente a su pin, se esperan 50ms y se vuelve a incrementar el contador.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.5cm and 1.5cm]
+
+            % --- Eje Central (Todo fluye hacia abajo) ---
+            \node (start) [startstop] {Inicio};
+            \node (config) [io, below=0.8cm of start] {Configurar GPIO 0-7 como \texttt{OUT}};
+
+            % Decisión Principal (Contador)
+            \node (dec_cont) [decision, below=1.5cm of config] {¿\texttt{contador} < 256?};
+
+        
+            \coordinate (while_entry) at ($(config.south)!0.3!(dec_cont.north)$);
+            \coordinate (loop_delay) at ($(config.south)!0.7!(dec_cont.north)$);
+
+            % Decisión Secundaria (Bit) va justo debajo del contador
+            \node (dec_bit) [decision, below=1.5cm of dec_cont] {¿\texttt{bit} < 8?};
+
+            % Punto de inserción para el ciclo de bits (entre los dos rombos)
+            \coordinate (bit_entry) at ($(dec_cont.south)!0.5!(dec_bit.north)$);
+
+            % Delay va al final de la columna central
+            \node (delay) [process, below=1.5cm of dec_bit] {Esperar 50 ms};
+
+            % --- Nodo Lateral (Único que va a la derecha) ---
+            \node (process_bit) [process, right=1.2cm of dec_bit, align=center] {
+                \texttt{estado = (cont >> bit) \& 1} \\
+                \texttt{leds[bit].value(estado)}
+            };
+
+            % --- Conexiones Centrales ---
+            \draw [arrow] (start) -- (config);
+            \draw [arrow] (config) -- (dec_cont);
+            
+            % Flujo "Sí" del contador baja al bit
+            \draw [arrow] (dec_cont.south) -- node[anchor=west, pos=0.2] {Sí} (dec_bit.north);
+            
+            % Flujo "No" del bit baja al delay
+            \draw [arrow] (dec_bit.south) -- node[anchor=west] {No} (delay.north);
+
+            % --- Conexiones del Ciclo de Bits (Lado Derecho) ---
+            \draw [arrow] (dec_bit.east) -- node[anchor=south] {Sí} (process_bit.west);
+            % Retorno: sube desde el proceso y entra por la línea central antes del rombo de bits
+            \draw [arrow] (process_bit.north) |- (bit_entry);
+
+            % --- Conexiones de Retorno (Lado Izquierdo) ---
+            
+            % 1. Retorno del Delay al Contador (Carril Interno)
+            % Viaja a la izquierda, sube y se reincorpora
+            \draw [arrow] (delay.west) -- ++(-2.5cm,0) |- (loop_delay);
+
+            % 2. Retorno de Reset - "No" del Contador (Carril Externo)
+            % Sale por la izquierda, viaja más lejos para no chocar y sube al inicio
+            \draw [arrow] (dec_cont.west) -- ++(-2.5cm,0) node[anchor=south, pos=0.3] {No} |- (while_entry);
+
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo: Contador 8-bits}
+    \end{figure}
+
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 9]{Code/act9.py}
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.72\textwidth]{image/Actividad9/Act9_2.jpeg}
+        \caption{Actividad 9: Contador = 81  - \texttt{01010001}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.72\textwidth]{image/Actividad9/Act9.jpeg}
+        \caption{Actividad 9: Contador = 101  - \texttt{01100101}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.72\textwidth]{image/Actividad9/Act9_3.jpeg}
+        \caption{Actividad 9: Contador = 121 - \texttt{01111001}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.72\textwidth]{image/Actividad9/Act9_4.jpeg}
+        \caption{Actividad 9: Contador = 149 - \texttt{10010101}}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.72\textwidth]{image/Actividad9/Act9_5.jpeg}
+        \caption{Actividad 9: Contador = 176 - \texttt{10110000}}
+    \end{figure}
 
     \textbf{Análisis de resultados}
+
+    A partir de las imágenes obtenidas se puede apreciar que la secuencia, en este caso un contador binario se implemento de forma correcta, en la descripción de cada imagen se puede observa el número en decimal y su equivalencia en número binario a través del encendido y apagado de los bits correspondientes para representar dicho número. Solo que debido a la distribución de los pines el led más a la izquierda, es decir el (LED 8) es el led menos significativo, mientras que el led más a la derecha (LED 1 )es el led más representativo ya que si no se considera de esta manera no se estaría visualizando el contador de manera correcta.
 
     \section*{Actividad 10}
 
@@ -523,11 +685,137 @@
 
     \subsection*{Propuesta de solución}
 
+    Para controlar loss pines físicos del microcontrolador así como manejar los tiempos se debe de realizar la importación de las bibliotecas \texttt{machine} y \texttt{utime}. Como se van a manejar dos semáforos es necesario crear las variables individuales para cada luz de los semáforos (\texttt{V1, A1, R1}) y (\texttt{V2, A2, R2}) dichas variables se configuran como salidas debido a que el microcontrolador enviara una señal alta para encender los Leds respectivos.
+
+    Debido a que en un semáforo se deben tener luces contradictorias al mismo tiempo, es necesario al realizar un cambio que las luces se apaguen, es por esto que se implemento una función auxiliar \texttt{apagar\_todos} en la cual al llamarla pone todos los leds con un valor de \texttt{0} apagando todos los leds, esto con la finalidad de limpiar las luces led.
+
+    Dado que se quiere que se repita la secuencia de luces de dos semáforos de forma indefinida, la lógica de la secuencia tiene que ir dentro de un ciclo \texttt{while} infinito.
+
+    Para implementar el funcionamiento descrito en la tabla, se optó por realizarlo por estados para una mejor comprensión del código donde en el estado 1 se llama a la función \texttt{apagar\_todos} luego se enciende la luz verde del semáforo 1 (\texttt{V1}) y la luz roja del semáforo 2 (\texttt{R2}) para después esperar por 5[s], una vez transcurrido 5[s] se pasa al estado 2 donde por medio de un ciclo for de 5 iteraciones la luz \texttt{V1} parpadee cinco veces, es decir un parpadeo por cada segundo, donde se apaga y prende cada 200 [ms].
+
+    Una vez ya haya parpadeado 5 veces se pasa al estado 3, donde se apagan todos los leds por medio de la función auxiliar, para posteriormente encender \texttt{A1} y \texttt{R2} esperando en este estado un total de 3[s]. Una vez ya transcurridos 3[s] se procede a apagar todos los leds, para encender \texttt{R1} y \texttt{V2} manteniendo estos valores por 5[s]
+
+    Después de esperar por 5[s] se pasa al estado 5, donde el rojo sigue encendido y se inicia otro ciclo \texttt{for} de 5 repeticiones donde la luz \texttt{V2} se apaga y enciende cada 200[ms] indicando el efecto de parpadeo que la luz verde va cambiar. Después de que acaba el parpadeo de \texttt{V2} se apagan todos las luces y se enciende \texttt{R1} Y \texttt{A2} pausando la ejecución por 3[s], al transcurrir 3[s] vuelve al estado inicial, es decir el estado 1.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.2cm and 1.5cm]
+
+            % --- Eje Central ---
+            \node (start) [startstop] {Inicio};
+            \node (config) [io, below=0.8cm of start] {Configurar pines V, A, R como \texttt{OUT}};
+
+            % Punto de entrada para el ciclo infinito (while True)
+            \coordinate (while_entry) at ($(config.south) + (0,-0.4)$);
+
+            % Estado 1
+            \node (est1) [process, below=0.8cm of config, align=center] {
+                \texttt{apagar\_todos()} \\
+                Encender V1 y R2 \\
+                Esperar 5s
+            };
+
+            % Intermitencia V1 (For loop del Estado 2)
+            \node (dec_v1) [decision, below=1cm of est1] {¿Iteración < 5?};
+            
+            \node (parp_v1) [process, right=1.2cm of dec_v1, align=center] {
+                Apagar V1 (200ms) \\
+                Encender V1 (200ms)
+            };
+            % Punto de reentrada del ciclo for
+            \coordinate (v1_entry) at ($(est1.south)!0.5!(dec_v1.north)$);
+
+            % Estado 3
+            \node (est3) [process, below=1cm of dec_v1, align=center] {
+                \texttt{apagar\_todos()} \\
+                Encender A1 y R2 \\
+                Esperar 3s
+            };
+
+            % Estado 4
+            \node (est4) [process, below=1cm of est3, align=center] {
+                \texttt{apagar\_todos()} \\
+                Encender R1 y V2 \\
+                Esperar 5s
+            };
+
+            % Intermitencia V2 (For loop del Estado 5)
+            \node (dec_v2) [decision, below=1cm of est4] {¿Iteración < 5?};
+            
+            \node (parp_v2) [process, right=1.2cm of dec_v2, align=center] {
+                Apagar V2 (200ms) \\
+                Encender V2 (200ms)
+            };
+            % Punto de reentrada del ciclo for
+            \coordinate (v2_entry) at ($(est4.south)!0.5!(dec_v2.north)$);
+
+            % Estado 6
+            \node (est6) [process, below=1cm of dec_v2, align=center] {
+                \texttt{apagar\_todos()} \\
+                Encender R1 y A2 \\
+                Esperar 3s
+            };
+
+            % --- Conexiones Centrales ---
+            \draw [arrow] (start) -- (config);
+            \draw [arrow] (config) -- (est1);
+            \draw [arrow] (est1) -- (dec_v1);
+            \draw [arrow] (dec_v1.south) -- node[anchor=west] {No} (est3.north);
+            \draw [arrow] (est3) -- (est4);
+            \draw [arrow] (est4) -- (dec_v2);
+            \draw [arrow] (dec_v2.south) -- node[anchor=west] {No} (est6.north);
+
+            % --- Conexiones de las Intermitencias (Lado Derecho) ---
+            \draw [arrow] (dec_v1.east) -- node[anchor=south] {Sí} (parp_v1.west);
+            \draw [arrow] (parp_v1.north) |- (v1_entry);
+
+            \draw [arrow] (dec_v2.east) -- node[anchor=south] {Sí} (parp_v2.west);
+            \draw [arrow] (parp_v2.north) |- (v2_entry);
+
+            % --- Retorno del Ciclo Infinito (Lado Izquierdo) ---
+            % Retorna desde el Estado 6 hasta arriba, justo antes del Estado 1
+            \draw [arrow] (est6.west) -- ++(-3cm,0) |- (while_entry);
+        \end{tikzpicture}
+        \caption*{Diagrama de flujo: Control de 2 Semáforos}
+    \end{figure}
+
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 10]{Code/act10.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90, width=0.72\textwidth]{image/Actividad10/Act10_2.jpeg}
+        \caption{Actividad 10: Semáforo Estado 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90, width=0.72\textwidth]{image/Actividad10/Act10_3.jpeg}
+        \caption{Actividad 10: Semáforo Estado 2}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90, width=0.72\textwidth]{image/Actividad10/Act10_4.jpeg}
+        \caption{Actividad 10: Semáforo Estado 3}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90, width=0.72\textwidth]{image/Actividad10/Act10_5.jpeg}
+        \caption{Actividad 10: Semáforo Estado 4}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90, width=0.72\textwidth]{image/Actividad10/Act10_6.jpeg}
+        \caption{Actividad 10: Semáforo Estado 6}
+    \end{figure}
+
     \textbf{Análisis de resultados}
+
+    Por medio de las imágenes tomadas se pueden observar la mayoría de los estados descritos en la solución del problema, de forma que cada que pasa el tiempo especificado en la tabla se pasa al siguiente estado con las luces correspondientes en cada estado. De manera que se implemento de forma correcta el comportamiento de los dos semáforos donde por medio de las instrucciones de encendido y apagado mandando los valores lógicos de \texttt{0} y \texttt{1} así como por medio de la función \texttt{sleep} realizar pausas en cada estado así como estructuras de repetición se puede implementar el sistema de dos semáforos. 
 
     \newpage
     \section{Conclusiones:}
