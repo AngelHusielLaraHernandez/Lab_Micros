@@ -331,116 +331,303 @@
     
     \section*{Actividad 4}
 
-    Realizar un programa que genere las siguientes salidas:
+Realizar un programa que genere las siguientes salidas:
 
-    \begin{table}[h!]
-        \centering
-        \begin{tabular}{|c|c|l}
-        \cline{1-2}
-        GPIO2 & GPIO3 & \\ \cline{1-2}
-        1 & 0 & \multirow{2}{*}{@85 ms entre estados} \\ \cline{1-2}
-        0 & 1 & \\ \cline{1-2}
-        \end{tabular}
-        \caption*{Tabla 3-3. Control; actividad 4}
-    \end{table}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|l}
+    \cline{1-2}
+    GPIO2 & GPIO3 & \\ \cline{1-2}
+    1 & 0 & \multirow{2}{*}{@85 ms entre estados} \\ \cline{1-2}
+    0 & 1 & \\ \cline{1-2}
+    \end{tabular}
+    \caption*{Tabla 3-3. Control; actividad 4}
+\end{table}
 
+\subsection*{Propuesta de solución}
+La propuesta de solución para implemen lo solicitado, consiste en programar dos terminales de salida digital del microcontrolador Raspberry Pi Pico para que tengan comportamientos opuestos, pues a diferencia de otras actividades donde se requiere pura sincronización aquí cuando el \texttt{GPIO 2} se encuentra en estado lógico alto (3.3\,V), el \texttt{GPIO 3} debe permanecer en estado bajo (0\,V), e invertirse inmediatamente después de un intervalo de tiempo. Se ha configurado un retardo de 85\,ms utilizando la librería \texttt{utime}, lo que genera una frecuencia de oscilación de aproximadamente 5.88\,Hz, produciendo un efecto visual de parpadeo alternado entre los LEDs de la placa.
 
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below of=start] {Importar \texttt{machine}, \texttt{utime}};
+        \node (config) [io, below of=import] {Configurar GPIO 2 y 3 como salidas};
+        \node (state1) [process, below of=config] {\texttt{LED1(1)}, \texttt{LED2(0)}};
+        \node (delay1) [process, below of=state1] {Esperar 85 ms};
+        \node (state2) [process, below of=delay1] {\texttt{LED1(0)}, \texttt{LED2(1)}};
+        \node (delay2) [process, below of=state2] {Esperar 85 ms};
 
-    \subsection*{Propuesta de solución}
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (state1);
+        \draw [arrow] (state1) -- (delay1);
+        \draw [arrow] (delay1) -- (state2);
+        \draw [arrow] (state2) -- (delay2);
+        \draw [arrow] (delay2.east) -- ++(2,0) |- (state1.east);
+    \end{tikzpicture}
+    \caption*{Diagrama de flujo — Actividad 4}
+\end{figure}
 
+\textbf{Desarrollo}
 
-    \textbf{Desarrollo}
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/act4.py}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/act4.py}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image/Actividad4/Act4.jpeg}
+    \caption{Estado 1 de la secuencia. El microcontrolador establece el GPIO 2 en alto por lo que el primer LED se enciende y elsegundo permanece apagado por estar en el nivel lógico de bajo.}
+\end{figure}
 
-    \textbf{Análisis de resultados}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image/Actividad4/Act4_2.jpeg}
+    \caption{Estado 2 de la secuencia. Tras el retardo de 85\,ms, se invierte la polaridad lógica y el GPIO 3 se activa y el GPIO 2 se apaga, completando el ciclo de alternancia.}
+\end{figure}
+\newpage
+
+\textbf{Análisis de resultados}
+
+Como se vió en las Figura 7 y 8 se cumplio con lo solicitado en la tabla de verdad ya que al ejecutarse el bucle infinito, el procesador alterna los estados de los pines de manera cíclica, lo cual se evidencia visualmente al notar que solo un led se mantiene encendido en un cierto instante, mientras que el otro permanece apagado. 
+
+La implementación de \texttt{utime.sleep\_ms(85)} fue vital para poder apreciar de mejor manera los estados del sistema ya que un tiempo menor podría causar un solapamiento visual debido a la persistencia retiniana, mientras que un tiempo mayor ralentizaría la respuesta. Este ejercicio nos demuestra la capacidad de la Raspberry Pi Pico para gestionar procesos de conmutación rápida y coordinada en el control de la sincronización de periféricos.
 
 
     \section*{Actividad 5}
 
-    Realizar un programa que prenda y apague las GPIO0 al GPIO7; el circuito corresponde en su totalidad al mostrado en la figura 3.3, usar los retardos a elección.
+Realizar un programa que prenda y apague las GPIO0 al GPIO7; el circuito corresponde en su totalidad al mostrado en la figura 3.3, usar los retardos a elección.
 
-    \begin{table}[h!]
+\begin{table}[h!]
+\centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|}
+    \hline
+    GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 \\ \hline
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+    1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ \hline
+    \end{tabular}
+    \caption*{Tabla 3-4. Control; actividad 5}
+\end{table}
+
+\subsection*{Propuesta de solución}
+Para esta actividad número 5 se escala el uso del hardware al gestionar un bus completo de 8 bits (GPIO 0 a GPIO 7), es por ello que en lugar de instanciar cada pin de forma individual, se propone el uso de una **lista de objetos** y un ciclo \texttt{for} para la inicialización por lo que se consigue optimizar el uso de memoria y la legibilidad del código. La lógica de control aplica un estado uniforme a todo el conjunto: se recorre la lista para establecer un nivel alto ($3.3$\,V) en todos los terminales simultáneamente, se mantiene por $500$\,ms, y posteriormente se repite el proceso para el nivel bajo ($0$\,V), Con esto se busca demostrar la flexibilidad de MicroPython para manejar múltiples periféricos de forma colectiva.
+
+\begin{figure}[H]
     \centering
-        \begin{tabular}{|c|c|c|c|c|c|c|c|}
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below of=start] {Importar \texttt{machine}, \texttt{utime}};
+        \node (list) [process, below of=import] {Crear lista \texttt{leds} (GPIO 0-7)};
+        \node (on) [process, below of=list] {Bucle: \texttt{led.value(1)} para todos};
+        \node (delay1) [process, below of=on] {Esperar 500 ms};
+        \node (off) [process, below of=delay1] {Bucle: \texttt{led.value(0)} para todos};
+        \node (delay2) [process, below of=off] {Esperar 500 ms};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (list);
+        \draw [arrow] (list) -- (on);
+        \draw [arrow] (on) -- (delay1);
+        \draw [arrow] (delay1) -- (off);
+        \draw [arrow] (off) -- (delay2);
+        \draw [arrow] (delay2.east) -- ++(2,0) |- (on.east);
+    \end{tikzpicture}
+    \caption*{Diagrama de flujo — Actividad 5}
+\end{figure}
+
+\textbf{Desarrollo}
+
+
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5]{Code/act5.py}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image/Actividad5/Act5.jpeg}
+    \caption{Estado de encendido, aquí se observa la activación simultánea de la barra de 8 LEDs (GPIO 0-7), validando que el microcontrolador suministra corriente correctamente a todo el bus configurado.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image/Actividad5/Act5_2.jpeg}
+    \caption{Estado de apagado. Tras el retardo de 500 ms, el procesador corta el flujo en todos los terminales, resultando en la desactivación completa de los indicadores visuales.}
+\end{figure}
+
+\textbf{Análisis de resultados}
+
+El comportamiento observado en las figuras 9 y 10 nos confirma la eficacia de la programación mediante colecciones ya que al ejecutar el código, la placa responde encendiendo simultáneamente los 8 leds al recorrer la lista y cambiar el estado de los pines es despreciable frente al retardo de $500$\,ms, dando la impresión de una activación instantánea. Este resultado es relevante porque valida la integridad de las conexiones físicas desde el \textbf{GPIO 0} hasta el \textbf{GPIO 7} en la placa de expansión y el uso de la instrucción \texttt{range(8)} asegura que no existan pines omitidos en la secuencia. Este método de control "en bloque" es fundamental para futuras aplicaciones más avanzadas.
+
+\section*{Actividad 6}
+
+Repetir la acción anterior 10 veces; mantener apagado 2 segundos y repetir acción.
+
+\begin{table}[h!]
+\centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+    \cline{1-8}
+    GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 & \\ \cline{1-8}
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}10 \\ repeticiones\\ (200 ms)\end{tabular}} \\ \cline{1-8}
+    1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & \\ \cline{1-8}
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \\ \cline{1-8}
+    1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & \\ \cline{1-8}
+    \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & 2 segundos \\ \cline{1-8}
+    \end{tabular}
+    \caption*{Tabla 3-5. Control; actividad 6}
+\end{table}
+
+\subsection*{Propuesta de solución}
+Para esta actividad se implementa una estructura de control anidada que permite gestionar ciclos de repetición finitos dentro de un bucle infinito tomando como base el codigo realizado en la actividad anterior. La solución utiliza un objeto de lista para los pines \texttt{GPIO 0} al \texttt{7} y el flujo principal consiste en un bucle \texttt{for} que ejecuta 10 iteraciones del parpadeo de todos los leds (200\,ms por estado) y una vez completada esta secuencia, el programa sale del bucle interno para ejecutar una pausa de 2000\,ms (2 segundos) con todos los terminales en nivel lógico bajo ($0$\,V), antes de reiniciar el ciclo completo.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.8cm, auto] % Aumenté un poco la distancia vertical
+        % Definición de nodos
+        \node (start) [startstop] {Inicio};
+        \node (config) [process, below of=start] {Configurar GPIO 0-7 como salidas};
+        \node (loop10) [decision, below of=config, yshift=-0.5cm] {¿Repetición < 10?};
+        
+        % Nodo a la derecha con xshift aumentado para flechas más largas
+        \node (on) [process, right of=loop10, xshift=3.5cm] {Todos ON (200 ms)};
+        \node (off) [process, below of=on] {Todos OFF (200 ms)};
+        
+        % Nodo inferior
+        \node (wait2) [process, below of=loop10, yshift=-1.5cm] {Todos OFF (2000 ms)};
+
+        % Conexiones
+        \draw [arrow] (start) -- (config);
+        \draw [arrow] (config) -- (loop10);
+        
+        % Flecha "Sí" más larga
+        \draw [arrow] (loop10) -- node[anchor=south] {Sí} (on);
+        \draw [arrow] (on) -- (off);
+        
+        % Retorno del bucle for
+        \draw [arrow] (off) -| (loop10);
+        
+        % Flecha "No" hacia abajo
+        \draw [arrow] (loop10) -- node[anchor=west] {No} (wait2);
+        
+        % Retorno al bucle principal (flecha izquierda más larga para equilibrar)
+        \draw [arrow] (wait2.west) -- ++(-1.5,0) |- (loop10.west);
+    \end{tikzpicture}
+    \caption*{Diagrama de flujo — Actividad 6}
+\end{figure}
+
+\textbf{Desarrollo}
+
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6]{Code/act6.py}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/Actividad6/Act6_3.jpeg}
+    \caption{Estado de encendido durante los 10 ciclos de encendido y apagado.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/Actividad6/Act6.jpeg}
+    \caption{Captura del estado de apagado por 2 s. Los pines GPIO 0-7 se mantienen en 0\,V tras terminar las 10 iteraciones de encendido y apagado.}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/Actividad6/Act6_2.jpeg}
+    \caption{Retorno al estado de encendido tras los 2 segundos de apagado. La barra de LEDs vuelve a moetrar una iluminacion uniforme }
+\end{figure}
+
+\textbf{Análisis de resultados}
+
+Las imágenes capturadas en la Figura 11, 12 y 13 reflejan los dos estados críticos del sistema: la activación total del bus de 8 bits y el estado de reposo. 
+
+Mediante la observación del sistema, se confirmó que el microcontrolador realiza exactamente 10 destellos rápidos antes de entrar en el estado de espera prolongada y la transición entre el bucle \texttt{for repeticion in range(10)} y el retardo de \texttt{utime.sleep\_ms(2000)} ocurrió conforme a lo esperado en el procesamiento, demostrando que el hardware del Raspberry Pi Pico maneja eficientemente  estructuras de iteración de Python. 
+    
+\newpage
+
+\section*{Actividad 7}
+
+Usando los GPIO0 al GPIO7; realizar un programa que genere la siguiente secuencia; usar retardos de 100ms.
+
+\begin{table}[h!]
+\centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|}
         \hline
         GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 \\ \hline
-        0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-        1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ \hline
-        \end{tabular}
-        \caption*{Tabla 3-4. Control; actividad 5}
-    \end{table}
+        \textbf{1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+        0 & \textbf{1} & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
+        0 & 0 & \textbf{1} & 0 & 0 & 0 & 0 & 0 \\ \hline
+        0 & 0 & 0 & \textbf{1} & 0 & 0 & 0 & 0 \\ \hline
+        0 & 0 & 0 & 0 & \textbf{1} & 0 & 0 & 0 \\ \hline
+        0 & 0 & 0 & 0 & 0 & \textbf{1} & 0 & 0 \\ \hline
+        0 & 0 & 0 & 0 & 0 & 0 & \textbf{1} & 0 \\ \hline
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & \textbf{1} \\ \hline
+    \end{tabular}
+    \caption*{Tabla 3-6. Control; actividad 7}
+\end{table}
 
-    \subsection*{Propuesta de solución}
+\subsection*{Propuesta de solución}
+En esta septima actividad se nos solicitó realizar una especie de corriemiento de bits a la derecha con los leds de las Raspberry por lo que se implementó un algoritmo de desplazamiento lineal de un único bit activo a lo largo de un bus de 8 bits par lograr implementar la tabla de verdad solicitad, se utiliza una estructura de bucles anidados: un bucle principal recorre los índices de la lista de LEDs (0 al 7), mientras que un bucle interno se encarga de "limpiar" el estado de todos los terminales antes de activar el pin correspondiente al índice actual. Este método garantiza que, en cualquier instante de tiempo dado, solo un LED se encuentre bajo un nivel lógico alto ($3.3$\,V) y el uso de un retardo de 100\,ms genera un efecto visual de traslación fluida de izquierda a derecha en la barra de indicadores físicos.
 
-    \textbf{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5]{Code/act5.py}
-
-    \textbf{Análisis de resultados}
-
-
-    \section*{Actividad 6}
-
-    Repetir la acción anterior 10 veces; mantener apagado 2 segundos y repetir acción.
-
-    \begin{table}[h!]
+\begin{figure}[H]
     \centering
-        \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
-        \cline{1-8}
-        GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 & \\ \cline{1-8}
-        0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}10 \\ repeticiones\\ (200 ms)\end{tabular}} \\ \cline{1-8}
-        1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & \\ \cline{1-8}
-        0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \\ \cline{1-8}
-        1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & \\ \cline{1-8}
-        \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} & 2 segundos \\ \cline{1-8}
-        \end{tabular}
-        \caption*{Tabla 3-5. Control; actividad 6}
-    \end{table}
+    \begin{tikzpicture}[node distance=1.8cm, auto]
+        % Definición de nodos
+        \node (start) [startstop] {Inicio};
+        \node (config) [process, below of=start] {Configurar GPIO 0-7 como salidas};
+        \node (while) [decision, below of=config, yshift=-0.5cm] {¿Ejecución continua?};
+        
+        % Nodos del bucle for (parte derecha)
+        \node (forI) [process, right of=while, xshift=4cm] {Inicializar $i = 0$};
+        \node (checkI) [decision, below of=forI, yshift=-0.5cm] {¿$i < 8$?};
+        \node (apagar) [process, below of=checkI, yshift=-1cm] {Apagar todos: \texttt{led.value(0)}};
+        \node (encender) [process, below of=apagar] {Encender: \texttt{leds[i].value(1)}};
+        \node (espera) [process, below of=encender] {Esperar 100 ms};
+        \node (inc) [process, below of=espera] {Incrementar $i = i + 1$};
+        
+        % Conexiones
+        \draw [arrow] (start) -- (config);
+        \draw [arrow] (config) -- (while);
+        
+        % Rama Sí del while (continuar)
+        \draw [arrow] (while) -- node[anchor=south] {Sí} (forI);
+        \draw [arrow] (forI) -- (checkI);
+        \draw [arrow] (checkI) -- node[anchor=east] {Sí} (apagar);
+        \draw [arrow] (apagar) -- (encender);
+        \draw [arrow] (encender) -- (espera);
+        \draw [arrow] (espera) -- (inc);
+        \draw [arrow] (inc.west) -- ++(-1.5cm,0) |- (checkI.west);
+        
+        % Salida del bucle for (i >= 8)
+        \draw [arrow] (checkI) -- node[anchor=south] {No} ++(3cm,0) |- (while.north);
+        
+        % Rama No del while (terminar)
+        \node (fin) [startstop, below of=while, yshift=-4cm] {Fin};
+        \draw [arrow] (while) -- node[anchor=east] {No} (fin);
+        
+    \end{tikzpicture}
+    \caption{Diagrama de flujo — Actividad 7 (Efecto de luz recorriente)}
+    \label{fig:act7}
+\end{figure}
+\textbf{Desarrollo}
 
-    \subsection*{Propuesta de solución}
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7]{Code/act7.py}
 
-
-    \textbf{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6]{Code/act6.py}
-
-    \textbf{Análisis de resultados}
-
-
-    
-    \newpage
-
-    \section*{Actividad 7}
-
-    Usando los GPIO0 al GPIO7; realizar un programa que genere la siguiente secuencia; usar retardos de 100ms.
-
-    \begin{table}[h!]
+\begin{figure}[H]
     \centering
-        \begin{tabular}{|c|c|c|c|c|c|c|c|}
-            \hline
-            GPIO0 & GPIO1 & GPIO2 & GPIO3 & GPIO4 & GPIO5 & GPIO6 & GPIO7 \\ \hline
-            \textbf{1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-            0 & \textbf{1} & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-            0 & 0 & \textbf{1} & 0 & 0 & 0 & 0 & 0 \\ \hline
-            0 & 0 & 0 & \textbf{1} & 0 & 0 & 0 & 0 \\ \hline
-            0 & 0 & 0 & 0 & \textbf{1} & 0 & 0 & 0 \\ \hline
-            0 & 0 & 0 & 0 & 0 & \textbf{1} & 0 & 0 \\ \hline
-            0 & 0 & 0 & 0 & 0 & 0 & \textbf{1} & 0 \\ \hline
-            0 & 0 & 0 & 0 & 0 & 0 & 0 & \textbf{1} \\ \hline
-        \end{tabular}
-        \caption*{Tabla 3-6. Control; actividad 7}
-    \end{table}
+    \includegraphics[width=0.7\textwidth]{image/Actividad7/Act7.jpeg}
+    \caption{Encendido del GPIO7 y apagado de los demás.}
+\end{figure}
 
 
-    \subsection*{Propuesta de solución}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/Actividad7/Act7_2.jpeg}
+    \caption{Encendido del GPIO8 y apagado de los demás, ultimo estado de la tabla.}
+\end{figure}
 
 
-    \textbf{Desarrollo}
+\textbf{Análisis de resultados}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7]{Code/act7.py}
+El análisis de la ejecución física tal y como se muestra en la Figura 14 y 15 confirma que el programa cumple estrictamente con la secuencia definida en la Tabla 3-6. Al utilizar una lista indexada, el microcontrolador puede direccionar de forma dinámica cada terminal GPIO, permitiendo que la señal alta "viaje" desde el \texttt{GPIO 0} hasta el \texttt{GPIO 7} de manera sucesiva.
 
-    \textbf{Análisis de resultados}
+En este ejercicio se visualiza una especie de corriemiento de bits a una frecuencia de ($10$\,Hz) que es ideal para observar el desplazamiento individual de cada LED sin que la persistencia visual mezcle los estados.
 
     \section*{Actividad 8}
 
@@ -824,6 +1011,9 @@
         \item \textbf{Espinoza Matamoros Percival Ulises:}
 
         \item \textbf{Flores Colin Victor Jaziel:}
+        La realización de esta práctica número 7 me permitió consolidar el dominio de la plataforma Raspberry Pi Pico y su microcontrolador RP2040. A través del entorno Thonny y el lenguaje MicroPython que ees una herremienta sumamente séncilla, se logró la transición exitosa desde el control básico de un solo bit (parpadeo de un LED) hasta la gestión compleja de buses de datos de 8 bits y sistemas de control secuencial con lógica de semaforización.
+        
+        Concluyo que el uso de estructuras de datos como listas y bucles anidados optimiza significativamente la interacción con las terminales GPIO, permitiendo desarrollar algoritmos modulares y escalables y la precisión en los retardos y la manipulación de estados lógicos mediante máscaras de bits demostraron que la plataforma es altamente eficiente para aplicaciones de control en tiempo real, cumpliendo satisfactoriamente con los objetivos de diseño y análisis propuestos en el laboratorio.
 
         \item \textbf{Lara Hernandez Angel Husiel:} Las instrucciones de alto nivel en Python se traducen en control directo sobre los pines GPIO, pudiendo manipular voltajes y estados lógicos con métodos tan simples como \texttt{value(1)} y \texttt{value(0)}, lo que reduce drásticamente la complejidad comparado con programar a nivel de registros.
 
