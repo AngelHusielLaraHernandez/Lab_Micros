@@ -1,18 +1,17 @@
-import machine # Importa la librería de hardware
-import utime   # Importa la librería de tiempo
+from machine import Pin
+import time
 
-# Configura el pin GPIO 0 como salida
-LED = machine.Pin(0, machine.Pin.OUT)
+# Configura GPIO 8 como entrada (Interruptor)
+sw1_1 = Pin(8, Pin.IN)
+# Configura GPIO 0 como salida (LED Verde)
+led_verde = Pin(0, Pin.OUT)
 
-while True:                 # Bucle principal
-    # --- Tiempos pequeños (Parpadeo rápido) ---
-    LED.value(1)            # Enciende el LED
-    utime.sleep_ms(100)     # Espera solo 100 ms (muy rápido)
-    LED.value(0)            # Apaga el LED
-    utime.sleep_ms(100)     # Espera 100 ms
-    
-    # --- Tiempos grandes (Parpadeo lento) ---
-    LED.value(1)            # Enciende el LED
-    utime.sleep_ms(2000)    # Espera 2000 ms (2 segundos)
-    LED.value(0)            # Apaga el LED
-    utime.sleep_ms(2000)    # Espera 2 segundos
+while True:
+    if sw1_1.value() == 1:
+        led_verde.value(1) # Enciende el LED
+        print("Interruptor cerrado, '1'")
+        time.sleep(0.5)
+    else:
+        led_verde.value(0) # Apaga el LED
+        print("Interruptor abierto, '0'")
+        time.sleep(0.5)

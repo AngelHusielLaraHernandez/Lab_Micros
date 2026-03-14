@@ -1,17 +1,37 @@
-import machine
-import utime
+from machine import Pin
+import time
 
-# Configura los pines GPIO 2 y GPIO 3 como salidas
-LED1 = machine.Pin(2, machine.Pin.OUT)
-LED2 = machine.Pin(3, machine.Pin.OUT)
+# Configura S1 (GPIO 11) como entrada con PULL_UP interna
+S1 = Pin(11, Pin.IN, Pin.PULL_UP)
+
+# Configura salidas de los LEDs y el zumbador
+led4 = Pin(4, Pin.OUT)
+led5 = Pin(5, Pin.OUT)
+led6 = Pin(6, Pin.OUT)
+led7 = Pin(7, Pin.OUT)
+buzzer = Pin(22, Pin.OUT)
+
+def apagar_salidas():
+    led4.value(0)
+    led5.value(0)
+    led6.value(0)
+    led7.value(0)
+    buzzer.value(0)
+
+def encender_salidas():
+    led4.value(1)
+    led5.value(1)
+    led6.value(1)
+    led7.value(1)
+    buzzer.value(1)
 
 while True:
-    # Estado 1: GPIO2 en Alto (1), GPIO3 en Bajo (0)
-    LED1.value(1)
-    LED2.value(0)
-    utime.sleep_ms(85) # Espera 85 ms entre estados
-    
-    # Estado 2: GPIO2 en Bajo (0), GPIO3 en Alto (1)
-    LED1.value(0)
-    LED2.value(1)
-    utime.sleep_ms(85) # Espera 85 ms entre estados
+    # Como es PULL_UP, 1 significa botón liberado y 0 botón presionado
+    if S1.value() == 1:
+        apagar_salidas()
+        print("Push button S1 liberado, '1'\nSalidas en bajo")
+    else:
+        encender_salidas()
+        print("Push button S1 presionado, '0'\nSalidas en alto")
+        
+    time.sleep(0.2) # Pequeño retardo para evitar rebotes
