@@ -17,8 +17,8 @@ las funciones **GPIO** en la modalidad de entrada y salida.
 |:-:|-------------|:------:|
 | 1 | Lectura de interruptor en GPIO8 e impresion de estado en consola | Completada |
 | 2 | Control de LED verde en GPIO0 segun estado de interruptor en GPIO8 | Completada |
-| 3 | Control de LED con push button en GPIO12 (PULL_UP) | Completada |
-| 4 | Secuencia de LEDs (GPIO4-GPIO7) y buzzer con push button S1 | Completada |
+| 3 | Control de LED con push button en GPIO12 (PULL_UP) | Pendiente |
+| 4 | Secuencia de LEDs (GPIO4-GPIO7) y buzzer con push button S1 | Pendiente |
 | 5 | Control de 8 LEDs, buzzer y contadores segun tabla de entradas (5 switches) | Pendiente |
 
 ### Progreso general
