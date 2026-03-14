@@ -19,7 +19,7 @@ buzzer.duty_u16(0) # Inicia silenciado
 # --- 3. FUNCIONES AUXILIARES ---
 def leer_entradas():
     """Lee el estado de todos los botones y switches y devuelve una tupla"""
-    return (S2.value(), S1.value(), SW1_1.value(), SW1_2.value(), SW1_3.value())
+    return (S2.value(), S1.value(), SW1_3.value(), SW1_2.value(), SW1_1.value())
 
 def set_leds(valor_binario):
     """
@@ -50,32 +50,31 @@ while True:
     
     # 0 1 0 0 0: Todos apagados
     if entradas == (0, 1, 0, 0, 0):
+        print(entradas)
         set_leds(0b00000000)
         beep(0)
         time.sleep(0.1)
         
     # 0 1 0 0 1: Todos encendidos
     elif entradas == (0, 1, 0, 0, 1):
+        print(entradas)
         set_leds(0b11111111)
         beep(0)
         time.sleep(0.1)
         
     # 0 1 0 1 0: Desplazamiento a la derecha (LED 7 a LED 0)
     elif entradas == (0, 1, 0, 1, 0):
-        for i in range(7, -1, -1): # Cuenta de 7 bajando hasta 0
-            if leer_entradas() != (0, 1, 0, 1, 0): break # Rompe si cambias un switch
-            set_leds(1 << i)
-            time.sleep(0.15)
+        print(entradas)
+        set_leds(0b10101010)
             
     # 0 1 0 1 1: Desplazamiento a la izquierda (LED 0 a LED 7)
     elif entradas == (0, 1, 0, 1, 1):
-        for i in range(8): # Cuenta de 0 hasta 7
-            if leer_entradas() != (0, 1, 0, 1, 1): break
-            set_leds(1 << i)
-            time.sleep(0.15)
+        print(entradas)
+        set_leds(0b01010101)
             
     # 0 1 1 0 0: Desplazamiento a la derecha con pitido al final
     elif entradas == (0, 1, 1, 0, 0):
+        print(entradas)
         for i in range(7, -1, -1):
             if leer_entradas() != (0, 1, 1, 0, 0): break
             set_leds(1 << i)
@@ -90,22 +89,40 @@ while True:
             
     # 0 1 1 0 1: Secuencia de extremos hacia el centro
     elif entradas == (0, 1, 1, 0, 1):
-        secuencia = [0b10000001, 0b01000010, 0b00100100, 0b00011000]
-        for val in secuencia:
-            if leer_entradas() != (0, 1, 1, 0, 1): break
-            set_leds(val)
-            time.sleep(0.2)
+        print(entradas)
+        for i in range(7, -1, -1): # Cuenta de 7 bajando hasta 0
+            if leer_entradas() != (0, 1, 1, 0, 1): break # Rompe si cambias un switch
+            set_leds(1 << i)
+            if i ==6 :
+                beep(1)
+            else:
+                beep (0)
+                
+            time.sleep(0.15)
             
     # 0 1 1 1 0: Secuencia del centro hacia los extremos
     elif entradas == (0, 1, 1, 1, 0):
-        secuencia = [0b00011000, 0b00100100, 0b01000010, 0b10000001]
+        print(entradas)
+        secuencia = [0b10000000, 0b01000000, 0b00100000, 0b00010000,0b00001000,0b00000100,0b00000010,0b00000001]
+
+        for val in secuencia:
+            beep(0)
+            if leer_entradas() != (0, 1, 1, 1, 0): break
+            set_leds(val)
+            time.sleep(0.2)
+        secuencia.reverse()
         for val in secuencia:
             if leer_entradas() != (0, 1, 1, 1, 0): break
             set_leds(val)
             time.sleep(0.2)
             
+            if val == 128:
+                beep(1)
+                time.sleep(0.2)
+            
     # 0 1 1 1 1: Auto increíble (extremos a centro y viceversa) con pitido al llegar a extremos
     elif entradas == (0, 1, 1, 1, 1):
+        print(entradas)
         secuencia = [0b10000001, 0b01000010, 0b00100100, 0b00011000, 0b00100100, 0b01000010, 0b10000001]
         for i, val in enumerate(secuencia):
             if leer_entradas() != (0, 1, 1, 1, 1): break
@@ -120,6 +137,7 @@ while True:
             
     # 0 0 1 1 1: Contador ascendente (0 a 9) en los LEDs 3, 4, 5 y 6
     elif entradas == (0, 0, 1, 1, 1):
+        print(entradas)
         for num in range(10):
             if leer_entradas() != (0, 0, 1, 1, 1): break
             # Desplazamos el número 3 bits a la izquierda para que empiece en el LED 3
@@ -129,6 +147,7 @@ while True:
             
     # 1 1 1 1 1: Contador descendente (9 a 0) en los LEDs 3, 4, 5 y 6
     elif entradas == (1, 1, 1, 1, 1):
+        print(entradas)
         for num in range(9, -1, -1):
             if leer_entradas() != (1, 1, 1, 1, 1): break
             set_leds(num << 3)
@@ -136,6 +155,7 @@ while True:
             
     # 1 0 1 1 1: Notas musicales
     elif entradas == (1, 0, 1, 1, 1):
+        print(entradas)
         set_leds(0) # Apagamos los LEDs para esta función
         notas = [261, 293, 329, 349, 392, 440, 493, 523] # Do, Re, Mi, Fa, Sol, La, Si, Do
         for nota in notas:
@@ -147,6 +167,8 @@ while True:
         
     # Estado por defecto: Todo apagado
     else:
+        print(entradas)
         set_leds(0)
         beep(0)
         time.sleep(0.1)
+

@@ -277,13 +277,54 @@
 
 
     \subsection*{Propuesta de solución}
+    El objetivo es monitorear el estado físico de un interruptor de palanca e imprimir su estado en la consola. La solución emplea la clase \texttt{Pin} del módulo \texttt{machine} para configurar el terminal GPIO 8 del microcontrolador estrictamente como una entrada digital (\texttt{Pin.IN}). Mediante un bucle infinito \texttt{while True}, se realiza un sondeo continuo (\textit{polling}) del estado del pin. Se implementa una estructura condicional \texttt{if-else} que evalúa el nivel lógico retornado por el método \texttt{value()}; si se detecta un nivel lógico alto (1), se notifica por consola que el circuito está cerrado; de lo contrario (0), se notifica como abierto. Se intercala un retardo de 500 milisegundos para evitar la saturación del procesador y estabilizar las lecturas en la consola serial.
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
+        \node (config) [io, below=1cm of import] {Configurar GPIO8 como entrada};
+        \node (read) [process, below=1cm of config] {Leer \texttt{sw1\_1.value()}};
+        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
+        \node (on) [io, right=1.8cm of dec] {Imprimir: ``Cerrado''};
+        \node (off) [io, left=1.8cm of dec] {Imprimir: ``Abierto''};
+        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (read);
+        \draw [arrow] (read) -- (dec);
+        \draw [arrow] (dec) -- node[above] {Sí} (on);
+        \draw [arrow] (dec) -- node[above] {No} (off);
+        \draw [arrow] (on) |- (delay);
+        \draw [arrow] (off) |- (delay);
+        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=0.6cm]on.east) |- (read.east);
+    \end{tikzpicture}
+    \end{center}
+
+    El flujo de datos inicia con la importación de los módulos \texttt{machine} y \texttt{time}, seguido de la configuración del pin GPIO~8 como entrada digital. El programa entra entonces en un bucle infinito donde, en cada iteración, lee el nivel lógico presente en el pin. Si el valor leído es 1 (3.3\,V), el flujo toma la rama afirmativa e imprime en consola que el interruptor está cerrado; si el valor es 0 (0\,V), toma la rama negativa e imprime que está abierto. Ambas ramas convergen en un retardo de 500\,ms antes de regresar a la lectura, estableciendo así un ciclo de sondeo continuo a 2\,Hz.
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1]{Code/act1.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1.jpg}
+        \caption{Estado de reposo (Interruptor abierto). En ausencia de accionamiento mecánico, el terminal GPIO 8 registra un nivel lógico bajo (0V). El monitor serial refleja la lectura del búfer imprimiendo de manera continua "Interruptor abierto, '0'".}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_2.jpg}
+        \caption{Estado de activación (Interruptor cerrado). Al presionar el pulsador, el circuito se cierra permitiendo el flujo de voltaje (3.3V) hacia el terminal GPIO 8. El microcontrolador interpreta este nivel lógico alto y actualiza la consola imprimiendo "Interruptor cerrado, '1'".}
+    \end{figure}
 
     \textbf{Análisis de resultados}
+
+    La ejecución de este código demuestra la capacidad del microcontrolador para leer señales eléctricas externas y traducirlas a lógica de software. La instrucción \texttt{sw1\_1 = Pin(8, Pin.IN)} configura los registros internos del procesador para deshabilitar los transistores de salida en ese terminal y habilitar el búfer de lectura, permitiendo sensar el voltaje externo. 
+
+    Durante el ciclo infinito, cuando el interruptor físico cierra el circuito, el pin 8 recibe un voltaje de 3.3V. El hardware interpreta este voltaje como un nivel lógico alto, causando que \texttt{sw1\_1.value()} sea igual a 1, lo cual activa la primera rama de la condicional y envía la cadena de texto a la consola. Inversamente, al abrir el interruptor, el voltaje decae a 0V, la lectura retorna 0 y el control de flujo salta a la rama \texttt{else}. La inclusión de \texttt{time.sleep(0.5)} establece una frecuencia de muestreo de 2 Hz, lo que resulta suficiente para capturar las interacciones mecánicas humanas de manera estable sin desbordar el búfer de salida serial del IDE.
 
     \newpage
     \section*{Actividad 2}
@@ -335,14 +376,55 @@
     Figura 4-5. Esquemático y tabla de la actividad 2
     \end{center}
 
-
-
     \subsection*{Propuesta de solución}
 
-    \textbf{Desarrollo}
+    Para integrar una respuesta física ante el estímulo del interruptor, se expande el código anterior añadiendo una etapa de salida digital. Se inicializa el terminal GPIO 0 como salida (\texttt{Pin.OUT}), el cual está eléctricamente conectado a un LED verde en la tarjeta de desarrollo. La lógica del programa se modifica vinculando el estado de este LED al estado de lectura del interruptor: dentro de la condición donde se detecta el nivel alto (interruptor cerrado), se envía un 1 lógico al LED para encenderlo; en la condición de nivel bajo (interruptor abierto), se envía un 0 lógico para apagarlo. El sondeo se mantiene con un retardo de medio segundo.
 
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
+        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar GPIO8 como entrada, GPIO0 como salida};
+        \node (read) [process, below=1cm of config] {Leer \texttt{sw1\_1.value()}};
+        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
+        \node (on) [io, right=2cm of dec, text width=3.2cm] {LED encendido\\ Imprimir: ``Cerrado, '1' ''};
+        \node (off) [io, left=2cm of dec, text width=3.2cm] {LED apagado\\ Imprimir: ``Abierto, '0' ''};
+        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (read);
+        \draw [arrow] (read) -- (dec);
+        \draw [arrow] (dec) -- node[above] {Sí} (on);
+        \draw [arrow] (dec) -- node[above] {No} (off);
+        \draw [arrow] (on) |- (delay);
+        \draw [arrow] (off) |- (delay);
+        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
+    \end{tikzpicture}
+    \end{center}
+
+    El flujo de datos comienza importando los módulos necesarios y configurando dos terminales GPIO: el pin~8 como entrada digital (interruptor) y el pin~0 como salida digital (LED verde). El programa ingresa en un bucle infinito que lee continuamente el estado del interruptor. Si se detecta un nivel lógico alto (interruptor cerrado), el flujo activa la salida GPIO~0 encendiendo el LED y simultáneamente imprime el estado en consola; si se detecta un nivel bajo (interruptor abierto), se desactiva la salida apagando el LED y se imprime el estado correspondiente. Tras cualquiera de las dos ramas, se ejecuta un retardo de 500\,ms antes de retornar a la lectura, manteniendo la sincronía entre el sensor de entrada y el actuador de salida.
+
+    \textbf{Desarrollo}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/act2.py}
     
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2.jpg}
+        \caption{Estado de activación de salida cruzada. Al accionar el pulsador, el GPIO 8 registra un nivel alto (1). El microcontrolador procesa esta entrada y satura de manera simultánea el terminal GPIO 0 (3.3V), encendiendo el LED verde, mientras la consola confirma el estado del interruptor cerrado.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_2.jpg}
+        \caption{Estado de desactivación. Al liberar el interruptor, el voltaje en el GPIO 8 cae a nivel bajo (0). El flujo del programa evalúa la condición alterna, drenando inmediatamente el voltaje del GPIO 0 (0V) para apagar el indicador visual y actualizando la lectura a estado abierto en el monitor serial.}
+    \end{figure}
+    \newpage
     \textbf{Análisis de resultados}
+
+    El programa evidencia la interconexión de periféricos de entrada y salida (I/O) mediados por la Unidad Lógico Aritmética del microcontrolador. Al instanciar \texttt{led\_verde = Pin(0, Pin.OUT)}, se configura un canal de salida capaz de suministrar voltaje. 
+
+    El bloque condicional funciona ahora como un puente directo entre ambos pines físicos. Cuando la condición \texttt{sw1\_1.value() == 1} se cumple, la instrucción \texttt{led\_verde.value(1)} ordena al hardware colocar 3.3V en el terminal GPIO 0, cerrando el circuito del LED a tierra y provocando su iluminación simultánea con la impresión en consola. Por el contrario, cuando la lectura es 0, \texttt{led\_verde.value(0)} anula el voltaje de salida, apagando el componente. Esta sincronía demuestra que la respuesta del actuador (el LED) está estrictamente gobernada por el estado lógico del sensor (el interruptor), logrando un control de lazo abierto simple y altamente predecible.
 
     \newpage
     \section*{Actividad 3}
@@ -535,8 +617,9 @@
         \item \textbf{Flores Colin Victor Jaziel:}
 
 
-        \item \textbf{Lara Hernandez Angel Husiel:} 
-        
+        \item \textbf{Lara Hernandez Angel Husiel:}
+
+        Implementar la lectura del interruptor, el encendido condicional del LED, el uso de resistencias pull-up internas con el push button y la secuencia de multiples LEDs con buzzer me sirvio mucho para entender como las estructuras condicionales y los bucles se combinan con el sondeo periodico del hardware para generar respuestas predecibles en tiempo real. Tambien vi que vincular directamente el estado de una entrada con el de una salida es la base del control de lazo abierto, y que agregar retardos adecuados estabiliza las lecturas sin saturar el procesador. En resumen, esta practica me dio bases muy solidas para entender como se implementa la interaccion entrada-salida en un microcontrolador, pasando de la simple lectura de un sensor hasta el control simultaneo de varios actuadores.
 
     \end{itemize}
 
