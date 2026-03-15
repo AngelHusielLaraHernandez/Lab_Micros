@@ -450,17 +450,75 @@
     Figura 4-6. Circuito de prueba; actividad 3
     \end{center}
 
+\begin{table}[H]
+    \centering
+    \scriptsize % Fuente más pequeña
+    \begin{tabular}{|c|c|c|p{4.2cm}|}
+        \hline
+        \textbf{Estado del botón} & \textbf{Lectura} & \textbf{LED} & \textbf{Mensaje en consola} \\
+        \hline
+        No presionado (abierto) & 0 (pull-down) & Apagado & ``Push Button S2 en espera; '0' '' \\
+        \hline
+        Presionado (cerrado) & 1 (3.3V) & Encendido & ``Push Button S2 presionado; '1' '' \\
+        \hline
+    \end{tabular}
+    \caption{Tabla de control - Relación entre el estado del pulsador y las acciones del programa}
+    \label{tab:act3}
+\end{table}
 
     \subsection*{Propuesta de solución}
+    El programa implementa un sistema donde un push button determina el estado de encendido o apagado de un LED, siguiendo el esquema eléctrico de la Figura 4-6, se configura el GPIO 0 como salida digital para controlar el LED, y el GPIO 12 como entrada digital con resistencia \texttt{PULL\_DOWN} interna y esta configuraciónes para que en estado de reposo (botón no presionado), la lectura del pin de entrada sea 0 lógico, ya que la resistencia lo mantiene conectado a GND. Cuando el usuario presiona el botón, se cierra el circuito a 3.3V por lo que se pasa a una lectura de nivel alto (1 lógico).
 
+    El programa evalúa continuamente el estado del pulsador dentro de un bucle infinito. Si detecta un nivel bajo (0), apaga el LED y muestra un mensaje en la terminal indicando que el botón está en espera. Si detecta un nivel alto (1), enciende el LED y muestra un mensaje de botón presionado. Se incluye un retardo de 500 ms después de cada lectura para estabilizar la señal, evitar efectos de rebote mecánico del botón y permitir la visualización ordenada de los mensajes en la consola.
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
+        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar GPIO0 como salida (LED)\\ GPIO12 como entrada con PULL\_DOWN};
+        \node (read) [process, below=1cm of config] {Leer \texttt{push\_S2.value()}};
+        \node (dec) [decision, below=1.2cm of read] {¿Valor == 0?};
+        \node (off) [io, left=2cm of dec, text width=3.5cm] {LED apagado\\ Imprimir: ``Botón en espera, '0''''};
+        \node (on) [io, right=2cm of dec, text width=3.5cm] {LED encendido\\ Imprimir: ``Botón presionado, '1''''};
+        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (read);
+        \draw [arrow] (read) -- (dec);
+        \draw [arrow] (dec) -- node[above] {Sí} (off);
+        \draw [arrow] (dec) -- node[above] {No} (on);
+        \draw [arrow] (off) |- (delay);
+        \draw [arrow] (on) |- (delay);
+        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
+    \end{tikzpicture}
+    \end{center}
+
+    El flujo de datos comienza importando los módulos necesarios y configurando dos terminales GPIO: el pin~0 como salida digital para controlar el LED, y el pin~12 como entrada digital con resistencia \texttt{PULL\_DOWN} interna para leer el estado del pulsador. 
+    
+    Después el programa ingresa en un bucle infinito que lee continuamente el estado del botón mediante \texttt{push\_S2.value()}. Si se detecta un nivel lógico bajo (valor == 0), que corresponde al botón no presionado (estado de espera), el flujo activa la rama izquierda apagando el LED y mostrando el mensaje ``Push Button S2 en espera; lectura: '0' '' en consola. Si se detecta un nivel lógico alto (valor == 1), que indica que el botón ha sido presionado, el flujo activa la rama derecha encendiendo el LED y mostrando el mensaje ``Push Button S2 presionado; lectura: '1' ''y tras ejecutar cualquiera de las dos ramas, se aplica un retardo de 500 milisegundos para evitar rebotes mecánicos y espaciar los mensajes en consola, antes de retornar al inicio del ciclo de lectura.
 
     \textbf{Desarrollo}
 
+
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3]{Code/act3.py}
 
-    \textbf{Análisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_2.jpg}
+        \caption{Estado de espera - Botón no presionado. El LED permanece apagado y la consola muestra lecturas: '0'.}
+    \end{figure}
 
-    \newpage
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3.jpg}
+        \caption{Estado activado - Botón presionado. El LED se enciende y la consola muestra lecturas: '1'.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+    El programa cumple satisfactoriamente con el objetivo de controlar un LED mediante un pulsador, y esto fue gracias a la configuración del GPIO 12 con resistencia \texttt{PULL\_DOWN} interna que resulta fundamental para mantener una lectura estable en 0 lógico cuando el botón no está presionado. Al presionar el botón, el circuito se cierra a 3.3V y la lectura cambia inmediatamente a 1 lógico, activando el LED. 
+    
+    Otra cosa fundamental fue el retardo de 500 ms después de cada lectura, pues cumple una doble función: actúa como filtro antirrebote amortiguando las oscilaciones mecánicas del contacto y espacia los mensajes en la consola para una visualización clara. 
     \section*{Actividad 4}
     Usando el push button S1, tal como se ha mencionado previamente está conectado para operar en la configuración \textit{PULL\_UP}; modificar el estado de la GPIO4, GPIO5, GPIO6 y GPIO7 de acuerdo a la entrada indicada en la tabla 4.2.
 
@@ -502,8 +560,47 @@
     Figura 4-7. Esquemático; actividad 4
     \end{center}
 
-    \subsection*{Propuesta de solución}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad3/tabla.png}
+        \caption{Estado activado - Botón S1 presionado. Los LEDs y el zumbador se encienden y la consola muestra lecturas: '0'.}
+    \end{figure}
 
+    \subsection*{Propuesta de solución}
+    Este programa es mu similar a la Actividad 3, pues tiene una lógica muy pareceida con la diferencia de que implementa estados con cuatro LEDs (GPIO4, GPIO5, GPIO6, GPIO7) y un zumbador (buzzer) en GPIO22, siguiendo el esquema eléctrico de la Figura 4-7. La configuración \texttt{PULL\_UP} es fundamental pues mantiene el pin de entrada en nivel alto (1 lógico) cuando el botón no está presionado, y al presionarlo se cierra el circuito a GND, llevando la lectura a nivel bajo (0 lógico).
+
+    Para optimizar la estructura del código y evitar repeticiones, se definen dos funciones: \texttt{apagar\_salidas()} que pone en 0 todos los actuadores, y \texttt{encender\_salidas()} que los pone en 1. Dentro del bucle infinito, el programa evalúa continuamente el estado del pulsador mediante \texttt{S1.value()}. Si detecta un nivel alto (1), correspondiente al botón liberado, ejecuta la función de apagado y muestra un mensaje indicando que las salidas están en bajo. Si detecta un nivel bajo (0), correspondiente al botón presionado, ejecuta la función de encendido y muestra el mensaje correspondiente. Se incluye un retardo de 200 ms para estabilizar la lectura y evitar rebotes mecánicos.
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
+        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar S1 (GPIO11) como entrada con PULL\_UP\\ Configurar GPIO4-7 y GPIO22 como salidas};
+        \node (def1) [process, below=1cm of config, text width=4cm] {Definir función \texttt{apagar\_salidas()}};
+        \node (def2) [process, below=1cm of def1, text width=4cm] {Definir función \texttt{encender\_salidas()}};
+        \node (read) [process, below=1cm of def2] {Leer \texttt{S1.value()}};
+        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
+        \node (off) [io, left=2cm of dec, text width=3.5cm] {Ejecutar \texttt{apagar\_salidas()}\\ Imprimir: ``Botón liberado, '1' ''};
+        \node (on) [io, right=2cm of dec, text width=3.5cm] {Ejecutar \texttt{encender\_salidas()}\\ Imprimir: ``Botón presionado, '0' ''};
+        \node (delay) [process, below=2cm of dec] {Esperar 200 ms};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (def1);
+        \draw [arrow] (def1) -- (def2);
+        \draw [arrow] (def2) -- (read);
+        \draw [arrow] (read) -- (dec);
+        \draw [arrow] (dec) -- node[above] {Sí} (off);
+        \draw [arrow] (dec) -- node[above] {No} (on);
+        \draw [arrow] (off) |- (delay);
+        \draw [arrow] (on) |- (delay);
+        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
+    \end{tikzpicture}
+    \end{center}
+
+    El flujo de datos comienza importando los módulos necesarios y configurando los pines: GPIO11 como entrada digital con resistencia \texttt{PULL\_UP} interna para leer el estado del pulsador S1, y los pines GPIO4, GPIO5, GPIO6, GPIO7 y GPIO22 como salidas digitales para controlar los LEDs y el zumbador respectivamente y se definen dos funciones para la lógica de activación y desactivación de todos los actuadores, lo que permite un código más limpio y mantenible.
+
+    Después el programa ingresa en un bucle infinito que lee continuamente el estado del botón mediante \texttt{S1.value()}. Debido a la configuración \texttt{PULL\_UP}, si se detecta un nivel lógico alto (valor == 1), que corresponde al botón liberado, el flujo activa la rama izquierda ejecutando \texttt{apagar\_salidas()} y mostrando el mensaje ``Push button S1 liberado, '1'; Salidas en bajo'' en consola. Si se detecta un nivel lógico bajo (valor == 0), que indica que el botón ha sido presionado, el flujo activa la rama derecha ejecutando \texttt{encender\_salidas()} y mostrando el mensaje ``Push button S1 presionado, '0'; Salidas en alto''. Tras ejecutar cualquiera de las dos ramas, se aplica un retardo de 200 milisegundos para evitar rebotes mecánicos y espaciar los mensajes en consola, antes de retornar al inicio del ciclo de lectura.
 
     \textbf{Desarrollo}
 
@@ -511,7 +608,23 @@
 
 
 
-    \textbf{Análisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad4/Act4.jpg}
+        \caption{Estado de reposo - Botón S1 liberado. Los LEDs y el zumbador permanecen apagados y la consola muestra lecturas: '1'.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Estado activado - Botón S1 presionado. Los LEDs y el zumbador se encienden y la consola muestra lecturas: '0'.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+    El programa cumple satisfactoriamente con el objetivo de controlar múltiples actuadores (cuatro LEDs y un zumbador) mediante el push bottom y la configuración del GPIO11 con resistencia \texttt{PULL\_UP} interna para mantener una lectura estable en 1 lógico cuando el botón no está presionado y al presionar el botón, el circuito se cierra a GND y la lectura cambia inmediatamente a 0 lógico, activando todas las salidas simultáneamente mediante las funciones definidas.
+
+    La implementación de funciones (\texttt{apagar\_salidas()} y \texttt{encender\_salidas()}) optimiza la estructura del código al encapsular la lógica de control de los cinco actuadores, lo que hace más legible el código
+    Como en la actividad pasada el retardo de 200 ms después de cada lectura cumple una doble función ya que actúa como filtro antirrebote amortiguando las oscilaciones mecánicas del contacto y espacia los mensajes en la consola para una visualización clara cumpliendo con lo establecido en la tabla de control.
 
 
     \newpage
@@ -615,6 +728,10 @@
         
 
         \item \textbf{Flores Colin Victor Jaziel:}
+        En esta cuarta práctica de laboratorio se cumplió satisfactoriamente el objetivo de controlar acciones mediante las terminales GPIO de la Raspberry Pi Pico en modalidades de entrada y salida. Implementar la lectura del interruptor, el encendido condicional del LED, el uso de resistencias pull-up internas y la secuencia de múltiples LEDs con buzzer permitió comprender cómo las estructuras condicionales y los bucles se combinan con el manejo del hardware para generar respuestas en tiempo real.
+        
+        Todo esto fue posible gracias a las resistencias internas PULL-UP Y PULL-DOWN que garantizaron lecturas estables como si fuesen filtros antirrebote. Vincular directamente el estado de entrada con la salida demostró la base del control de lazo abierto. Para finalizar esta práctica me ayudó a comprender la importancia de la interacción de las señales de entrada y salida en la Raspberry que tiene la capacudad de manejar y cordinar diferentes actuadores a la vez.
+
 
 
         \item \textbf{Lara Hernandez Angel Husiel:}
