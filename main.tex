@@ -710,22 +710,287 @@
 
     \subsection*{Propuesta de solución}
 
+    Para la solución es necesario desglosar por partes los estados codificados en la tabla, esto con la finalidad de conocer que secuencias y funcionalidades se deben implementar para cumplir con cada uno de los estados.
+
+    Antes de describir cada estado es importante mencionar los pines que sera de entrada así como su respectivo identificador. 
+
+    \begin{itemize}
+        \item GPIO12: S2 (Push Button)
+        \item GPIO11: S1 (Push Button)
+        \item GPIO10: SW1\_1 (DIP Switch)
+        \item GPIO9: SW1\_2 (DIP Switch)
+        \item GPIO8: SW1\_3 (DIP Switch)
+    \end{itemize}
+
+    \textbf{Estado: \texttt{01000}}
+
+    En este estado el programa debe mantener todas las salidas en bajo, para esto se emplea una función llamada \texttt{set\_leds}  la cuál recibe un numero de 8 bits apagando los leds correspondientes a los bits del número. Una vez asignada se llama a la función \texttt{beep} la cual enciende o apaga el buzzer dependiendo del valor que se le pase, en este caso se le asigna un valor de 0 para apagar el buzzer, posteriormente se realiza un retardo de 0.1 [ms]
+
+    \textbf{Estado: \texttt{01001}}
+
+    En este estado el programa debe encender todos los LEDs, para esto se emplea la función \texttt{set\_leds} con un valor de 255 (0b11111111) para encender los 8 LEDs, posteriormente se llama a la función \texttt{beep} con un valor de 0 para mantener el buzzer apagado y se realiza un retardo de 0.1 [ms]
+
+    \textbf{Estado: \texttt{01010}}
+
+    En este estado el programa debe encender los LEDs de manera alternada, para esto se emplea la función \texttt{set\_leds} con un valor de (0b10101010) para encender los LEDs en posiciones pares y apagar los LEDs en posiciones impares, posteriormente se llama a la función \texttt{beep} con un valor de 0 para mantener el buzzer apagado y se realiza un retardo de 0.1 [s]
+
+    \textbf{Estado: \texttt{01011}}
+
+    Para este estado el programa debe encender los LEDs de manera alternada, para esto se emplea la función \texttt{set\_leds} con un valor de (0b01010101) para encender los LEDs en posiciones impares y apagar los LEDs en posiciones pares (posiciones inversas respecto al estado anterior)
+
+    \textbf{Estado: \texttt{01100}}
+
+    Se tiene que hacer una secuencia que se realice un desplazamiento a la izquierda, de forma que cuando llegue al final suene el buzzer y se apaguen los leds. Para esto de realiza una iteración de los indices de forma descendente donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende un solo led haciendo uso de la máscara \texttt{set\_leds(1 << i)}, se apaga el buzzer y se realiza un retardo de 0.15 [s]. Al finalizar la iteración se enciende el buzzer y se apagan los leds, posteriormente se realiza un retardo de 0.2 [s]
+
+    \textbf{Estado: \texttt{01101}}
+
+    Para este estado se tiene que hacer una secuencia que vaya de los extremos al centro, para esto se vuelve a realizar una iteración de los indices de forma descendente donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende yn único led en la posición \texttt{i} creando asi un efecto de desplazamiento desde los extremos hacia el centro con una pausa de 0.15 [s].
+
+    El buzzer solo se activa cuando \texttt{i = 6} mediante la función \texttt{beep(1)}, en el resto de las iteraciones el buzzer se mantiene apagado con \texttt{beep(0)}.
+
+    \textbf{Estado: \texttt{01110}}
+
+    En este estado se tiene que hacer una secuencia que vaya del centro a los extremos, para esto se declara una lista con el orden ya definido de los indices a encender, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende un único led en la posición \texttt{i} creando asi un efecto de desplazamiento desde el centro hacia los extremos con una pausa de 0.2 [s].
+
+    Una vez finaliza la primer iteración se invierte el orden de los indices para crear el efecto de desplazamiento desde los extremos hacia el centro, esta iteración se realiza de la misma forma que la anterior con una pausa de 0.2 [s]. Donde para el último valor de regreso (\texttt{128}) se activa el buzzer con \texttt{beep(1)} durante 0.2 [s].
+
+    \textbf{Estado: \texttt{01111}}
+
+    La secuencia que corresponde a este estado es de los extremos hacia el centro y viceversa, donde suene un pitido al llegar a los extremos, para esto se declara una lista con el orden ya definido de los indices a encender, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se obtiene el indice (\texttt{i}) así como el valor del led \texttt{val} donde se actualiza el estado de los LEDs con \texttt{set\_leds(val)} creando asi un efecto de desplazamiento desde los extremos hacia el centro con una pausa de 0.15 [s]. Donde por medio de una condicional se detecta el último elemento el cual coincide de el regreso de los extremos para activar el buzzer con \texttt{beep(1)}, finalmente cuando termina la secuencia se apaga el buzzer.
+
+    \textbf{Estado: \texttt{00111}}
+
+    Para este estado se tiene que hacer un contador ascendente de 0 a 9, para esto se realiza una iteración de los números del 0 al 9 donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se actualiza el estado de los LEDs con el valor del contador (\texttt{set\_leds(num << 3)}), esto para comenzar a visualizarse en el LED 3, creando asi un efecto de contador ascendente con una pausa de 0.5 [s].
+
+    \textbf{Estado: \texttt{11111}}
+
+    Se tiene que hacer un contador descendente de 9 a 0, para esto se realiza una iteración de los números del 9 al 0 donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se actualiza el estado de los LEDs con el valor del contador (\texttt{set\_leds(num << 3)}) creando asi un efecto de contador descendente con una pausa de 0.5 [s].
+
+    \textbf{Estado: \texttt{10111}}
+
+    Para este estado se tiene que hacer una secuencia de notas musicales, para esto se declara una lista con las frecuencias de las notas musicales a reproducir, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se reproduce la nota correspondiente a la nota correspondiente a ese indice en la lista por medio de la función \texttt{tocar\_nota} la cual recibe la frecuencia de la nota a reproducir, posteriormente se realiza un retardo de 0.4 [s] para dar tiempo a que se escuche la nota antes de reproducir la siguiente. Cuando finaliza la iteración se apaga el buzzer con \texttt{beep(0)} y se realiza un retardo de 0.2 [s] antes de volver a iniciar la secuencia de notas musicales.
+
+    \textbf{Estado: Caso por Defecto}
+
+    Se considera como caso por defecto cualquier estado que no corresponda a los estados previamente descritos, para este caso el programa debe mantener todas las salidas en bajo, para esto se emplea la función \texttt{set\_leds} con un valor de 0 para apagar todos los LEDs, posteriormente se llama a la función \texttt{beep} con un valor de 0 para apagar el buzzer, finalmente se realiza un retardo de 0.1 [s].
+
+    Dado que se tiene varios estados, para implementar el diagrama de flujo correspondiente se optó por implementar una simplificación para cada estado, esto con la finalidad de mantener un código limpio y organizado, además de facilitar la lectura y comprensión del código. De forma que se dividió en dos partes el diagrama de flujo, la primera parte corresponde a la lectura de la configuración inicial y la lógica  de evaluación de cada estado.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
+
+        % Estilos proporcionados
+        \tikzset{
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+            arrow/.style={thick,->,>=stealth}
+        }
+
+        % Nodos
+        \node (start) [startstop] {Inicio Evaluación de Entradas};
+        
+        \node (dec1) [decision, below=1cm of start, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 0)?};
+        \node (act1) [io, right=1.5cm of dec1, text width=3.5cm] {\texttt{set\_leds(0)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
+        
+        \node (dec2) [decision, below=1cm of dec1, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 1)?};
+        \node (act2) [io, right=1.5cm of dec2, text width=3.5cm] {\texttt{set\_leds(0b11111111)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
+        
+        \node (dec3) [decision, below=1cm of dec2, text width=3cm] {¿entradas == \\(0, 1, 1, 0, 0)?};
+        \node (act3) [process, right=1.5cm of dec3, text width=3.8cm] {Bucle: Desplazamiento a la derecha con LEDs\\ Finaliza con \texttt{beep(1)}};
+
+        \node (dots) [process, below=1cm of dec3, fill=gray!20, text width=3.5cm] {Evaluar secuencias intermedias (\dots)};
+        
+        \node (decN) [decision, below=1cm of dots, text width=3cm] {¿entradas == \\(1, 0, 1, 1, 1)?};
+        \node (actN) [process, right=1.5cm of decN, text width=3.8cm] {Bucle: \texttt{tocar\_nota()}\\ Finaliza con \texttt{beep(0)}};
+
+        \node (actElse) [io, below=1cm of decN, text width=3.5cm] {Estado por defecto:\\ \texttt{set\_leds(0)}\\ \texttt{beep(0)}};
+
+        \node (end) [startstop, right=6.5cm of dots] {Fin de la iteración};
+
+        % Flechas
+        \draw [arrow] (start) -- (dec1);
+        
+        \draw [arrow] (dec1) -- node[above] {Sí} (act1);
+        \draw [arrow] (dec1) -- node[left] {No} (dec2);
+        
+        \draw [arrow] (dec2) -- node[above] {Sí} (act2);
+        \draw [arrow] (dec2) -- node[left] {No} (dec3);
+        
+        \draw [arrow] (dec3) -- node[above] {Sí} (act3);
+        \draw [arrow] (dec3) -- node[left] {No} (dots);
+        
+        \draw [arrow] (dots) -- (decN);
+        
+        \draw [arrow] (decN) -- node[above] {Sí} (actN);
+        \draw [arrow] (decN) -- node[left] {No (else)} (actElse);
+
+        % Conexiones al final
+        \draw [arrow] (act1.east) -- ++(3.2,0) |- (end.east);
+        \draw [arrow] (act2.east) -- ++(1.3,0) -| (end.north);
+        \draw [arrow] (act3.east) -- ++(0.5,0) -| (end.north);
+        \draw [arrow] (actN.east) -- ++(0.5,0) -| (end.south);
+        \draw [arrow] (actElse.east) -- ++(0.5,0) |- (end.west);
+        \end{tikzpicture}  
+        \caption{Diagrama de flujo simplificado para la evaluación de estados en la Actividad 5 Pt. 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
+
+            % Estilos proporcionados
+            \tikzset{
+                startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+                process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+                decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+                io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+                arrow/.style={thick,->,>=stealth}
+            }
+
+            % Nodos
+            \node (start) [startstop] {Inicio Evaluación de Entradas};
+            
+            \node (dec1) [decision, below=1cm of start, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 0)?};
+            \node (act1) [io, right=1.5cm of dec1, text width=3.5cm] {\texttt{set\_leds(0)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
+            
+            \node (dec2) [decision, below=1cm of dec1, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 1)?};
+            \node (act2) [io, right=1.5cm of dec2, text width=3.5cm] {\texttt{set\_leds(0b11111111)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
+            
+            \node (dec3) [decision, below=1cm of dec2, text width=3cm] {¿entradas == \\(0, 1, 1, 0, 0)?};
+            \node (act3) [process, right=1.5cm of dec3, text width=3.8cm] {Bucle: Desplazamiento a la derecha con LEDs\\ Finaliza con \texttt{beep(1)}};
+
+            \node (dots) [process, below=1cm of dec3, fill=gray!20, text width=3.5cm] {Evaluar secuencias intermedias (\dots)};
+            
+            \node (decN) [decision, below=1cm of dots, text width=3cm] {¿entradas == \\(1, 0, 1, 1, 1)?};
+            \node (actN) [process, right=1.5cm of decN, text width=3.8cm] {Bucle: \texttt{tocar\_nota()}\\ Finaliza con \texttt{beep(0)}};
+
+            \node (actElse) [io, below=1cm of decN, text width=3.5cm] {Estado por defecto:\\ \texttt{set\_leds(0)}\\ \texttt{beep(0)}};
+
+            \node (end) [startstop, right=6.5cm of dots] {Fin de la iteración};
+
+            % Flechas
+            \draw [arrow] (start) -- (dec1);
+            
+            \draw [arrow] (dec1) -- node[above] {Sí} (act1);
+            \draw [arrow] (dec1) -- node[left] {No} (dec2);
+            
+            \draw [arrow] (dec2) -- node[above] {Sí} (act2);
+            \draw [arrow] (dec2) -- node[left] {No} (dec3);
+            
+            \draw [arrow] (dec3) -- node[above] {Sí} (act3);
+            \draw [arrow] (dec3) -- node[left] {No} (dots);
+            
+            \draw [arrow] (dots) -- (decN);
+            
+            \draw [arrow] (decN) -- node[above] {Sí} (actN);
+            \draw [arrow] (decN) -- node[left] {No (else)} (actElse);
+
+            % Conexiones al final
+            \draw [arrow] (act1.east) -- ++(3.2,0) |- (end.east);
+            \draw [arrow] (act2.east) -- ++(1.3,0) -| (end.north);
+            \draw [arrow] (act3.east) -- ++(0.5,0) -| (end.north);
+            \draw [arrow] (actN.east) -- ++(0.5,0) -| (end.south);
+            \draw [arrow] (actElse.east) -- ++(0.5,0) |- (end.west);
+        \end{tikzpicture}
+        \caption{Diagrama de flujo simplificado para la evaluación de estados en la Actividad 5 Pt. 2}
+    \end{figure}
+
+    \newpage
 
     \textbf{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 10]{Code/act5.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5]{Code/act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_4.jpg}
+        \caption{Estado \texttt{01010} - Desplazamiento a la derecha con LEDs}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_5.jpg}
+        \caption{Estado \texttt{01011} - Desplazamiento a la izquierda con LEDs}
+    \end{figure}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5.jpg}
+        \caption{Estado \texttt{01101} - Secuencia de extremos hacia el centro }
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_3.jpg}
+        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_6.jpg}
+        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 2}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_7.jpg}
+        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 3}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_9.jpg}
+        \caption{Estado \texttt{00111} - Contador ascendente de 0 a 9 - Pt. 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_10.jpg}
+        \caption{Estado \texttt{00111} - Contador ascendente de 0 a 9 - Pt. 2}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_11.jpg}
+        \caption{Estado \texttt{11111} - Contador descendente de 9 a 0}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_13.jpg}
+        \caption{Estado \texttt{01110} - Secuencia del centro hacia los extremos - Pt. 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_14.jpg}
+        \caption{Estado \texttt{01110} - Secuencia del centro hacia los extremos - Pt. 2}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_15.jpg}
+        \caption{Estado \texttt{01101} - Secuencia de extremos hacia el centro.}
+    \end{figure}
 
     \textbf{Análisis de resultados}
 
+    A partir de los resultados obtenidos se pudo comprobar que cada una de las secuencias y funcionalidades implementadas correspondían a los estados codificados en la tabla, verifican así el correcto funcionamiento de las funciones auxiliares implementadas como \texttt{beep}, \texttt{set\_leds}, \texttt{tocar\_nota} para el control de los LEDs y el buzzer, así como la correcta lectura de las entradas por medio de los GPIOs. Además, se pudo observar que la implementación de retardos adecuados permitió visualizar de mejor manera las secuencias de LEDs y escuchar claramente las notas musicales, lo cual es fundamental para la correcta interpretación de cada estado.
+
+    De forma que por medio de estructuras condicionales y bucles se logró  implementar los estados con sus respectivas secuencias y funcionalidades, demostrando así la funcionalidad de los puertos GPIO para el control de dispositivos como los LEDs y el buzzer.
 
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Mediante la realización de la práctica se pudo comprender el control de las terminales del microprocessor de la Raspberry Pi Pico por medio de los puertos GPIO en modalidad tanto de entrada como de salida. Al implementar múltiples actividades controlando el encendido de leds, así como la lectura de push buttons y dip switches, se pudo entender la importancia de las resistencias pull-up internas para garantizar lecturas estables. Por otro lado se pudo observar cómo las estructuras condicionales y los bucles permiten generar respuestas en tiempo real basadas en el estado de las entradas, demostrando así la capacidad de la Raspberry Pi Pico para manejar múltiples actuadores simultáneamente.
         
-
+        Adicionalmente el implementarlo mediante código en microPython permitió comprender la interacción entre el software y el hardware, obteniendo bases solidas para futuras prácticas y proyectos que involucren el control de dispositivos por medio de los puertos GPIO.
+        
         \item \textbf{Flores Colin Victor Jaziel:}
         En esta cuarta práctica de laboratorio se cumplió satisfactoriamente el objetivo de controlar acciones mediante las terminales GPIO de la Raspberry Pi Pico en modalidades de entrada y salida. Implementar la lectura del interruptor, el encendido condicional del LED, el uso de resistencias pull-up internas y la secuencia de múltiples LEDs con buzzer permitió comprender cómo las estructuras condicionales y los bucles se combinan con el manejo del hardware para generar respuestas en tiempo real.
         

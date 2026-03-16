@@ -120,7 +120,7 @@ while True:
                 beep(1)
                 time.sleep(0.2)
             
-    # 0 1 1 1 1: Auto increíble (extremos a centro y viceversa) con pitido al llegar a extremos
+    # 0 1 1 1 1: Auto (extremos a centro y viceversa) con pitido al llegar a extremos
     elif entradas == (0, 1, 1, 1, 1):
         print(entradas)
         secuencia = [0b10000001, 0b01000010, 0b00100100, 0b00011000, 0b00100100, 0b01000010, 0b10000001]
