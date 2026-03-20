@@ -40,9 +40,15 @@
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.95}
 
+% Definición de los colores utilizados en las tablas
+\definecolor{headerbg}{HTML}{5B84C4} % Azul oscuro para el encabezado principal
+\definecolor{subheaderbg}{HTML}{B4C6E7} % Azul intermedio para sub-encabezados
+\definecolor{rowbg}{HTML}{E9EDF4} % Azul claro para filas intercaladas
+
 \lstset{
   backgroundcolor=\color{backcolour},
   basicstyle=\ttfamily\small,
+    inputencoding=utf8,
   keywordstyle=\color{blue}\bfseries,
   stringstyle=\color{codepurple},
   commentstyle=\color{codegray}\itshape,
@@ -67,6 +73,7 @@
            {Ñ}{{\~N}}1
            {¿}{{\textquestiondown}}1
            {¡}{{\textexclamdown}}1
+           {°}{{\ensuremath{^\circ}}}1
 }
 
 % Definición del lenguaje Python para listings
@@ -201,806 +208,521 @@
     \setcounter{page}{1}
 
     \section{Objetivo:}
-    Realizar control de acciones mediante las terminales de Raspberry Pi Pico por medio de las
-    funciones GPIO en la modalidad de entrada y salida.
+    
+    Reforzará las habilidades para programar y configurar las funciones GPIO para controlar
+    motores de corriente directa, motores de pasos y servomotores a través del microcontrolador
+    Raspberry Pi Pico. Estudiar la importancia de los amplificadores de potencia.
+    
     \section*{Actividad 1}
-
-    Escribir el programa de la figura 4.4, comentar cada línea de código, reportar que hace y ejecutarlo; el circuito a emplear es el siguiente:
-
-    \vspace{1cm}
+    
+    De acuerdo a la distribución indicada en el circuito de la figura 5-10; realizar las acciones
+    de control indicadas en la tabla 5-2. Conectar la fuente externa con 5V.
 
     \begin{center}
-    \begin{circuitikz}[american, thick]
-        
-        % Cuerpo de la Raspberry Pi Pico
-        \draw[thick] (0,0.5) rectangle (4,-9.5);
-        \node[align=center, font=\small\sffamily] at (2, -1.5) {Raspberry PI\\[0.1cm]Pico};
-
-        % Pines Superiores (41, 42, 43)
-        \draw[red, thick] (0.8, 0.5) -- (0.8, 0.8); \node[above, font=\tiny\sffamily, inner sep=1pt] at (0.8, 0.8) {41};
-        \draw[red, thick] (2.0, 0.5) -- (2.0, 0.8); \node[above, font=\tiny\sffamily, inner sep=1pt] at (2.0, 0.8) {42};
-        \draw[red, thick] (3.2, 0.5) -- (3.2, 0.8); \node[above, font=\tiny\sffamily, inner sep=1pt] at (3.2, 0.8) {43};
-        \node[below, font=\tiny\sffamily] at (0.8, 0.5) {SW CLK};
-        \node[below, font=\tiny\sffamily] at (2.0, 0.5) {SW GND};
-        \node[below, font=\tiny\sffamily] at (3.2, 0.5) {SW DIO};
-
-        % Pines Inferiores (GND agrupados)
-        \draw[red, thick] (2, -9.5) -- (2, -10.2);
-        \node[above, font=\tiny\sffamily] at (2, -9.5) {GND};
-        \node[below, font=\tiny\sffamily] at (2, -10.2) {3,8,13,18 \quad 23,28,38};
-
-        % Pines del lado Izquierdo (dejando los huecos de los GND)
-        \foreach \i/\pin in {
-            1/GP0, 2/GP1, 
-            4/GP2, 5/GP3, 6/GP4, 7/GP5, 
-            9/GP6, 10/GP7, 11/GP8, 12/GP9, 
-            14/GP10, 15/GP11, 16/GP12, 17/GP13, 
-            19/GP14, 20/GP15
-        } {
-            \draw[red, thick] (0, -\i*0.45) -- (-0.4, -\i*0.45);
-            \node[right, font=\tiny\sffamily] at (0, -\i*0.45) {\pin};
-            \node[above left, font=\tiny\sffamily, inner sep=1pt] at (0, -\i*0.45) {\i};
+    \resizebox{0.95\linewidth}{!}{%
+    \begin{tikzpicture}
+        % Estilos de las etiquetas estilo "banderas"
+        \tikzset{
+            label left/.style={
+                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, font=\tiny\sffamily, inner sep=2pt
+            },
+            label right/.style={
+                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, font=\tiny\sffamily, inner sep=2pt
+            }
         }
 
-        % Pines del lado Derecho (dejando los huecos de los GND)
-        \foreach \i/\pin/\num in {
-            1/VBUS/40, 2/VSS/39, 
-            4/3V3\_EN/37, 5/3V3/36, 6/ADC\_VREF/35, 7/GP28\_A2/34, 8/AGND/33, 
-            9/GP27\_A1/32, 10/GP26\_A0/31, 11/RUN/30, 12/GP22/29, 
-            14/GP21/27, 15/GP20/26, 16/GP19/25, 17/GP18/24, 
-            19/GP17/22, 20/GP16/21
+        % === RASPBERRY PI PICO ===
+        \picoboard
+
+        % Etiquetas en el lado izquierdo de la Pico
+        \node[label left=green, anchor=east] at (-0.4, -1*0.45) {DIR1\_M1};
+        \node[label left=green, anchor=east] at (-0.4, -2*0.45) {DIR2\_M1};
+        \node[label left=green, anchor=east] at (-0.4, -4*0.45) {DIR1\_M2};
+        \node[label left=green, anchor=east] at (-0.4, -5*0.45) {DIR2\_M2};
+
+        % Etiquetas en el lado derecho de la Pico
+        \node[label right=red, anchor=west]   at (4.4, -15*0.45) {ENABLE\_M1}; 
+        \node[label right=green, anchor=west] at (4.4, -16*0.45) {ENABLE\_M2}; 
+
+        % === DRIVER L293D ===
+        \draw[thick] (-10, -0.8) rectangle (-4, -6.4);
+        \node[font=\sffamily] at (-7, -0.5) {IC1};
+        \node[font=\small\sffamily] at (-7, -3.6) {L293D};
+
+        % Pines y textos L293D (Izquierda)
+        \foreach \i/\text/\y in {
+            1/Enable 1/-1.5,
+            2/In 1/-2.1,
+            3/Out 1 ( Controlled by Enable 1 )/-2.7,
+            4/0V/-3.3,
+            5/0V/-3.9,
+            6/Out 2 ( Controlled by Enable 1 )/-4.5,
+            7/In 2/-5.1,
+            8/+Vmotor/-5.7
         } {
-            \draw[red, thick] (4, -\i*0.45) -- (4.4, -\i*0.45);
-            \node[left, font=\tiny\sffamily] at (4, -\i*0.45) {\pin};
-            \node[above right, font=\tiny\sffamily, inner sep=1pt] at (4, -\i*0.45) {\num};
+            \node[right, font=\tiny\sffamily, text=gray!80!black] at (-10, \y) {\text};
+            \node[left, font=\tiny\sffamily, text=red] at (-10, \y+0.1) {\i};
         }
 
-        % Etiqueta roja VCC = 3.3V en el pin 37 (3V3_EN, \i=4 -> y=-1.8)
-        \node[right, draw=red, thick, inner sep=2pt, font=\scriptsize\sffamily, signal, signal to=east] (vccbox) at (4.4, -1.8) {VCC = 3.3V};
+        % Pines y textos L293D (Derecha)
+        \foreach \i/\text/\y in {
+            16/+V/-1.5,
+            15/In 4/-2.1,
+            14/Out 4 ( Controlled by Enable 2 )/-2.7,
+            13/0V/-3.3,
+            12/0V/-3.9,
+            11/Out 3 ( Controlled by Enable 2 )/-4.5,
+            10/In 3/-5.1,
+            9/Enable 2/-5.7
+        } {
+            \node[left, font=\tiny\sffamily, text=gray!80!black] at (-4, \y) {\text};
+            \node[right, font=\tiny\sffamily, text=red] at (-4, \y+0.1) {\i};
+        }
 
-        % Circuito externo conectado a GP8 (Pin 11, \i=11 -> y=-4.95)
-        \coordinate (gp8_node) at (-2.5, -4.95);
-        \draw[green!60!black, thick] (-0.4, -4.95) -- (gp8_node);
-        \filldraw (gp8_node) circle (1.5pt);
+        % --- Conexiones Izquierda (L293D) ---
+        \draw[thick, green] (-10, -1.5) -- (-14, -1.5);
+        \node[label left=green, anchor=east] at (-14, -1.5) {ENABLE\_M\_1};
 
-        % Interruptor hacia 3.3V
-        \draw (gp8_node) to[switch, l=SW1] (-2.5, -1.5) node[vcc]{3.3V};
+        \draw[thick, green] (-10, -2.1) -- (-14, -2.1);
+        \node[label left=red, anchor=east] at (-14, -2.1) {DIR1\_M1};
 
-        % Resistencia hacia Tierra
-        \draw (gp8_node) to[R, l=$1\text{k}\Omega$] (-2.5, -8.0) node[ground]{GND};
+        \draw[thick, green] (-10, -5.1) -- (-14, -5.1);
+        \node[label left=red, anchor=east] at (-14, -5.1) {DIR2\_M1};
 
-    \end{circuitikz}
+        % Motor 1
+        \draw[thick, fill=white] (-13, -3.6) circle (0.4);
+        \node[font=\sffamily] at (-13, -3.6) {M};
+        \node[above right, font=\small\sffamily] at (-12.8, -3.2) {M1};
+        % Terminales M1
+        \draw[thick, fill=black] (-12.6, -3.4) rectangle (-12.5, -3.3);
+        \draw[thick, fill=black] (-12.6, -3.9) rectangle (-12.5, -3.8);
+        % Cables M1
+        \draw[thick, green] (-10, -2.7) -- (-11.5, -2.7) -- (-11.5, -3.35) -- (-12.5, -3.35);
+        \draw[thick, green] (-10, -4.5) -- (-11.5, -4.5) -- (-11.5, -3.85) -- (-12.5, -3.85);
 
-    \vspace{0.5cm}
-    Figura 4-3. Entrada digital usando un interruptor
+        % GND Izquierda
+        \draw[thick, green] (-10, -3.3) -- (-10.5, -3.3) -- (-10.5, -3.9);
+        \draw[thick, green] (-10, -3.9) -- (-11.0, -3.9) -- (-11.0, -4.5);
+        \draw[thick, green] (-11.0, -4.5) -- ++(0,-0.3);
+        \draw[thick, green] (-11.2, -4.8) -- ++(0.4,0);
+        \draw[thick, green] (-11.1, -4.9) -- ++(0.2,0);
+        \draw[thick, green] (-11.05, -5.0) -- ++(0.1,0);
+
+        % 5V Izquierda (+Vmotor)
+        \draw[thick, red] (-10, -5.7) -- (-10.5, -5.7) -- (-10.5, -6.5) -- (-11.5, -6.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % --- Conexiones Derecha (L293D) ---
+        \draw[thick, green] (-4, -2.1) -- (-2.5, -2.1);
+        \node[label right=green, anchor=west] at (-2.5, -2.1) {DIR2\_M2};
+
+        \draw[thick, green] (-4, -5.1) -- (-2.5, -5.1);
+        \node[label right=green, anchor=west] at (-2.5, -5.1) {DIR1\_M2};
+
+        \draw[thick, green] (-4, -5.7) -- (-2.5, -5.7);
+        \node[label right=red, anchor=west] at (-2.5, -5.7) {ENABLE\_M2};
+
+        % Motor 2
+        \draw[thick, fill=white] (-1.5, -3.6) circle (0.4);
+        \node[font=\sffamily] at (-1.5, -3.6) {M};
+        \node[above right, font=\small\sffamily] at (-1.3, -3.2) {M2};
+        % Terminales M2
+        \draw[thick, fill=black] (-1.9, -3.4) rectangle (-2.0, -3.3);
+        \draw[thick, fill=black] (-1.9, -3.9) rectangle (-2.0, -3.8);
+        % Cables M2
+        \draw[thick, green] (-4, -2.7) -- (-2.5, -2.7) -- (-2.5, -3.35) -- (-2.0, -3.35);
+        \draw[thick, green] (-4, -4.5) -- (-2.5, -4.5) -- (-2.5, -3.85) -- (-2.0, -3.85);
+
+        % GND Derecha
+        \draw[thick, green] (-4, -3.3) -- (-3.5, -3.3) -- (-3.5, -3.9);
+        \draw[thick, green] (-4, -3.9) -- (-3.0, -3.9) -- (-3.0, -4.5);
+        \draw[thick, green] (-3.0, -4.5) -- ++(0,-0.3);
+        \draw[thick, green] (-3.2, -4.8) -- ++(0.4,0);
+        \draw[thick, green] (-3.1, -4.9) -- ++(0.2,0);
+        \draw[thick, green] (-3.05, -5.0) -- ++(0.1,0);
+
+        % 5V Derecha (+V)
+        \draw[thick, green] (-4, -1.5) -- (-3.5, -1.5) -- (-3.5, -0.5) -- (-4.5, -0.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % === Título / Caption ===
+        \node[font=\sffamily] at (-3, -11) {Figura 5-10. Control de motores de corriente directa};
+
+        \end{tikzpicture}%
+    }
     \end{center}
+
+    \begin{table}[ht]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \setlength{\arrayrulewidth}{1pt}
+        \arrayrulecolor{white}
+        \begin{tabular}{|c|c|c|c|c|}
+            \hline
+            \rowcolor{headerbg}
+            \multicolumn{3}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{2}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+            \hline
+            \rowcolor{subheaderbg}
+            \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{MOTOR 1} & \textbf{MOTOR 2} \\
+            \rowcolor{subheaderbg}
+            \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO0 -- GPIO1-GPIO20} & \textit{GPIO2 -- GPIO3-GPIO19} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 0 & 0 & \textbf{PARO} & PARO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 0 & 1 & \textbf{GIRA HORARIO} & PARO \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 1 & 0 & \textbf{PARO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 1 & 1 & \textbf{GIRA HORARIO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 0 & 0 & \textbf{GIRA ANTIHORARIO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 0 & 1 & \textbf{GIRA HORARIO} & GIRA ANTIHORARIO \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 1 & 0 & \textbf{GIRA ANTIHORARIO} & GIRA ANTIHORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 1 & 1 & \textbf{PARO} & PARO \\
+            \hline
+        \end{tabular}
+        \caption{Tabla 5-2. Controlador; actividad 1}
+    \end{table}
+
+    \newpage
 
 
     \subsection*{Propuesta de solución}
-    El objetivo es monitorear el estado físico de un interruptor de palanca e imprimir su estado en la consola. La solución emplea la clase \texttt{Pin} del módulo \texttt{machine} para configurar el terminal GPIO 8 del microcontrolador estrictamente como una entrada digital (\texttt{Pin.IN}). Mediante un bucle infinito \texttt{while True}, se realiza un sondeo continuo (\textit{polling}) del estado del pin. Se implementa una estructura condicional \texttt{if-else} que evalúa el nivel lógico retornado por el método \texttt{value()}; si se detecta un nivel lógico alto (1), se notifica por consola que el circuito está cerrado; de lo contrario (0), se notifica como abierto. Se intercala un retardo de 500 milisegundos para evitar la saturación del procesador y estabilizar las lecturas en la consola serial.
-
-    \begin{center}
-    \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
-        \node (start) [startstop] {Inicio};
-        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
-        \node (config) [io, below=1cm of import] {Configurar GPIO8 como entrada};
-        \node (read) [process, below=1cm of config] {Leer \texttt{sw1\_1.value()}};
-        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
-        \node (on) [io, right=1.8cm of dec] {Imprimir: ``Cerrado''};
-        \node (off) [io, left=1.8cm of dec] {Imprimir: ``Abierto''};
-        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
-
-        \draw [arrow] (start) -- (import);
-        \draw [arrow] (import) -- (config);
-        \draw [arrow] (config) -- (read);
-        \draw [arrow] (read) -- (dec);
-        \draw [arrow] (dec) -- node[above] {Sí} (on);
-        \draw [arrow] (dec) -- node[above] {No} (off);
-        \draw [arrow] (on) |- (delay);
-        \draw [arrow] (off) |- (delay);
-        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=0.6cm]on.east) |- (read.east);
-    \end{tikzpicture}
-    \end{center}
-
-    El flujo de datos inicia con la importación de los módulos \texttt{machine} y \texttt{time}, seguido de la configuración del pin GPIO~8 como entrada digital. El programa entra entonces en un bucle infinito donde, en cada iteración, lee el nivel lógico presente en el pin. Si el valor leído es 1 (3.3\,V), el flujo toma la rama afirmativa e imprime en consola que el interruptor está cerrado; si el valor es 0 (0\,V), toma la rama negativa e imprime que está abierto. Ambas ramas convergen en un retardo de 500\,ms antes de regresar a la lectura, estableciendo así un ciclo de sondeo continuo a 2\,Hz.
 
     \textbf{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1]{Code/act1.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1]{Code/Act1.py}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1.jpg}
-        \caption{Estado de reposo (Interruptor abierto). En ausencia de accionamiento mecánico, el terminal GPIO 8 registra un nivel lógico bajo (0V). El monitor serial refleja la lectura del búfer imprimiendo de manera continua "Interruptor abierto, '0'".}
-    \end{figure}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_2.jpg}
-        \caption{Estado de activación (Interruptor cerrado). Al presionar el pulsador, el circuito se cierra permitiendo el flujo de voltaje (3.3V) hacia el terminal GPIO 8. El microcontrolador interpreta este nivel lógico alto y actualiza la consola imprimiendo "Interruptor cerrado, '1'".}
-    \end{figure}
 
     \textbf{Análisis de resultados}
 
-    La ejecución de este código demuestra la capacidad del microcontrolador para leer señales eléctricas externas y traducirlas a lógica de software. La instrucción \texttt{sw1\_1 = Pin(8, Pin.IN)} configura los registros internos del procesador para deshabilitar los transistores de salida en ese terminal y habilitar el búfer de lectura, permitiendo sensar el voltaje externo. 
-
-    Durante el ciclo infinito, cuando el interruptor físico cierra el circuito, el pin 8 recibe un voltaje de 3.3V. El hardware interpreta este voltaje como un nivel lógico alto, causando que \texttt{sw1\_1.value()} sea igual a 1, lo cual activa la primera rama de la condicional y envía la cadena de texto a la consola. Inversamente, al abrir el interruptor, el voltaje decae a 0V, la lectura retorna 0 y el control de flujo salta a la rama \texttt{else}. La inclusión de \texttt{time.sleep(0.5)} establece una frecuencia de muestreo de 2 Hz, lo que resulta suficiente para capturar las interacciones mecánicas humanas de manera estable sin desbordar el búfer de salida serial del IDE.
 
     \newpage
     \section*{Actividad 2}
 
-    Realizar las modificaciones necesarias para que genere las acciones mostradas en la figura 4-5.
-
-    \vspace{0.5cm}
+    De acuerdo a la distribución indicada en el circuito de la figura 5-11; realizar las acciones
+    de control indicadas en la tabla 5-3, considerar la secuencia indicada en la figura 5-4. Conectar la
+    fuente externa con 5V.
 
     \begin{center}
-    \begin{circuitikz}[american, thick, scale=0.85, transform shape]
+    \resizebox{0.95\linewidth}{!}{%
+    \begin{tikzpicture}
+
+        % Estilos exactos para las etiquetas tipo bandera (blancas con borde de color)
+        \tikzset{
+            flag left/.style={
+                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            },
+            flag right/.style={
+                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            }
+        }
+
+        % --- RASPBERRY PI PICO ---
         \picoboard
-        
-        % Etiqueta VCC en Pin 37
-        \node[right, draw=red, thick, inner sep=2pt, font=\scriptsize\sffamily, signal, signal to=east] at (P37) {VCC = 3.3V};
-        
-        % LED en GP0 (Pin 1)
-        \draw[green!60!black, thick] (P1) -- ++(-3.5,0) coordinate (N1);
-        \draw (N1) to[R, l=220$\Omega$] ++(0,-1.5) to[led] ++(0,-1.5) node[ground]{GND};
-        
-        % Switch en GP8 (Pin 11)
-        \draw[green!60!black, thick] (P11) -- ++(-1.5,0) coordinate (N11);
-        \filldraw (N11) circle (1.5pt);
-        \draw (N11) to[switch, l=SW1] ++(0, 1.5) node[vcc]{3.3V};
-        \draw (N11) to[R, l=$1\text{k}\Omega$] ++(0, -2.5) node[ground]{GND};
-    \end{circuitikz}
 
-    \vspace{0.5cm}
-    (a) Esquemático
-    \vspace{1cm}
+        % Conexiones de la Pico (Lado Izquierdo)
+        % GP4 (Pin 6)
+        \draw[thick, red] (-0.4, -2.7) -- (-1.2, -2.7);
+        \node[flag left=green, anchor=east] at (-1.2, -2.7) {IN1};
 
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{|c|c|p{7.5cm}|}
-        \multicolumn{1}{c}{Entradas} & \multicolumn{2}{c}{Salidas} \\[-0.5ex]
-        \multicolumn{1}{c}{$\overbrace{\makebox[2.5cm]{}}$} & \multicolumn{2}{c}{$\overbrace{\makebox[9.5cm]{}}$} \\[-1ex]
-        \hline
-        \rowcolor{blue!60!black} \textcolor{white}{\textbf{GPIO8}} & \textcolor{white}{\textbf{GPIO0}} & \textcolor{white}{\textbf{Consola de Thonny}} \\
-        \rowcolor{blue!60!black} \textcolor{white}{\textbf{SW1\_1}} & \textcolor{white}{\textbf{LED VERDE}} & \\
-        \hline
-        `0' & 0 & Interruptor abierto, `0' \newline LED VERDE en GPIO0 apagado \\
-        \hline
-        `1' & 1 & Interruptor cerrado, `1' \newline LED VERDE en GPIO0 encendido \\
-        \hline
-    \end{tabular}
+        % GP5 (Pin 7)
+        \draw[thick, red] (-0.4, -3.15) -- (-1.2, -3.15);
+        \node[flag left=green, anchor=east] at (-1.2, -3.15) {IN2};
 
-    \vspace{0.5cm}
-    (b) Tabla
+        % GP6 (Pin 9)
+        \draw[thick, red] (-0.4, -4.05) -- (-1.2, -4.05);
+        \node[flag left=green, anchor=east] at (-1.2, -4.05) {IN3};
 
-    \vspace{0.5cm}
-    Figura 4-5. Esquemático y tabla de la actividad 2
+        % GP7 (Pin 10)
+        \draw[thick, red] (-0.4, -4.5) -- (-1.2, -4.5);
+        \node[flag left=green, anchor=east] at (-1.2, -4.5) {IN4};
+
+
+        % --- ULN2003A (IC2) ---
+        \draw[thick] (-12, -0.8) rectangle (-7, -7.5);
+        \node[font=\sffamily] at (-9.5, -0.5) {IC2};
+        \node[font=\small\sffamily] at (-9.5, -4.15) {ULN2003A};
+
+        % Pines del ULN2003A (Lado Izquierdo) - Solo texto, las líneas se dibujan abajo
+        \foreach \i/\text/\y in {
+            16/Out 1/-1.5, 15/Out 2/-2.3, 14/Out 3/-3.1, 13/Out 4/-3.9,
+            12/Out 5/-4.7, 11/Out 6/-5.5, 10/Out 7/-6.3, 9/COM - Common/-7.1
+        } {
+            \node[right, font=\tiny\sffamily, text=gray!80!black] at (-12, \y) {\text};
+            \node[left, font=\tiny\sffamily, text=red] at (-12, \y+0.1) {\i};
+        }
+
+        % Pines del ULN2003A (Lado Derecho) - Solo texto
+        \foreach \i/\text/\y in {
+            1/In 1/-1.5, 2/In 2/-2.3, 3/In 3/-3.1, 4/In 4/-3.9,
+            5/In 5/-4.7, 6/In 6/-5.5, 7/In 7/-6.3, 8/0V/-7.1
+        } {
+            \node[left, font=\tiny\sffamily, text=gray!80!black] at (-7, \y) {\text};
+            \node[right, font=\tiny\sffamily, text=red] at (-7, \y+0.1) {\i};
+        }
+
+        % --- Conexiones ULN2003A Izquierda ---
+        % BOBINAS
+        \draw[thick, red] (-12, -1.5) -- (-12.8, -1.5); \node[flag left=red, anchor=east] at (-12.8, -1.5) {BOBINA A};
+        \draw[thick, red] (-12, -2.3) -- (-12.8, -2.3); \node[flag left=red, anchor=east] at (-12.8, -2.3) {BOBINA B};
+        \draw[thick, red] (-12, -3.1) -- (-12.8, -3.1); \node[flag left=red, anchor=east] at (-12.8, -3.1) {BOBINA C};
+        \draw[thick, red] (-12, -3.9) -- (-12.8, -3.9); \node[flag left=red, anchor=east] at (-12.8, -3.9) {BOBINA D};
+
+        % 5V (desde pin 9)
+        \draw[thick, red] (-12, -7.1) -- (-12.5, -7.1) -- (-12.5, -7.5) -- (-12.8, -7.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % --- Conexiones ULN2003A Derecha ---
+        % INs
+        \draw[thick, red] (-7, -1.5) -- (-6.2, -1.5); \node[flag right=green, anchor=west] at (-6.2, -1.5) {IN4};
+        \draw[thick, red] (-7, -2.3) -- (-6.2, -2.3); \node[flag right=green, anchor=west] at (-6.2, -2.3) {IN3};
+        \draw[thick, red] (-7, -3.1) -- (-6.2, -3.1); \node[flag right=green, anchor=west] at (-6.2, -3.1) {IN2};
+        \draw[thick, red] (-7, -3.9) -- (-6.2, -3.9); \node[flag right=green, anchor=west] at (-6.2, -3.9) {IN1};
+
+        % GND (desde pin 8)
+        \draw[thick, red] (-7, -7.1) -- (-6.2, -7.1);
+        \draw[thick, black] (-6.2, -7.1) -- (-6.2, -7.4);
+        \draw[thick, black] (-6.6, -7.4) -- (-5.8, -7.4); % Línea superior GND
+        \draw[thick, black] (-6.4, -7.5) -- (-6.0, -7.5); % Línea media GND
+        \draw[thick, black] (-6.3, -7.6) -- (-6.1, -7.6); % Línea inferior GND
+
+        % Título
+        \node[font=\sffamily] at (-4, -10.5) {Figura 5-11. Esquemático; actividad 2};
+
+    \end{tikzpicture}
+    }
     \end{center}
+
+    \begin{table}[ht]
+        \centering
+        \renewcommand{\arraystretch}{1.15}
+        \setlength{\arrayrulewidth}{1pt}
+        \arrayrulecolor{white}
+        \resizebox{0.88\linewidth}{!}{%
+        \begin{tabular}{|c|c|c|c|}
+            \hline
+            \rowcolor{headerbg}
+            \multicolumn{3}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+            \hline
+            \rowcolor{subheaderbg}
+            \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{Motor a pasos} \\
+            \rowcolor{subheaderbg}
+            \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO7 -- GPIO6-GPIO5 -- GPIO4} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 0 & 0 & \textbf{PARO} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 0 & 1 & \textbf{GIRA HORARIO} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 1 & 0 & \textbf{GIRA SENTIDO ANTIHORARIO} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 1 & 1 & \textbf{GIRA 90$^\circ$ SENTIDO HORARIO cada 2 seg} \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 0 & 0 & \textbf{GIRA 180$^\circ$ SENTIDO ANTIHORARIO cada 3 seg} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 0 & 1 & \textbf{GIRA 360$^\circ$ SENTIDO HORARIO cada 4 seg *} \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 1 & 0 & \textbf{GIRA 5 REVOLUCIONES SENTIDO HORARIO *} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 1 & 1 & \textbf{GIRAR 10 REVOLUCIONES SENTIDO ANTIHORARIO *} \\
+            \hline
+        \end{tabular}%
+        }
+
+        \vspace{0.3cm}
+        \begin{minipage}{0.88\linewidth}
+        \footnotesize \textbf{*} \textit{Para los tres últimos casos, cada que se concluya una revolución en el motor a pasos, activar el Zumbador conectado en el GPIO22 durante 300 ms.}
+        \end{minipage}
+
+        \caption{Tabla 5-2. Controlador; actividad 2}
+    \end{table}
+
+    \newpage
 
     \subsection*{Propuesta de solución}
 
-    Para integrar una respuesta física ante el estímulo del interruptor, se expande el código anterior añadiendo una etapa de salida digital. Se inicializa el terminal GPIO 0 como salida (\texttt{Pin.OUT}), el cual está eléctricamente conectado a un LED verde en la tarjeta de desarrollo. La lógica del programa se modifica vinculando el estado de este LED al estado de lectura del interruptor: dentro de la condición donde se detecta el nivel alto (interruptor cerrado), se envía un 1 lógico al LED para encenderlo; en la condición de nivel bajo (interruptor abierto), se envía un 0 lógico para apagarlo. El sondeo se mantiene con un retardo de medio segundo.
-
-    \begin{center}
-    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
-        \node (start) [startstop] {Inicio};
-        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
-        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar GPIO8 como entrada, GPIO0 como salida};
-        \node (read) [process, below=1cm of config] {Leer \texttt{sw1\_1.value()}};
-        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
-        \node (on) [io, right=2cm of dec, text width=3.2cm] {LED encendido\\ Imprimir: ``Cerrado, '1' ''};
-        \node (off) [io, left=2cm of dec, text width=3.2cm] {LED apagado\\ Imprimir: ``Abierto, '0' ''};
-        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
-
-        \draw [arrow] (start) -- (import);
-        \draw [arrow] (import) -- (config);
-        \draw [arrow] (config) -- (read);
-        \draw [arrow] (read) -- (dec);
-        \draw [arrow] (dec) -- node[above] {Sí} (on);
-        \draw [arrow] (dec) -- node[above] {No} (off);
-        \draw [arrow] (on) |- (delay);
-        \draw [arrow] (off) |- (delay);
-        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
-    \end{tikzpicture}
-    \end{center}
-
-    El flujo de datos comienza importando los módulos necesarios y configurando dos terminales GPIO: el pin~8 como entrada digital (interruptor) y el pin~0 como salida digital (LED verde). El programa ingresa en un bucle infinito que lee continuamente el estado del interruptor. Si se detecta un nivel lógico alto (interruptor cerrado), el flujo activa la salida GPIO~0 encendiendo el LED y simultáneamente imprime el estado en consola; si se detecta un nivel bajo (interruptor abierto), se desactiva la salida apagando el LED y se imprime el estado correspondiente. Tras cualquiera de las dos ramas, se ejecuta un retardo de 500\,ms antes de retornar a la lectura, manteniendo la sincronía entre el sensor de entrada y el actuador de salida.
 
     \textbf{Desarrollo}
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/act2.py}
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2.jpg}
-        \caption{Estado de activación de salida cruzada. Al accionar el pulsador, el GPIO 8 registra un nivel alto (1). El microcontrolador procesa esta entrada y satura de manera simultánea el terminal GPIO 0 (3.3V), encendiendo el LED verde, mientras la consola confirma el estado del interruptor cerrado.}
-    \end{figure}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_2.jpg}
-        \caption{Estado de desactivación. Al liberar el interruptor, el voltaje en el GPIO 8 cae a nivel bajo (0). El flujo del programa evalúa la condición alterna, drenando inmediatamente el voltaje del GPIO 0 (0V) para apagar el indicador visual y actualizando la lectura a estado abierto en el monitor serial.}
-    \end{figure}
-    \newpage
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/Act2.py}
+
     \textbf{Análisis de resultados}
 
-    El programa evidencia la interconexión de periféricos de entrada y salida (I/O) mediados por la Unidad Lógico Aritmética del microcontrolador. Al instanciar \texttt{led\_verde = Pin(0, Pin.OUT)}, se configura un canal de salida capaz de suministrar voltaje. 
-
-    El bloque condicional funciona ahora como un puente directo entre ambos pines físicos. Cuando la condición \texttt{sw1\_1.value() == 1} se cumple, la instrucción \texttt{led\_verde.value(1)} ordena al hardware colocar 3.3V en el terminal GPIO 0, cerrando el circuito del LED a tierra y provocando su iluminación simultánea con la impresión en consola. Por el contrario, cuando la lectura es 0, \texttt{led\_verde.value(0)} anula el voltaje de salida, apagando el componente. Esta sincronía demuestra que la respuesta del actuador (el LED) está estrictamente gobernada por el estado lógico del sensor (el interruptor), logrando un control de lazo abierto simple y altamente predecible.
 
     \newpage
     \section*{Actividad 3}
-    Escribir el programa de la figura 4-6, comentar cada línea de código, describir que hace y ejecutarlo; en el reporte agregar la tabla de control.
+    De acuerdo a la distribución indicada en el circuito de la figura 5-12; realizar las acciones
+    de control indicadas en la tabla 5-4, considerar la información indicada en la figura 5-7. Conectar la
+    fuente externa con 5V.
 
-    \vspace{0.5cm}
 
     \begin{center}
-    \begin{circuitikz}[american, thick]
-        \picoboard
-        
-        % LED en GP0 (Pin 1)
-        \draw[green!60!black, thick] (P1) -- ++(-3.5,0) coordinate (N1);
-        \draw (N1) to[R, l=220$\Omega$] ++(0,-1.5) to[led] ++(0,-1.5) node[ground]{GND};
-        
-        % Push button en GP12 (Pin 16)
-        \draw[green!60!black, thick] (P16) -- ++(-1.5,0) coordinate (N16);
-        \node[above, font=\tiny\sffamily, text=black] at (N16) {IN};
-        \draw (N16) to[nopb, l=SW2] ++(0, 1.5) node[vcc]{3.3V};
-    \end{circuitikz}
+    \resizebox{0.95\linewidth}{!}{%
+    \begin{tikzpicture}
 
-    \vspace{0.5cm}
-    Figura 4-6. Circuito de prueba; actividad 3
-    \end{center}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|c|c|c|p{4.2cm}|}
-        \hline
-        \textbf{Estado del botón} & \textbf{Lectura} & \textbf{LED} & \textbf{Mensaje en consola} \\
-        \hline
-        No presionado (abierto) & 0 (pull-down) & Apagado & ``Push Button S2 en espera; '0' '' \\
-        \hline
-        Presionado (cerrado) & 1 (3.3V) & Encendido & ``Push Button S2 presionado; '1' '' \\
-        \hline
-    \end{tabular}
-    \caption{Tabla de control - Relación entre el estado del pulsador y las acciones del programa}
-    \label{tab:act3}
-\end{table}
-
-    \subsection*{Propuesta de solución}
-    El programa implementa un sistema donde un push button determina el estado de encendido o apagado de un LED, siguiendo el esquema eléctrico de la Figura 4-6, se configura el GPIO 0 como salida digital para controlar el LED, y el GPIO 12 como entrada digital con resistencia \texttt{PULL\_DOWN} interna y esta configuraciónes para que en estado de reposo (botón no presionado), la lectura del pin de entrada sea 0 lógico, ya que la resistencia lo mantiene conectado a GND. Cuando el usuario presiona el botón, se cierra el circuito a 3.3V por lo que se pasa a una lectura de nivel alto (1 lógico).
-
-    El programa evalúa continuamente el estado del pulsador dentro de un bucle infinito. Si detecta un nivel bajo (0), apaga el LED y muestra un mensaje en la terminal indicando que el botón está en espera. Si detecta un nivel alto (1), enciende el LED y muestra un mensaje de botón presionado. Se incluye un retardo de 500 ms después de cada lectura para estabilizar la señal, evitar efectos de rebote mecánico del botón y permitir la visualización ordenada de los mensajes en la consola.
-
-    \begin{center}
-    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
-        \node (start) [startstop] {Inicio};
-        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
-        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar GPIO0 como salida (LED)\\ GPIO12 como entrada con PULL\_DOWN};
-        \node (read) [process, below=1cm of config] {Leer \texttt{push\_S2.value()}};
-        \node (dec) [decision, below=1.2cm of read] {¿Valor == 0?};
-        \node (off) [io, left=2cm of dec, text width=3.5cm] {LED apagado\\ Imprimir: ``Botón en espera, '0''''};
-        \node (on) [io, right=2cm of dec, text width=3.5cm] {LED encendido\\ Imprimir: ``Botón presionado, '1''''};
-        \node (delay) [process, below=2cm of dec] {Esperar 500 ms};
-
-        \draw [arrow] (start) -- (import);
-        \draw [arrow] (import) -- (config);
-        \draw [arrow] (config) -- (read);
-        \draw [arrow] (read) -- (dec);
-        \draw [arrow] (dec) -- node[above] {Sí} (off);
-        \draw [arrow] (dec) -- node[above] {No} (on);
-        \draw [arrow] (off) |- (delay);
-        \draw [arrow] (on) |- (delay);
-        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
-    \end{tikzpicture}
-    \end{center}
-
-    El flujo de datos comienza importando los módulos necesarios y configurando dos terminales GPIO: el pin~0 como salida digital para controlar el LED, y el pin~12 como entrada digital con resistencia \texttt{PULL\_DOWN} interna para leer el estado del pulsador. 
-    
-    Después el programa ingresa en un bucle infinito que lee continuamente el estado del botón mediante \texttt{push\_S2.value()}. Si se detecta un nivel lógico bajo (valor == 0), que corresponde al botón no presionado (estado de espera), el flujo activa la rama izquierda apagando el LED y mostrando el mensaje ``Push Button S2 en espera; lectura: '0' '' en consola. Si se detecta un nivel lógico alto (valor == 1), que indica que el botón ha sido presionado, el flujo activa la rama derecha encendiendo el LED y mostrando el mensaje ``Push Button S2 presionado; lectura: '1' ''y tras ejecutar cualquiera de las dos ramas, se aplica un retardo de 500 milisegundos para evitar rebotes mecánicos y espaciar los mensajes en consola, antes de retornar al inicio del ciclo de lectura.
-
-    \textbf{Desarrollo}
-
-
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3]{Code/act3.py}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_2.jpg}
-        \caption{Estado de espera - Botón no presionado. El LED permanece apagado y la consola muestra lecturas: '0'.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3.jpg}
-        \caption{Estado activado - Botón presionado. El LED se enciende y la consola muestra lecturas: '1'.}
-    \end{figure}
-
-    \subsection*{Análisis de resultados}
-    El programa cumple satisfactoriamente con el objetivo de controlar un LED mediante un pulsador, y esto fue gracias a la configuración del GPIO 12 con resistencia \texttt{PULL\_DOWN} interna que resulta fundamental para mantener una lectura estable en 0 lógico cuando el botón no está presionado. Al presionar el botón, el circuito se cierra a 3.3V y la lectura cambia inmediatamente a 1 lógico, activando el LED. 
-    
-    Otra cosa fundamental fue el retardo de 500 ms después de cada lectura, pues cumple una doble función: actúa como filtro antirrebote amortiguando las oscilaciones mecánicas del contacto y espacia los mensajes en la consola para una visualización clara. 
-    \section*{Actividad 4}
-    Usando el push button S1, tal como se ha mencionado previamente está conectado para operar en la configuración \textit{PULL\_UP}; modificar el estado de la GPIO4, GPIO5, GPIO6 y GPIO7 de acuerdo a la entrada indicada en la tabla 4.2.
-
-    \vspace{0.5cm}
-
-    \begin{center}
-    \begin{circuitikz}[american, thick, scale=0.85, transform shape]
-        \picoboard
-        
-        % 4 LEDs en GP4, GP5, GP6, GP7 (Pines 6, 7, 9, 10)
-        \draw[green!60!black, thick] (P6) -- ++(-4.0,0) to[R, l_=$220\Omega$] ++(-1.5,0) to[led] ++(0,-1.5) node[ground]{GND};
-        \draw[green!60!black, thick] (P7) -- ++(-3.0,0) to[R, l_=$220\Omega$] ++(-1.5,0) to[led] ++(0,-1.5) node[ground]{GND};
-        \draw[green!60!black, thick] (P9) -- ++(-2.0,0) to[R, l_=$220\Omega$] ++(-1.5,0) to[led] ++(0,-1.5) node[ground]{GND};
-        \draw[green!60!black, thick] (P10) -- ++(-1.0,0) to[R, l_=$220\Omega$] ++(-1.5,0) to[led] ++(0,-1.5) node[ground]{GND};
-        
-        % Push button en GP12 (Pin 16)
-        \draw[green!60!black, thick] (P16) -- ++(-2.5,0) coordinate (N16);
-        \draw (N16) to[nopb, l=S1] ++(0,-1.5) node[ground]{GND};
-        
-        % Buzzer en GP22 (Pin 29) y GP21 (Pin 27)
-        \draw[thick] (6.5, -3) rectangle (8.5, -6);
-        \draw[thick] (8.5, -3) -- (9.5, -2) -- (9.5, -7) -- (8.5, -6);
-        \node[above, font=\small\sffamily] at (7.5, -2.5) {Buzzer Activo};
-        \node[right, font=\small\sffamily] at (6.5, -4) {+};
-        \node[right, font=\small\sffamily] at (6.5, -5) {-};
-        \node[align=center, font=\small\sffamily] at (7.5, -4.5) {SPEAKER};
-        
-        % Conexiones al Buzzer
-        \draw[green!60!black, thick] (P29) -- ++(1.5,0) |- (6.5, -4);
-        \node[above, font=\tiny, text=black] at (5.5, -4) {1};
-        
-        \draw[green!60!black, thick] (P27) -- ++(1,0) coordinate (GNDBuzzer) |- (6.5, -5);
-        \node[above, font=\tiny, text=black] at (5.5, -5) {2};
-        \draw (GNDBuzzer) node[ground]{};
-        
-    \end{circuitikz}
-
-    \vspace{0.5cm}
-    Figura 4-7. Esquemático; actividad 4
-    \end{center}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=1.0\textwidth]{img/Actividad3/tabla.png}
-        \caption{Estado activado - Botón S1 presionado. Los LEDs y el zumbador se encienden y la consola muestra lecturas: '0'.}
-    \end{figure}
-
-    \subsection*{Propuesta de solución}
-    Este programa es mu similar a la Actividad 3, pues tiene una lógica muy pareceida con la diferencia de que implementa estados con cuatro LEDs (GPIO4, GPIO5, GPIO6, GPIO7) y un zumbador (buzzer) en GPIO22, siguiendo el esquema eléctrico de la Figura 4-7. La configuración \texttt{PULL\_UP} es fundamental pues mantiene el pin de entrada en nivel alto (1 lógico) cuando el botón no está presionado, y al presionarlo se cierra el circuito a GND, llevando la lectura a nivel bajo (0 lógico).
-
-    Para optimizar la estructura del código y evitar repeticiones, se definen dos funciones: \texttt{apagar\_salidas()} que pone en 0 todos los actuadores, y \texttt{encender\_salidas()} que los pone en 1. Dentro del bucle infinito, el programa evalúa continuamente el estado del pulsador mediante \texttt{S1.value()}. Si detecta un nivel alto (1), correspondiente al botón liberado, ejecuta la función de apagado y muestra un mensaje indicando que las salidas están en bajo. Si detecta un nivel bajo (0), correspondiente al botón presionado, ejecuta la función de encendido y muestra el mensaje correspondiente. Se incluye un retardo de 200 ms para estabilizar la lectura y evitar rebotes mecánicos.
-
-    \begin{center}
-    \begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
-        \node (start) [startstop] {Inicio};
-        \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{time}};
-        \node (config) [io, below=1cm of import, text width=4.5cm] {Configurar S1 (GPIO11) como entrada con PULL\_UP\\ Configurar GPIO4-7 y GPIO22 como salidas};
-        \node (def1) [process, below=1cm of config, text width=4cm] {Definir función \texttt{apagar\_salidas()}};
-        \node (def2) [process, below=1cm of def1, text width=4cm] {Definir función \texttt{encender\_salidas()}};
-        \node (read) [process, below=1cm of def2] {Leer \texttt{S1.value()}};
-        \node (dec) [decision, below=1.2cm of read] {¿Valor == 1?};
-        \node (off) [io, left=2cm of dec, text width=3.5cm] {Ejecutar \texttt{apagar\_salidas()}\\ Imprimir: ``Botón liberado, '1' ''};
-        \node (on) [io, right=2cm of dec, text width=3.5cm] {Ejecutar \texttt{encender\_salidas()}\\ Imprimir: ``Botón presionado, '0' ''};
-        \node (delay) [process, below=2cm of dec] {Esperar 200 ms};
-
-        \draw [arrow] (start) -- (import);
-        \draw [arrow] (import) -- (config);
-        \draw [arrow] (config) -- (def1);
-        \draw [arrow] (def1) -- (def2);
-        \draw [arrow] (def2) -- (read);
-        \draw [arrow] (read) -- (dec);
-        \draw [arrow] (dec) -- node[above] {Sí} (off);
-        \draw [arrow] (dec) -- node[above] {No} (on);
-        \draw [arrow] (off) |- (delay);
-        \draw [arrow] (on) |- (delay);
-        \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=1cm]on.east) |- (read.east);
-    \end{tikzpicture}
-    \end{center}
-
-    El flujo de datos comienza importando los módulos necesarios y configurando los pines: GPIO11 como entrada digital con resistencia \texttt{PULL\_UP} interna para leer el estado del pulsador S1, y los pines GPIO4, GPIO5, GPIO6, GPIO7 y GPIO22 como salidas digitales para controlar los LEDs y el zumbador respectivamente y se definen dos funciones para la lógica de activación y desactivación de todos los actuadores, lo que permite un código más limpio y mantenible.
-
-    Después el programa ingresa en un bucle infinito que lee continuamente el estado del botón mediante \texttt{S1.value()}. Debido a la configuración \texttt{PULL\_UP}, si se detecta un nivel lógico alto (valor == 1), que corresponde al botón liberado, el flujo activa la rama izquierda ejecutando \texttt{apagar\_salidas()} y mostrando el mensaje ``Push button S1 liberado, '1'; Salidas en bajo'' en consola. Si se detecta un nivel lógico bajo (valor == 0), que indica que el botón ha sido presionado, el flujo activa la rama derecha ejecutando \texttt{encender\_salidas()} y mostrando el mensaje ``Push button S1 presionado, '0'; Salidas en alto''. Tras ejecutar cualquiera de las dos ramas, se aplica un retardo de 200 milisegundos para evitar rebotes mecánicos y espaciar los mensajes en consola, antes de retornar al inicio del ciclo de lectura.
-
-    \textbf{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/act4.py}
-
-
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth]{img/Actividad4/Act4.jpg}
-        \caption{Estado de reposo - Botón S1 liberado. Los LEDs y el zumbador permanecen apagados y la consola muestra lecturas: '1'.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth]{img/Actividad4/Act4_2.jpg}
-        \caption{Estado activado - Botón S1 presionado. Los LEDs y el zumbador se encienden y la consola muestra lecturas: '0'.}
-    \end{figure}
-
-    \subsection*{Análisis de resultados}
-    El programa cumple satisfactoriamente con el objetivo de controlar múltiples actuadores (cuatro LEDs y un zumbador) mediante el push bottom y la configuración del GPIO11 con resistencia \texttt{PULL\_UP} interna para mantener una lectura estable en 1 lógico cuando el botón no está presionado y al presionar el botón, el circuito se cierra a GND y la lectura cambia inmediatamente a 0 lógico, activando todas las salidas simultáneamente mediante las funciones definidas.
-
-    La implementación de funciones (\texttt{apagar\_salidas()} y \texttt{encender\_salidas()}) optimiza la estructura del código al encapsular la lógica de control de los cinco actuadores, lo que hace más legible el código
-    Como en la actividad pasada el retardo de 200 ms después de cada lectura cumple una doble función ya que actúa como filtro antirrebote amortiguando las oscilaciones mecánicas del contacto y espacia los mensajes en la consola para una visualización clara cumpliendo con lo establecido en la tabla de control.
-
-
-    \newpage
-    \section*{Actividad 5}
-    Realizar el programa que genere las acciones solicitadas en la tabla 4-3; el circuito utilizado corresponde al indicado en la figura 4-2.
-
-    \vspace{0.5cm}
-
-    {
-    % Aumentar el espacio entre filas para que no se vean amontonadas
-    \renewcommand{\arraystretch}{1.3}
-    \footnotesize\setlength{\tabcolsep}{2pt}
-    \begin{longtable}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-    \hline
-    \multicolumn{5}{|c|}{\cellcolor{headblue}\textbf{Entradas GPIO}} & \multicolumn{9}{c|}{\cellcolor{headblue}\textbf{Salidas GPIO}} \\ \hline
-    \cellcolor{subheadblue}\textbf{12} & \cellcolor{subheadblue}\textbf{11} & \cellcolor{subheadblue}\textbf{10} & \cellcolor{subheadblue}\textbf{9} & \cellcolor{subheadblue}\textbf{8} & \cellcolor{subheadblue}\textbf{7} & \cellcolor{subheadblue}\textbf{6} & \cellcolor{subheadblue}\textbf{5} & \cellcolor{subheadblue}\textbf{4} & \cellcolor{subheadblue}\textbf{3} & \cellcolor{subheadblue}\textbf{2} & \cellcolor{subheadblue}\textbf{1} & \cellcolor{subheadblue}\textbf{0} & \cellcolor{subheadblue}\textbf{22} \\ \hline
-    \cellcolor{subheadblue}\textbf{S2} & \cellcolor{subheadblue}\textbf{S1} & \cellcolor{subheadblue}\textbf{SW1\_1} & \cellcolor{subheadblue}\textbf{SW1\_2} & \cellcolor{subheadblue}\textbf{SW1\_3} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{BUZZ} \\ \hline
-    \endfirsthead
-    \hline
-    \multicolumn{5}{|c|}{\cellcolor{headblue}\textbf{Entradas GPIO}} & \multicolumn{9}{c|}{\cellcolor{headblue}\textbf{Salidas GPIO}} \\ \hline
-    \cellcolor{subheadblue}\textbf{12} & \cellcolor{subheadblue}\textbf{11} & \cellcolor{subheadblue}\textbf{10} & \cellcolor{subheadblue}\textbf{9} & \cellcolor{subheadblue}\textbf{8} & \cellcolor{subheadblue}\textbf{7} & \cellcolor{subheadblue}\textbf{6} & \cellcolor{subheadblue}\textbf{5} & \cellcolor{subheadblue}\textbf{4} & \cellcolor{subheadblue}\textbf{3} & \cellcolor{subheadblue}\textbf{2} & \cellcolor{subheadblue}\textbf{1} & \cellcolor{subheadblue}\textbf{0} & \cellcolor{subheadblue}\textbf{22} \\ \hline
-    \cellcolor{subheadblue}\textbf{S2} & \cellcolor{subheadblue}\textbf{S1} & \cellcolor{subheadblue}\textbf{SW1\_1} & \cellcolor{subheadblue}\textbf{SW1\_2} & \cellcolor{subheadblue}\textbf{SW1\_3} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{LED} & \cellcolor{subheadblue}\textbf{BUZZ} \\ \hline
-    \endhead
-    \rowcolor{datablockblue}
-    0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-    0 & 1 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 \\ \hline
-    0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 0 \\ \hline
-    0 & 1 & 0 & 1 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 \\ \hline
-    \rowcolor{datablockblue}
-    0 & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ \hline
-    \rowcolor{datablockblue}
-    0 & 1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ \hline
-    \rowcolor{datablockblue}
-    0 & 1 & 1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ \hline
-    \rowcolor{datablockblue}
-    0 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \rowcolor{datablockblue}
-    \multicolumn{5}{|c|}{\cellcolor{datablockblue}} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ \hline
-    0 & 0 & 1 & 1 & 1 & \multicolumn{8}{c|}{Contador ascendente 0 -- 9 (GPIO3, GPIO4, GPIO5, GPIO6)} & 0 \\ \hline
-    1 & 1 & 1 & 1 & 1 & \multicolumn{8}{c|}{Contador descendente 0 -- 9 (GPIO3, GPIO4, GPIO5, GPIO6)} & 0 \\ \hline
-    1 & 0 & 1 & 1 & 1 & \multicolumn{8}{c|}{Notas musicales} & 1 \\ \hline
-    \end{longtable}
-    }
-
-    \subsection*{Propuesta de solución}
-
-    Para la solución es necesario desglosar por partes los estados codificados en la tabla, esto con la finalidad de conocer que secuencias y funcionalidades se deben implementar para cumplir con cada uno de los estados.
-
-    Antes de describir cada estado es importante mencionar los pines que sera de entrada así como su respectivo identificador. 
-
-    \begin{itemize}
-        \item GPIO12: S2 (Push Button)
-        \item GPIO11: S1 (Push Button)
-        \item GPIO10: SW1\_1 (DIP Switch)
-        \item GPIO9: SW1\_2 (DIP Switch)
-        \item GPIO8: SW1\_3 (DIP Switch)
-    \end{itemize}
-
-    \textbf{Estado: \texttt{01000}}
-
-    En este estado el programa debe mantener todas las salidas en bajo, para esto se emplea una función llamada \texttt{set\_leds}  la cuál recibe un numero de 8 bits apagando los leds correspondientes a los bits del número. Una vez asignada se llama a la función \texttt{beep} la cual enciende o apaga el buzzer dependiendo del valor que se le pase, en este caso se le asigna un valor de 0 para apagar el buzzer, posteriormente se realiza un retardo de 0.1 [ms]
-
-    \textbf{Estado: \texttt{01001}}
-
-    En este estado el programa debe encender todos los LEDs, para esto se emplea la función \texttt{set\_leds} con un valor de 255 (0b11111111) para encender los 8 LEDs, posteriormente se llama a la función \texttt{beep} con un valor de 0 para mantener el buzzer apagado y se realiza un retardo de 0.1 [ms]
-
-    \textbf{Estado: \texttt{01010}}
-
-    En este estado el programa debe encender los LEDs de manera alternada, para esto se emplea la función \texttt{set\_leds} con un valor de (0b10101010) para encender los LEDs en posiciones pares y apagar los LEDs en posiciones impares, posteriormente se llama a la función \texttt{beep} con un valor de 0 para mantener el buzzer apagado y se realiza un retardo de 0.1 [s]
-
-    \textbf{Estado: \texttt{01011}}
-
-    Para este estado el programa debe encender los LEDs de manera alternada, para esto se emplea la función \texttt{set\_leds} con un valor de (0b01010101) para encender los LEDs en posiciones impares y apagar los LEDs en posiciones pares (posiciones inversas respecto al estado anterior)
-
-    \textbf{Estado: \texttt{01100}}
-
-    Se tiene que hacer una secuencia que se realice un desplazamiento a la izquierda, de forma que cuando llegue al final suene el buzzer y se apaguen los leds. Para esto de realiza una iteración de los indices de forma descendente donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende un solo led haciendo uso de la máscara \texttt{set\_leds(1 << i)}, se apaga el buzzer y se realiza un retardo de 0.15 [s]. Al finalizar la iteración se enciende el buzzer y se apagan los leds, posteriormente se realiza un retardo de 0.2 [s]
-
-    \textbf{Estado: \texttt{01101}}
-
-    Para este estado se tiene que hacer una secuencia que vaya de los extremos al centro, para esto se vuelve a realizar una iteración de los indices de forma descendente donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende yn único led en la posición \texttt{i} creando asi un efecto de desplazamiento desde los extremos hacia el centro con una pausa de 0.15 [s].
-
-    El buzzer solo se activa cuando \texttt{i = 6} mediante la función \texttt{beep(1)}, en el resto de las iteraciones el buzzer se mantiene apagado con \texttt{beep(0)}.
-
-    \textbf{Estado: \texttt{01110}}
-
-    En este estado se tiene que hacer una secuencia que vaya del centro a los extremos, para esto se declara una lista con el orden ya definido de los indices a encender, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se enciende un único led en la posición \texttt{i} creando asi un efecto de desplazamiento desde el centro hacia los extremos con una pausa de 0.2 [s].
-
-    Una vez finaliza la primer iteración se invierte el orden de los indices para crear el efecto de desplazamiento desde los extremos hacia el centro, esta iteración se realiza de la misma forma que la anterior con una pausa de 0.2 [s]. Donde para el último valor de regreso (\texttt{128}) se activa el buzzer con \texttt{beep(1)} durante 0.2 [s].
-
-    \textbf{Estado: \texttt{01111}}
-
-    La secuencia que corresponde a este estado es de los extremos hacia el centro y viceversa, donde suene un pitido al llegar a los extremos, para esto se declara una lista con el orden ya definido de los indices a encender, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se obtiene el indice (\texttt{i}) así como el valor del led \texttt{val} donde se actualiza el estado de los LEDs con \texttt{set\_leds(val)} creando asi un efecto de desplazamiento desde los extremos hacia el centro con una pausa de 0.15 [s]. Donde por medio de una condicional se detecta el último elemento el cual coincide de el regreso de los extremos para activar el buzzer con \texttt{beep(1)}, finalmente cuando termina la secuencia se apaga el buzzer.
-
-    \textbf{Estado: \texttt{00111}}
-
-    Para este estado se tiene que hacer un contador ascendente de 0 a 9, para esto se realiza una iteración de los números del 0 al 9 donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se actualiza el estado de los LEDs con el valor del contador (\texttt{set\_leds(num << 3)}), esto para comenzar a visualizarse en el LED 3, creando asi un efecto de contador ascendente con una pausa de 0.5 [s].
-
-    \textbf{Estado: \texttt{11111}}
-
-    Se tiene que hacer un contador descendente de 9 a 0, para esto se realiza una iteración de los números del 9 al 0 donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se actualiza el estado de los LEDs con el valor del contador (\texttt{set\_leds(num << 3)}) creando asi un efecto de contador descendente con una pausa de 0.5 [s].
-
-    \textbf{Estado: \texttt{10111}}
-
-    Para este estado se tiene que hacer una secuencia de notas musicales, para esto se declara una lista con las frecuencias de las notas musicales a reproducir, posteriormente se realiza una iteración sobre esta lista donde en cada paso si se cambio de estado se detiene la secuencia. En caso contrario por cada iteración se reproduce la nota correspondiente a la nota correspondiente a ese indice en la lista por medio de la función \texttt{tocar\_nota} la cual recibe la frecuencia de la nota a reproducir, posteriormente se realiza un retardo de 0.4 [s] para dar tiempo a que se escuche la nota antes de reproducir la siguiente. Cuando finaliza la iteración se apaga el buzzer con \texttt{beep(0)} y se realiza un retardo de 0.2 [s] antes de volver a iniciar la secuencia de notas musicales.
-
-    \textbf{Estado: Caso por Defecto}
-
-    Se considera como caso por defecto cualquier estado que no corresponda a los estados previamente descritos, para este caso el programa debe mantener todas las salidas en bajo, para esto se emplea la función \texttt{set\_leds} con un valor de 0 para apagar todos los LEDs, posteriormente se llama a la función \texttt{beep} con un valor de 0 para apagar el buzzer, finalmente se realiza un retardo de 0.1 [s].
-
-    Dado que se tiene varios estados, para implementar el diagrama de flujo correspondiente se optó por implementar una simplificación para cada estado, esto con la finalidad de mantener un código limpio y organizado, además de facilitar la lectura y comprensión del código. De forma que se dividió en dos partes el diagrama de flujo, la primera parte corresponde a la lectura de la configuración inicial y la lógica  de evaluación de cada estado.
-
-    \begin{figure}[H]
-        \centering
-        \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
-
-        % Estilos proporcionados
+        % Estilos para las etiquetas tipo bandera
         \tikzset{
-            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
-            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
-            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
-            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
-            arrow/.style={thick,->,>=stealth}
+            flag left/.style={
+                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            },
+            flag right/.style={
+                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            }
         }
 
-        % Nodos
-        \node (start) [startstop] {Inicio Evaluación de Entradas};
-        
-        \node (dec1) [decision, below=1cm of start, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 0)?};
-        \node (act1) [io, right=1.5cm of dec1, text width=3.5cm] {\texttt{set\_leds(0)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
-        
-        \node (dec2) [decision, below=1cm of dec1, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 1)?};
-        \node (act2) [io, right=1.5cm of dec2, text width=3.5cm] {\texttt{set\_leds(0b11111111)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
-        
-        \node (dec3) [decision, below=1cm of dec2, text width=3cm] {¿entradas == \\(0, 1, 1, 0, 0)?};
-        \node (act3) [process, right=1.5cm of dec3, text width=3.8cm] {Bucle: Desplazamiento a la derecha con LEDs\\ Finaliza con \texttt{beep(1)}};
+        % --- RASPBERRY PI PICO ---
+        \picoboard
 
-        \node (dots) [process, below=1cm of dec3, fill=gray!20, text width=3.5cm] {Evaluar secuencias intermedias (\dots)};
-        
-        \node (decN) [decision, below=1cm of dots, text width=3cm] {¿entradas == \\(1, 0, 1, 1, 1)?};
-        \node (actN) [process, right=1.5cm of decN, text width=3.8cm] {Bucle: \texttt{tocar\_nota()}\\ Finaliza con \texttt{beep(0)}};
+        % Conexiones de la Pico (Lado Derecho)
+        % GP21 (Pin 27) es el índice 14 en la macro -> y = -14*0.45 = -6.3
+        \node[flag right=green, anchor=west] at (4.4, -6.3) {Vo SERVO};
 
-        \node (actElse) [io, below=1cm of decN, text width=3.5cm] {Estado por defecto:\\ \texttt{set\_leds(0)}\\ \texttt{beep(0)}};
 
-        \node (end) [startstop, right=6.5cm of dots] {Fin de la iteración};
+        % --- SERVOMOTOR ---
+        % Bloque principal
+        \draw[thick] (-5, -3.5) rectangle (-3, -5.5);
+        \node[font=\sffamily] at (-4, -4) {Servo};
 
-        % Flechas
-        \draw [arrow] (start) -- (dec1);
-        
-        \draw [arrow] (dec1) -- node[above] {Sí} (act1);
-        \draw [arrow] (dec1) -- node[left] {No} (dec2);
-        
-        \draw [arrow] (dec2) -- node[above] {Sí} (act2);
-        \draw [arrow] (dec2) -- node[left] {No} (dec3);
-        
-        \draw [arrow] (dec3) -- node[above] {Sí} (act3);
-        \draw [arrow] (dec3) -- node[left] {No} (dots);
-        
-        \draw [arrow] (dots) -- (decN);
-        
-        \draw [arrow] (decN) -- node[above] {Sí} (actN);
-        \draw [arrow] (decN) -- node[left] {No (else)} (actElse);
+        % Pines del Servo (Lado Izquierdo)
+        \node[right, font=\tiny\sffamily] at (-5, -4.0) {+};
+        \node[right, font=\tiny\sffamily] at (-5, -4.6) {pulse};
+        \node[right, font=\tiny\sffamily] at (-5, -5.2) {-};
 
-        % Conexiones al final
-        \draw [arrow] (act1.east) -- ++(3.2,0) |- (end.east);
-        \draw [arrow] (act2.east) -- ++(1.3,0) -| (end.north);
-        \draw [arrow] (act3.east) -- ++(0.5,0) -| (end.north);
-        \draw [arrow] (actN.east) -- ++(0.5,0) -| (end.south);
-        \draw [arrow] (actElse.east) -- ++(0.5,0) |- (end.west);
-        \end{tikzpicture}  
-        \caption{Diagrama de flujo simplificado para la evaluación de estados en la Actividad 5 Pt. 1}
-    \end{figure}
+        % Conexiones del Servo
+        % + (5V)
+        \draw[thick, green!60!black] (-5, -4.0) -- (-6, -4.0) -- (-6, -2.8);
+        \draw[thick, green!60!black] (-6.3, -2.8) -- (-5.7, -2.8);
+        \node[above, font=\small\sffamily, text=black] at (-6, -2.8) {5V};
 
-    \begin{figure}[H]
-        \centering
-        \begin{tikzpicture}[node distance=1.8cm, scale=0.75, transform shape, every node/.style={font=\small}]
+        % pulse (Vo SERVO)
+        \draw[thick, green!60!black] (-5, -4.6) -- (-6, -4.6);
+        \node[flag left=green, anchor=east] at (-6, -4.6) {Vo SERVO};
 
-            % Estilos proporcionados
-            \tikzset{
-                startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
-                process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
-                decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
-                io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
-                arrow/.style={thick,->,>=stealth}
-            }
+        % - (GND)
+        \draw[thick, green!60!black] (-5, -5.2) -- (-6, -5.2) -- (-6, -6.2);
+        % Símbolo GND
+        \draw[thick, green!60!black] (-6.4, -6.2) -- (-5.6, -6.2);
+        \draw[thick, green!60!black] (-6.2, -6.3) -- (-5.8, -6.3);
+        \draw[thick, green!60!black] (-6.1, -6.4) -- (-5.9, -6.4);
 
-            % Nodos
-            \node (start) [startstop] {Inicio Evaluación de Entradas};
-            
-            \node (dec1) [decision, below=1cm of start, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 0)?};
-            \node (act1) [io, right=1.5cm of dec1, text width=3.5cm] {\texttt{set\_leds(0)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
-            
-            \node (dec2) [decision, below=1cm of dec1, text width=3cm] {¿entradas == \\(0, 1, 0, 0, 1)?};
-            \node (act2) [io, right=1.5cm of dec2, text width=3.5cm] {\texttt{set\_leds(0b11111111)}\\ \texttt{beep(0)}\\ \texttt{time.sleep(0.1)}};
-            
-            \node (dec3) [decision, below=1cm of dec2, text width=3cm] {¿entradas == \\(0, 1, 1, 0, 0)?};
-            \node (act3) [process, right=1.5cm of dec3, text width=3.8cm] {Bucle: Desplazamiento a la derecha con LEDs\\ Finaliza con \texttt{beep(1)}};
+        % Brazo del Servomotor (Lado Derecho)
+        \begin{scope}[shift={(-3, -4.5)}, rotate=-20]
+            % Contorno del brazo
+            \draw[thick, fill=white] (0, 0.2) -- (1, 0.15) arc (90:-90:0.15) -- (0, -0.2) -- cycle;
+            % Círculo base
+            \draw[thick, fill=white] (0, 0) circle (0.25);
+            % Agujero central
+            \draw[thick, fill=black] (0, 0) circle (0.05);
+            % Agujero del extremo
+            \draw[thick, fill=white] (1, 0) circle (0.05);
+        \end{scope}
 
-            \node (dots) [process, below=1cm of dec3, fill=gray!20, text width=3.5cm] {Evaluar secuencias intermedias (\dots)};
-            
-            \node (decN) [decision, below=1cm of dots, text width=3cm] {¿entradas == \\(1, 0, 1, 1, 1)?};
-            \node (actN) [process, right=1.5cm of decN, text width=3.8cm] {Bucle: \texttt{tocar\_nota()}\\ Finaliza con \texttt{beep(0)}};
+        % Etiqueta J1
+        \node[font=\sffamily] at (-1.5, -3.5) {J1};
 
-            \node (actElse) [io, below=1cm of decN, text width=3.5cm] {Estado por defecto:\\ \texttt{set\_leds(0)}\\ \texttt{beep(0)}};
+        % Título
+        \node[font=\sffamily] at (-1, -11) {Figura 5-12. Esquemático control del servomotor};
 
-            \node (end) [startstop, right=6.5cm of dots] {Fin de la iteración};
+    \end{tikzpicture}
+    }
+    \end{center}
 
-            % Flechas
-            \draw [arrow] (start) -- (dec1);
-            
-            \draw [arrow] (dec1) -- node[above] {Sí} (act1);
-            \draw [arrow] (dec1) -- node[left] {No} (dec2);
-            
-            \draw [arrow] (dec2) -- node[above] {Sí} (act2);
-            \draw [arrow] (dec2) -- node[left] {No} (dec3);
-            
-            \draw [arrow] (dec3) -- node[above] {Sí} (act3);
-            \draw [arrow] (dec3) -- node[left] {No} (dots);
-            
-            \draw [arrow] (dots) -- (decN);
-            
-            \draw [arrow] (decN) -- node[above] {Sí} (actN);
-            \draw [arrow] (decN) -- node[left] {No (else)} (actElse);
+    \begin{table}[ht]
+    \centering
+        \renewcommand{\arraystretch}{1.2}
+        \setlength{\arrayrulewidth}{1pt}
+        \arrayrulecolor{white}
+        \begin{tabular}{|c|c|c|c|c|c|}
+            \hline
+            \rowcolor{headerbg}
+            \multicolumn{5}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+            \hline
+            \rowcolor{subheaderbg}
+            \textbf{S2} & \textbf{S1} & \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{SERVOMOTOR} \\
+            \rowcolor{subheaderbg}
+            \textit{GPIO12} & \textit{GPIO11} & \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO21} \\
+            \hline
+            \rowcolor{white}
+            0 & 1 & 0 & 0 & 0 & \textbf{PARO} \\
+            \hline
+            \rowcolor{rowbg}
+            0 & 1 & 0 & 0 & 1 & \textbf{SERVO A 0$^\circ$} \\
+            \hline
+            \rowcolor{white}
+            0 & 1 & 0 & 1 & 0 & \textbf{SERVO A 45$^\circ$} \\
+            \hline
+            \rowcolor{rowbg}
+            0 & 1 & 1 & 0 & 0 & \textbf{SERVO A 90$^\circ$} \\
+            \hline
+            \rowcolor{white}
+            0 & 0 & 0 & 0 & 0 & \textbf{SERVO A 135$^\circ$} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 1 & 0 & 0 & 0 & \textbf{SERVO A 180$^\circ$} \\
+            \hline
+        \end{tabular}
+        \caption{Tabla 5-3. Controlador; actividad 3}
+    \end{table}
 
-            % Conexiones al final
-            \draw [arrow] (act1.east) -- ++(3.2,0) |- (end.east);
-            \draw [arrow] (act2.east) -- ++(1.3,0) -| (end.north);
-            \draw [arrow] (act3.east) -- ++(0.5,0) -| (end.north);
-            \draw [arrow] (actN.east) -- ++(0.5,0) -| (end.south);
-            \draw [arrow] (actElse.east) -- ++(0.5,0) |- (end.west);
-        \end{tikzpicture}
-        \caption{Diagrama de flujo simplificado para la evaluación de estados en la Actividad 5 Pt. 2}
-    \end{figure}
+    \newpage
+
+    \subsection*{Propuesta de solución}
+
+    \textbf{Desarrollo}
+
+
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3]{Code/Act3.py}
+
+    \subsection*{Análisis de resultados}
+
+
+    \newpage
+    \section*{Actividad 4}
+
+    Realizar un programa, de manera que controle la posición del servo de forma automática, iniciando en la posición de 0o hasta 180º y viceversa.
+
+
+    \subsection*{Propuesta de solución}
+
 
     \newpage
 
     \textbf{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5]{Code/act5.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/Act4.py}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_4.jpg}
-        \caption{Estado \texttt{01010} - Desplazamiento a la derecha con LEDs}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_5.jpg}
-        \caption{Estado \texttt{01011} - Desplazamiento a la izquierda con LEDs}
-    \end{figure}
-
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5.jpg}
-        \caption{Estado \texttt{01101} - Secuencia de extremos hacia el centro }
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_3.jpg}
-        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 1}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_6.jpg}
-        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 2}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_7.jpg}
-        \caption{Estado \texttt{01111} - Secuencia de extremos hacia el centro y viceversa - Pt. 3}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_9.jpg}
-        \caption{Estado \texttt{00111} - Contador ascendente de 0 a 9 - Pt. 1}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_10.jpg}
-        \caption{Estado \texttt{00111} - Contador ascendente de 0 a 9 - Pt. 2}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_11.jpg}
-        \caption{Estado \texttt{11111} - Contador descendente de 9 a 0}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_13.jpg}
-        \caption{Estado \texttt{01110} - Secuencia del centro hacia los extremos - Pt. 1}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_14.jpg}
-        \caption{Estado \texttt{01110} - Secuencia del centro hacia los extremos - Pt. 2}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_15.jpg}
-        \caption{Estado \texttt{01101} - Secuencia de extremos hacia el centro.}
-    \end{figure}
 
     \textbf{Análisis de resultados}
 
-    A partir de los resultados obtenidos se pudo comprobar que cada una de las secuencias y funcionalidades implementadas correspondían a los estados codificados en la tabla, verifican así el correcto funcionamiento de las funciones auxiliares implementadas como \texttt{beep}, \texttt{set\_leds}, \texttt{tocar\_nota} para el control de los LEDs y el buzzer, así como la correcta lectura de las entradas por medio de los GPIOs. Además, se pudo observar que la implementación de retardos adecuados permitió visualizar de mejor manera las secuencias de LEDs y escuchar claramente las notas musicales, lo cual es fundamental para la correcta interpretación de cada estado.
-
-    De forma que por medio de estructuras condicionales y bucles se logró  implementar los estados con sus respectivas secuencias y funcionalidades, demostrando así la funcionalidad de los puertos GPIO para el control de dispositivos como los LEDs y el buzzer.
 
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} Mediante la realización de la práctica se pudo comprender el control de las terminales del microprocessor de la Raspberry Pi Pico por medio de los puertos GPIO en modalidad tanto de entrada como de salida. Al implementar múltiples actividades controlando el encendido de leds, así como la lectura de push buttons y dip switches, se pudo entender la importancia de las resistencias pull-up internas para garantizar lecturas estables. Por otro lado se pudo observar cómo las estructuras condicionales y los bucles permiten generar respuestas en tiempo real basadas en el estado de las entradas, demostrando así la capacidad de la Raspberry Pi Pico para manejar múltiples actuadores simultáneamente.
+        \item \textbf{Espinoza Matamoros Percival Ulises:} 
         
-        Adicionalmente el implementarlo mediante código en microPython permitió comprender la interacción entre el software y el hardware, obteniendo bases solidas para futuras prácticas y proyectos que involucren el control de dispositivos por medio de los puertos GPIO.
-        
-        \item \textbf{Flores Colin Victor Jaziel:}
-        En esta cuarta práctica de laboratorio se cumplió satisfactoriamente el objetivo de controlar acciones mediante las terminales GPIO de la Raspberry Pi Pico en modalidades de entrada y salida. Implementar la lectura del interruptor, el encendido condicional del LED, el uso de resistencias pull-up internas y la secuencia de múltiples LEDs con buzzer permitió comprender cómo las estructuras condicionales y los bucles se combinan con el manejo del hardware para generar respuestas en tiempo real.
-        
-        Todo esto fue posible gracias a las resistencias internas PULL-UP Y PULL-DOWN que garantizaron lecturas estables como si fuesen filtros antirrebote. Vincular directamente el estado de entrada con la salida demostró la base del control de lazo abierto. Para finalizar esta práctica me ayudó a comprender la importancia de la interacción de las señales de entrada y salida en la Raspberry que tiene la capacudad de manejar y cordinar diferentes actuadores a la vez.
 
+        \item \textbf{Flores Colin Victor Jaziel:}
 
 
         \item \textbf{Lara Hernandez Angel Husiel:}
-
-        Implementar la lectura del interruptor, el encendido condicional del LED, el uso de resistencias pull-up internas con el push button y la secuencia de multiples LEDs con buzzer me sirvio mucho para entender como las estructuras condicionales y los bucles se combinan con el sondeo periodico del hardware para generar respuestas predecibles en tiempo real. Tambien vi que vincular directamente el estado de una entrada con el de una salida es la base del control de lazo abierto, y que agregar retardos adecuados estabiliza las lecturas sin saturar el procesador. En resumen, esta practica me dio bases muy solidas para entender como se implementa la interaccion entrada-salida en un microcontrolador, pasando de la simple lectura de un sensor hasta el control simultaneo de varios actuadores.
 
     \end{itemize}
 
