@@ -407,7 +407,7 @@
 
 
     \begin{center}
-    \resizebox{0.6\linewidth}{!}{%
+    \resizebox{0.55\linewidth}{!}{%
     \begin{tikzpicture}[node distance=1.2cm and 2cm]
 
     % --- NODOS ---
@@ -497,15 +497,49 @@
 
     El flujo de datos comienza con la inicialización de los pines: tres entradas digitales conectadas a los interruptores DIP y seis salidas para controlar ambos motores a través del L293D. Una vez configurado el hardware, el programa entra en un ciclo infinito donde primero se captura el estado de los tres switches como una tupla binaria. Esta tupla se compara secuencialmente con las ocho combinaciones posibles definidas en la tabla de verdad. Al encontrar coincidencia, se invoca la función \texttt{control\_motor()} con los parámetros apropiados, la cual traduce el comando de alto nivel (``HORARIO'', ``ANTIHORARIO'' o ``PARO'') en señales eléctricas específicas para los pines de habilitación y dirección. Finalmente, se introduce una pausa de 50 milisegundos antes de reiniciar el ciclo, lo cual estabiliza las lecturas y evita oscilaciones por rebote mecánico de los interruptores.
 
-    \textbf{Desarrollo}
+    \subsection*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1]{Code/Act1.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_1.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 1). El microcontrolador habilita únicamente el canal 1 del driver L293D. Se aprecia mediante el difuminado por movimiento que el Motor 1 (rueda izquierda) gira en sentido horario, mientras que el Motor 2 permanece estático en estado de PARO.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_3.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 0). Transición de las señales de control: el microcontrolador retira el voltaje de habilitación del Motor 1 y satura el pin de \texttt{ENABLE} del Motor 2. La llanta derecha muestra el giro en sentido horario mientras la izquierda entra en reposo absoluto.}
+    \end{figure}
 
-    \textbf{Análisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_5.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 1). Sincronización de salidas. Ambos canales del arreglo L293D son excitados simultáneamente con la misma polaridad en sus respectivos pines de dirección. El efecto mecánico resultante es el giro horario en ambas llantas, lo que en un chasis físico se traduce en desplazamiento frontal lineal.}
+    \end{figure}
 
-    Durante las pruebas en el laboratorio, el sistema respondió correctamente a cada una de las combinaciones de los interruptores. Al colocar los switches en la posición (0, 0, 0), ambos motores permanecieron completamente detenidos, lo cual confirmó que el estado de reposo funciona como se esperaba.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_9.jpg}
+        \caption{Comprobación de giro diferencial (ej. estado 1, 0, 1). La lectura de los interruptores genera señales opuestas para cada puente H. Ambos motores giran a plena capacidad, pero con los campos magnéticos invertidos entre sí (uno horario y el otro antihorario), demostrando el control independiente y aislado que proporciona el driver para la tracción del circuito.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_15.jpg}
+        \caption{Comprobación del estado lógico (1, 1, 0). Inversión de polaridad sincronizada. El microcontrolador conmuta los niveles lógicos de los pines de dirección, aplicando un voltaje inverso en ambas terminales del puente H. El difuminado constante en ambas llantas confirma el giro en sentido antihorario, lo que físicamente se traduce en el retroceso del chasis.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_17.jpg}
+        \caption{Comprobación de los estados de reposo (ej. 0, 0, 0 o 1, 1, 1). La lectura de estas combinaciones en los interruptores instruye al microcontrolador a drenar el voltaje de los pines \texttt{ENABLE} o a igualar las salidas de dirección a 0V. La nitidez absoluta en los rines de ambas llantas evidencia la ausencia de diferencia de potencial en los motores, confirmando el estado de PARO total.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Al colocar los switches en la posición (0, 0, 0), ambos motores permanecieron completamente detenidos, lo cual confirmó que el estado de reposo funciona como se esperaba.
 
     Cuando se activó únicamente el tercer switch, formando la combinación (0, 0, 1), el Motor 1 comenzó a girar en sentido horario mientras el Motor 2 permaneció inmóvil. Este comportamiento demostró que el control individual de cada motor opera de manera independiente, tal como lo requiere la tabla de verdad.
 
@@ -513,7 +547,7 @@
 
     El retardo de 50 milisegundos al final de cada ciclo resultó fundamental para eliminar lecturas erráticas causadas por el rebote mecánico de los interruptores. Sin este filtro, los motores presentaban cambios abruptos de dirección incluso cuando los switches estaban fijos.
 
-    \newpage
+    \vspace{2.6cm}
     \section*{Actividad 2}
 
     De acuerdo a la distribución indicada en el circuito de la figura 5-11; realizar las acciones
@@ -759,19 +793,75 @@
 
     El flujo de datos de la Actividad 2 comienza con la configuración inicial de los puertos GPIO: tres pines como entrada para el interruptor DIP, cuatro pines de salida destinados a las bobinas del motor y un pin con PWM configurado para el zumbador. Además, se define una matriz con la secuencia lógica de excitación de las bobinas en paso completo. Durante el ciclo principal infinito, se leen constantemente los tres interruptores para formar una tupla representativa del estado actual. A través de una cascada de decisiones lógicas, se direcciona el programa a los métodos específicos correspondientes a cada acción. Dependiendo del caso, el sistema ejecuta rutinas de paro, movimiento continuo iterando el estado de paso, o movimientos controlados haciendo uso de las funciones de grados o revoluciones. Para las funciones controladas, el flujo invoca funciones auxiliares que iteran de forma precisa sobre los pasos exactos requeridos, activando después la señal auditiva del zumbador. Finalizado cualquier bloque de acción, se reinicia el flujo tomando la nueva lectura de hardware.
 
-    \textbf{Desarrollo}
+    \subsection*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/Act2.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
-    \textbf{Análisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_1.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 0). Condición de PARO. El microcontrolador ejecuta la función \texttt{apagar\_motor()}, enviando ceros lógicos a los cuatro canales del arreglo Darlington ULN2003A. Las bobinas del motor a pasos se desenergizan y la flecha roja permanece estática, evitando el sobrecalentamiento del hardware.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_2.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 1). Giro Horario Continuo. El programa itera secuencialmente sobre la matriz de pasos incrementando el índice (\texttt{idx\_continuo + 1}). Las señales conmutan los transistores del driver, arrastrando el campo magnético y provocando el giro constante de la flecha roja en el sentido de las manecillas del reloj.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_3.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 0). Giro Antihorario Continuo. Al detectar esta combinación, el algoritmo invierte la lectura de la matriz (\texttt{idx\_continuo - 1}). El flujo de corriente en las bobinas se invierte secuencialmente, obligando al rotor y a la flecha roja a girar en sentido contrario de manera ininterrumpida.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_4.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 1). Desplazamiento de 90° Horario. La función \texttt{girar\_grados(90)} calcula la fracción exacta de pasos por revolución. La flecha roja demuestra un desplazamiento ortogonal preciso antes de que el procesador entre en un bloqueo (\texttt{time.sleep(2)}), manteniendo la posición por 2 segundos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_5.jpg}
+        \caption{Comprobación del estado lógico (1, 0, 0). Desplazamiento de 180° Antihorario. El microcontrolador envía los trenes de pulsos equivalentes a media revolución angular. La flecha roja finaliza su movimiento de manera diametralmente opuesta a su punto de partida, pausando la ejecución durante 3 segundos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_6.jpg}
+        \caption{Comprobación del estado lógico (1, 0, 1). Revolución de 360° Horario y activación de PWM. La flecha roja completa una rotación entera regresando a su origen. De manera paralela, el microcontrolador activa el canal PWM en el GPIO 22, emitiendo una onda cuadrada de 1000 Hz que acciona el zumbador acústico durante 300 ms al finalizar la vuelta.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_7.jpg}
+        \caption{Comprobación del estado lógico (1, 1, 0). Múltiples Revoluciones (5 vueltas). El código encapsula la rutina de 360° dentro de un bucle \texttt{for}, ordenando a la flecha roja girar 5 veces en sentido horario, detonando el zumbador tras cada iteración.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, angle=-180]{img/Actividad2/Act2_8.jpg}
+            \caption{Iteración intermedia.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, angle=-180]{img/Actividad2/Act2_9.jpg}
+            \caption{Avance del bucle antihorario.}
+        \end{subfigure}
+        \caption{Comprobación del estado lógico (1, 1, 1) y aislamiento del bucle iterativo (10 vueltas). Las imágenes evidencian a la flecha roja en pleno recorrido antihorario. Al ser un ciclo largo, el arreglo de LEDs indicadores muestra la rápida conmutación de las fases. El procesador se mantiene enclavado en esta rutina mediante un ciclo de guarda (\texttt{while leer\_entradas() == (1,1,1)}), asegurando que la secuencia de 10 revoluciones y 10 activaciones del zumbador se ejecute por completo (tipo \textit{one-shot}) antes de permitir una nueva lectura del hardware.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
 
     Las pruebas con el motor a pasos mostraron un control preciso del movimiento en todos los modos de operación. Con la combinación (0, 0, 1), el motor giró de forma continua en sentido horario, y al cambiar a (0, 1, 0), invirtió su dirección inmediatamente sin necesidad de detenerse primero.
 
     Los movimientos angulares resultaron particularmente interesantes. Al probar el modo de 90 grados, el motor completó exactamente un cuarto de vuelta y se detuvo. Calculando manualmente, 90 grados corresponden a 128 pasos (512 pasos por revolución divididos entre 4), y efectivamente el eje se posicionó en el ángulo esperado cada vez.
 
     El zumbador funcionó como indicador audible en los modos que lo requerían. Durante la prueba de 360 grados con la combinación (1, 0, 1), se escuchó claramente el tono de 1 kHz al completar cada revolución. Este tipo de retroalimentación resulta muy útil para confirmar visualmente que el programa terminó su tarea, especialmente cuando el movimiento del motor es difícil de distinguir a simple vista.
-
-    Un detalle importante fue el bloqueo implementado en los modos de múltiples revoluciones. Al activar la combinación (1, 1, 0) para las 5 revoluciones, el programa ejecutó todo el movimiento y después esperó a que se cambiaran los switches antes de repetir. Sin este mecanismo, el motor habría iniciado nuevamente las 5 vueltas de forma infinita.
 
 
     \newpage
@@ -782,7 +872,7 @@
 
 
     \begin{center}
-    \resizebox{0.95\linewidth}{!}{%
+    \resizebox{0.69\linewidth}{!}{%
     \begin{tikzpicture}
 
         % Estilos para las etiquetas tipo bandera
@@ -857,6 +947,7 @@
         \renewcommand{\arraystretch}{1.2}
         \setlength{\arrayrulewidth}{1pt}
         \arrayrulecolor{white}
+        \resizebox{0.68\linewidth}{!}{%
         \begin{tabular}{|c|c|c|c|c|c|}
             \hline
             \rowcolor{headerbg}
@@ -886,6 +977,7 @@
             \textbf{1} & 1 & 0 & 0 & 0 & \textbf{SERVO A 180$^\circ$} \\
             \hline
         \end{tabular}
+        }
         \caption{Tabla 5-3. Controlador; actividad 3}
     \end{table}
 
@@ -893,10 +985,10 @@
 
     \subsection*{Propuesta de solución}
 
-    \textbf{Desarrollo}
+    \subsection*{Desarrollo}
 
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3]{Code/Act3.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
 
     \subsection*{Análisis de resultados}
 
@@ -912,12 +1004,12 @@
 
     \newpage
 
-    \textbf{Desarrollo}
+    \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/Act4.py}
 
 
-    \textbf{Análisis de resultados}
+    \subsection*{Análisis de resultados}
 
 
     \newpage
@@ -930,8 +1022,7 @@
         \item \textbf{Flores Colin Victor Jaziel:}
 
 
-        \item \textbf{Lara Hernandez Angel Husiel:}
-
+        \item \textbf{Lara Hernandez Angel Husiel:} Implementar la lectura del sensor de temperatura interno del RP2040, el muestreo del potenciómetro, el control condicional del LED mediante la fotorresistencia, la comparación entre sensores térmicos y el control de brillo con PWM me sirvió mucho para entender cómo el convertidor analógico-digital transforma magnitudes físicas continuas en valores discretos que el microcontrolador puede procesar. También vi que la resolución de 16 bits del ADC permite una granularidad suficiente para distinguir cambios sutiles en el voltaje de entrada, y que relacionar directamente la lectura del potenciómetro con el ciclo de trabajo del PWM es una forma sencilla de implementar un control proporcional entre una entrada analógica y una salida modulada. 
     \end{itemize}
 
     \newpage
