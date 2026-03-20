@@ -1001,6 +1001,79 @@
 
     \subsection*{Propuesta de solución}
 
+    Para poder controlar la posición del servomotor es necesario realizar la importación de la biblioteca de \texttt{machine} para poder interactuar con el hardware físico, se seleccionan los módulos \texttt{Pin} para poder seleccionar el pin físico de la placa y el módulo \texttt{PWM} para poder generar la señal de modulación por ancho de pulso el cual es la señal eléctrica para poder manipular la posición del servomotor. Adicionalmente, se importa el módulo \texttt{time} para poder generar retardos en la ejecución del programa y así poder observar el movimiento del servo.
+
+    Una vez se han importado las bibliotecas necesarias, se procede a configurar el pin físico del GPIO 21 como una salida PWM, asignándole una frecuencia de 50 Hz, ya que este es el valor usual para el servomotor SG90, de forma que un ciclo completo de la señal corresponda a 20 [ms].
+
+    Posteriormente se define la función \texttt{set\_servo\_angulo} la cual se encarga de la lógica de movimiento del servomotor, donde se definen el máximo y mínimo ciclo de trabajo, esto considerando que MicroPython maneja el PWM con una resolución de 16 bits, por lo que el ciclo de trabajo se define en un rango de 0 a 65535. Donde el servomotor requiere un pulso de 0.5 [ms] para posicionarse en $0^\circ$, un pulso de 1.5 [ms] (1638) y un pulso de 2.5 [ms] (8192) para posicionarse en $180^\circ$. Es a partir de estos valores que se define una relación lineal entre el ángulo deseado y el ciclo de trabajo, utilizando una regla de tres simple para calcular el ciclo de trabajo correspondiente a cualquier ángulo entre 0 y 180 grados. Una vez calculado el ciclo de trabajo, se asigna este valor al canal PWM para generar la señal eléctrica que posicionará el servomotor en el ángulo deseado.
+
+    Para que se realice los movimiento de barrido se implemento un bucle infinito con dos ciclos for, donde el primer ciclo for va desde los ceros grados a los 180 grados, incrementando de 5 en 5 grados, donde se envía el angulo a la función \texttt{set\_servo\_angulo} y se genera un retardo de 0.5 segundos para poder observar el movimiento del servo. Posteriormente, el segundo ciclo for va desde los 180 grados a los ceros grados, decrementando de 5 en 5 grados, donde se repite el mismo proceso que el ciclo for anterior, pero en sentido contrario, generando así un movimiento de barrido continuo entre los 0 y 180 grados.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.2cm and 2cm]
+            % --- NODOS ---
+            \node (start) [startstop] {Inicio};
+
+            % Configuración inicial
+            \node (init) [process, below=0.8cm of start, text width=4.5cm, align=center] {Configurar PWM\\(Pin 21, Freq=50Hz)};
+
+            % --- BUCLE 1: ASCENDENTE ---
+            \node (init_asc) [process, below=1cm of init] {$\text{angulo} = 0$};
+            \node (cond_asc) [decision, below=1cm of init_asc] {$\text{angulo} \le 180$?};
+
+            % Proceso con la fórmula matemática integrada
+            \node (body_asc) [process, right=1.5cm of cond_asc, text width=6.5cm, align=center] {
+                $duty = 1638 + \left(\frac{\text{angulo}}{180}\right) \times (8192 - 1638)$\\
+                Escribir $duty$ en PWM\\
+                Esperar $0.05s$
+            };
+            \node (inc_asc) [process, below=0.8cm of body_asc] {$\text{angulo} = \text{angulo} + 5$};
+
+            % --- BUCLE 2: DESCENDENTE ---
+            \node (init_desc) [process, below=1.5cm of cond_asc] {$\text{angulo} = 180$};
+            \node (cond_desc) [decision, below=1cm of init_desc] {$\text{angulo} \ge 0$?};
+
+            % Proceso con la fórmula matemática integrada
+            \node (body_desc) [process, right=1.5cm of cond_desc, text width=6.5cm, align=center] {
+                $duty = 1638 + \left(\frac{\text{angulo}}{180}\right) \times (8192 - 1638)$\\
+                Escribir $duty$ en PWM\\
+                Esperar $0.05s$
+            };
+            \node (inc_desc) [process, below=0.8cm of body_desc] {$\text{angulo} = \text{angulo} - 5$};
+
+            % --- CONEXIONES PRINCIPALES ---
+            \draw [arrow] (start) -- (init);
+
+            % Punto de entrada al bucle infinito (while True)
+            \path (init) -- (init_asc) coordinate[midway] (loop_start);
+            \draw [arrow] (init) -- (init_asc);
+
+            % Flujo Ascendente
+            \draw [arrow] (init_asc) -- (cond_asc);
+            \draw [arrow] (cond_asc) -- node[anchor=south] {Sí} (body_asc);
+            \draw [arrow] (cond_asc) -- node[anchor=east] {No} (init_desc);
+            \draw [arrow] (body_asc) -- (inc_asc);
+
+            % Flujo Descendente
+            \draw [arrow] (init_desc) -- (cond_desc);
+            \draw [arrow] (cond_desc) -- node[anchor=south] {Sí} (body_desc);
+            \draw [arrow] (body_desc) -- (inc_desc);
+
+            % --- CONEXIONES DE RETORNO (BUSES) ---
+            % 1. Retorno del for ascendente
+            \path (inc_asc.south) -- ++(0,-0.9cm) coordinate (ret_asc);
+            \draw [arrow] (inc_asc.south) -- (ret_asc) -| ([xshift=-1.5cm]cond_asc.west) -- (cond_asc.west);
+
+            % 2. Retorno del for descendente
+            \path (inc_desc.south) -- ++(0,-0.4cm) coordinate (ret_desc);
+            \draw [arrow] (inc_desc.south) -- (ret_desc) -| ([xshift=-1.5cm]cond_desc.west) -- (cond_desc.west);
+
+            % 3. Retorno del while True
+            \path (cond_desc.south) -- ++(0,-0.8cm) coordinate (ret_while);
+            \draw [arrow] (cond_desc.south) -- node[anchor=east] {No} (ret_while) -| ([xshift=-3cm]cond_asc.west) |- (loop_start);
+        \end{tikzpicture}
+    \end{figure}
 
     \newpage
 
@@ -1008,16 +1081,40 @@
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/Act4.py}
 
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_1.jpg}
+        \caption{Movimiento Servomotor Barrido Positivo Pt.1}
+    \end{figure}
+    
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_3.jpg}
+        \caption{Movimiento Servomotor Barrido Positivo Pt.2}
+    \end{figure}
+    
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Movimiento Servomotor Barrido Negativo Pt.1}
+    \end{figure}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_4.jpg}
+        \caption{Movimiento Servomotor Barrido Negativo Pt.2}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Al cargar el programa descrito anteriormente en la raspberry pi pico, se pudo observar que el servomotor SG90 comenzó a realizar un movimiento de barrido continuo positivo entre los 0 y 180 grados. Donde se pudo observar que el movimiento era fluido y sin interrupciones, con un retardo de 0.5 segundos entre cada cambio de posición, lo que permitió apreciar claramente el desplazamiento del brazo del servomotor. Posteriormente, al completar el ciclo ascendente, el programa inició el ciclo descendente, donde el servomotor comenzó a realizar un movimiento de barrido continuo negativo entre los 180 y 0 grados. Al igual que en el ciclo ascendente, el movimiento fue fluido y sin interrupciones, con el mismo retardo de 0.5 segundos entre cada cambio de posición. Este comportamiento confirmó que la lógica implementada para controlar la posición del servomotor a través de la modulación por ancho de pulso (PWM) funcionaba correctamente, permitiendo un control preciso y repetible del ángulo del servo.
 
 
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
-        
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Por medio de la realización de la práctica logre comprender y aprender a como los diferentes tipos de motor, como lo son los motores de corriente directa, motores a pasos y servomotores, ya que aunque cada unos de estos tipos de motores funcionan por medio de las señales eléctricas, cada uno tiene una forma diferente de interpretar estas señales para generar movimiento. Ya que los motores de corriente directa responden a la polaridad y magnitud del voltaje aplicado, mientras que los motores a pasos requieren una secuencia específica de pulsos para controlar su posición y velocidad. Por otro lado, los servomotores utilizan señales PWM para controlar su ángulo de rotación con precisión. Al implementar los diferentes tipos de motores en las actividades, pude observar cómo cada uno de ellos responde a las señales eléctricas de manera distinta, lo que me permitió entender mejor sus características y aplicaciones específicas. Por lo que esta práctica me ayudó a comprender la diversidad de motores y cómo se pueden utilizar en diferentes contextos según sus características de control y respuesta a las señales eléctricas, y como con MicroPython se pueden implementar de manera sencilla y práctica.
 
         \item \textbf{Flores Colin Victor Jaziel:}
 
