@@ -1,4 +1,4 @@
-# Practica 4 — Laboratorio de Microcomputadoras
+# Practica 5 — Laboratorio de Microcomputadoras
 
 > **Plataforma Raspberry Pi Pico (RP2040) — Programacion en MicroPython con IDE Thonny**
 
@@ -17,18 +17,18 @@ las funciones **GPIO** en la modalidad de entrada y salida.
 |:-:|-------------|:------:|
 | 1 | Lectura de interruptor en GPIO8 e impresion de estado en consola | Completada |
 | 2 | Control de LED verde en GPIO0 segun estado de interruptor en GPIO8 | Completada |
-| 3 | Control de LED con push button en GPIO12 (PULL_UP) | Pendiente |
-| 4 | Secuencia de LEDs (GPIO4-GPIO7) y buzzer con push button S1 | Pendiente |
+| 3 | Control de LED con push button en GPIO12 (PULL_UP) | Completada |
+| 4 | Secuencia de LEDs (GPIO4-GPIO7) y buzzer con push button S1 | Completada |
 | 5 | Control de 8 LEDs, buzzer y contadores segun tabla de entradas (5 switches) | Pendiente |
 
 ### Progreso general
 
 ```
-Completadas : [########--] 2 / 5
-Pendientes  : [--------##] 3 / 5
+Completadas : [################] 2 / 4
+Pendientes  : [----------------] 2 / 4
 ```
 
-> **Nota:** La actividad 3,45 se encuentra pendiente de desarrollo
+> **Nota:** La actividad 5 se encuentra pendiente de desarrollo
 > (propuesta de solucion, diagramas de flujo y analisis de resultados).
 
 ---

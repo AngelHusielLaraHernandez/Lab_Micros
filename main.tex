@@ -355,6 +355,7 @@
         \renewcommand{\arraystretch}{1.2}
         \setlength{\arrayrulewidth}{1pt}
         \arrayrulecolor{white}
+        \resizebox{0.88\linewidth}{!}{%
         \begin{tabular}{|c|c|c|c|c|}
             \hline
             \rowcolor{headerbg}
@@ -390,6 +391,7 @@
             \textbf{1} & 1 & 1 & \textbf{PARO} & PARO \\
             \hline
         \end{tabular}
+        }
         \caption{Tabla 5-2. Controlador; actividad 1}
     \end{table}
 
@@ -397,6 +399,103 @@
 
 
     \subsection*{Propuesta de solución}
+
+    Para controlar de manera independiente dos motores de corriente directa (DC), se propone un algoritmo que interactúa con el driver L293D (un doble puente H). El programa requiere inicializar tres pines de entrada (\texttt{GPIO8}, \texttt{GPIO9}, \texttt{GPIO10}) con resistencias de pull-down físicas o externas para leer el estado del interruptor DIP. Simultáneamente, se configuran seis pines de salida: dos de habilitación (\texttt{ENABLE\_M1}, \texttt{ENABLE\_M2}) y cuatro de dirección (\texttt{DIR1\_M1}, \texttt{DIR2\_M1}, \texttt{DIR1\_M2}, \texttt{DIR2\_M2}). 
+
+    La lógica central encapsula el control del hardware en una función \texttt{control\_motor(motor, estado)}. Para inducir movimiento, el pin \texttt{ENABLE} correspondiente se satura a 3.3V (nivel lógico alto). El sentido de giro se determina estableciendo una diferencia de potencial en los pines de dirección: un estado alto en \texttt{DIR1} y bajo en \texttt{DIR2} generará un giro horario, mientras que la configuración inversa generará un giro antihorario. Enviar ceros lógicos a todos los terminales frena el motor. El bucle principal lee las tres entradas físicas como una tupla y la evalúa contra las combinaciones predefinidas en la tabla de verdad para enrutar las señales de voltaje a los pines correspondientes.
+
+
+
+    \begin{center}
+    \resizebox{0.6\linewidth}{!}{%
+    \begin{tikzpicture}[node distance=1.2cm and 2cm]
+
+    % --- NODOS ---
+    \node (start) [startstop] {Inicio};
+    \node (init) [process, below=0.8cm of start, text width=4.5cm, align=center] {Configurar Pines y Motores};
+    \node (read) [io, below=0.8cm of init, align=center] {Leer entradas\\$(sw_{1}, sw_{2}, sw_{3})$};
+
+    \node (dec1) [decision, below=1cm of read] {x=$(0,0,0)$?};
+    \node (proc1) [process, right=2cm of dec1, text width=4.5cm, align=center] {M1: PARO\\M2: PARO};
+
+    \node (dec2) [decision, below=1cm of dec1] {x=$(0,0,1)$?};
+    \node (proc2) [process, right=2cm of dec2, text width=4.5cm, align=center] {M1: ANTIHORARIO\\M2: PARO};
+
+    \node (dec3) [decision, below=1cm of dec2] {x=$(0,1,0)$?};
+    \node (proc3) [process, right=2cm of dec3, text width=4.5cm, align=center] {M1: PARO\\M2: HORARIO};
+
+    \node (dec4) [decision, below=1cm of dec3] {x=$(0,1,1)$?};
+    \node (proc4) [process, right=2cm of dec4, text width=4.5cm, align=center] {M1: ANTIHORARIO\\M2: HORARIO};
+
+    \node (dec5) [decision, below=1cm of dec4] {x=$(1,0,0)$?};
+    \node (proc5) [process, right=2cm of dec5, text width=4.5cm, align=center] {M1: HORARIO\\M2: HORARIO};
+
+    \node (dec6) [decision, below=1cm of dec5] {x=$(1,0,1)$?};
+    \node (proc6) [process, right=2cm of dec6, text width=4.5cm, align=center] {M1: HORARIO\\M2: HORARIO};
+
+    \node (dec7) [decision, below=1cm of dec6] {x=$(1,1,0)$?};
+    \node (proc7) [process, right=2cm of dec7, text width=4.5cm, align=center] {M1: HORARIO\\M2: ANTIHORARIO};
+
+    \node (dec8) [decision, below=1cm of dec7] {x=$(1,1,1)$?};
+    \node (proc8) [process, right=2cm of dec8, text width=4.5cm, align=center] {M1: PARO\\M2: PARO};
+
+    % Retardo general
+    \node (delay) [process, below=1.2cm of dec8] {Esperar 0.05s};
+
+    % --- CONEXIONES DIAGRAMA (Vertical) ---
+    \draw [arrow] (start) -- (init);
+    \draw [arrow] (init) -- (read);
+    \draw [arrow] (read) -- (dec1);
+
+    \draw [arrow] (dec1) -- node[anchor=south] {Sí} (proc1);
+    \draw [arrow] (dec1) -- node[anchor=west] {No} (dec2);
+
+    \draw [arrow] (dec2) -- node[anchor=south] {Sí} (proc2);
+    \draw [arrow] (dec2) -- node[anchor=west] {No} (dec3);
+
+    \draw [arrow] (dec3) -- node[anchor=south] {Sí} (proc3);
+    \draw [arrow] (dec3) -- node[anchor=west] {No} (dec4);
+
+    \draw [arrow] (dec4) -- node[anchor=south] {Sí} (proc4);
+    \draw [arrow] (dec4) -- node[anchor=west] {No} (dec5);
+
+    \draw [arrow] (dec5) -- node[anchor=south] {Sí} (proc5);
+    \draw [arrow] (dec5) -- node[anchor=west] {No} (dec6);
+
+    \draw [arrow] (dec6) -- node[anchor=south] {Sí} (proc6);
+    \draw [arrow] (dec6) -- node[anchor=west] {No} (dec7);
+
+    \draw [arrow] (dec7) -- node[anchor=south] {Sí} (proc7);
+    \draw [arrow] (dec7) -- node[anchor=west] {No} (dec8);
+
+    \draw [arrow] (dec8) -- node[anchor=south] {Sí} (proc8);
+    \draw [arrow] (dec8) -- node[anchor=west] {No} (delay);
+
+    % --- CONEXIONES DE BUS (Flujo de retorno sin superposición) ---
+    % 1. Definir un canal (bus) invisible derecho para unificar las salidas Sí hacia el "Delay"
+    \path (proc1.east) -- ++(1cm,0) coordinate (right_bus);
+
+    \draw (proc1.east) -- (proc1.east -| right_bus);
+    \draw (proc2.east) -- (proc2.east -| right_bus);
+    \draw (proc3.east) -- (proc3.east -| right_bus);
+    \draw (proc4.east) -- (proc4.east -| right_bus);
+    \draw (proc5.east) -- (proc5.east -| right_bus);
+    \draw (proc6.east) -- (proc6.east -| right_bus);
+    \draw (proc7.east) -- (proc7.east -| right_bus);
+    \draw (proc8.east) -- (proc8.east -| right_bus);
+
+    % Flecha que baja por el bus derecho y llega al delay
+    \draw [arrow] (proc1.east -| right_bus) |- (delay.east);
+
+    % 2. Retorno central izquierdo hacia la lectura
+    \path (read.west) -- ++(-1.5cm,0) coordinate (left_bus);
+    \draw [arrow] (delay.west) -- (delay.west -| left_bus) |- (read.west);
+
+    \end{tikzpicture}%
+    }
+    \end{center}
+
+    El flujo de datos comienza con la inicialización de los pines: tres entradas digitales conectadas a los interruptores DIP y seis salidas para controlar ambos motores a través del L293D. Una vez configurado el hardware, el programa entra en un ciclo infinito donde primero se captura el estado de los tres switches como una tupla binaria. Esta tupla se compara secuencialmente con las ocho combinaciones posibles definidas en la tabla de verdad. Al encontrar coincidencia, se invoca la función \texttt{control\_motor()} con los parámetros apropiados, la cual traduce el comando de alto nivel (``HORARIO'', ``ANTIHORARIO'' o ``PARO'') en señales eléctricas específicas para los pines de habilitación y dirección. Finalmente, se introduce una pausa de 50 milisegundos antes de reiniciar el ciclo, lo cual estabiliza las lecturas y evita oscilaciones por rebote mecánico de los interruptores.
 
     \textbf{Desarrollo}
 
@@ -406,6 +505,13 @@
 
     \textbf{Análisis de resultados}
 
+    Durante las pruebas en el laboratorio, el sistema respondió correctamente a cada una de las combinaciones de los interruptores. Al colocar los switches en la posición (0, 0, 0), ambos motores permanecieron completamente detenidos, lo cual confirmó que el estado de reposo funciona como se esperaba.
+
+    Cuando se activó únicamente el tercer switch, formando la combinación (0, 0, 1), el Motor 1 comenzó a girar en sentido horario mientras el Motor 2 permaneció inmóvil. Este comportamiento demostró que el control individual de cada motor opera de manera independiente, tal como lo requiere la tabla de verdad.
+
+    Un aspecto interesante se observó al probar la combinación (1, 1, 1): a pesar de tener todas las entradas en alto, los motores se detienen. Esto tiene sentido desde el punto de vista del diseño, ya que permite usar esta configuración como un ``freno de emergencia'' o estado seguro del sistema.
+
+    El retardo de 50 milisegundos al final de cada ciclo resultó fundamental para eliminar lecturas erráticas causadas por el rebote mecánico de los interruptores. Sin este filtro, los motores presentaban cambios abruptos de dirección incluso cuando los switches estaban fijos.
 
     \newpage
     \section*{Actividad 2}
@@ -558,12 +664,114 @@
 
     \subsection*{Propuesta de solución}
 
+    El control de un motor a pasos unipolar requiere energizar sus bobinas en un patrón estricto. La solución implementa una matriz de secuencias de paso completo (\texttt{[(1,1,0,0), (0,1,1,0), (0,0,1,1), (1,0,0,1)]}), donde cada fila representa los estados lógicos necesarios en los cuatro pines de salida acoplados al driver Darlington ULN2003A. Se establece una constante \texttt{PASOS\_POR\_REV} (512 o 2048, según la reducción interna del motor) para traducir rotaciones angulares en iteraciones de código.
+
+    Se añaden funciones trigonométricas y repetitivas: \texttt{girar\_grados()} divide el ángulo objetivo entre 360 y lo multiplica por los pasos por revolución para determinar el número exacto de cambios de fase requeridos; \texttt{girar\_revoluciones()} encapsula rotaciones completas. Adicionalmente, se integra retroalimentación acústica configurando el GPIO 22 con Modulación por Ancho de Pulso (PWM). Al finalizar un ciclo específico, el programa activa el PWM a una frecuencia audible para excitar un zumbador pasivo. Las condicionales del bucle principal leen la tupla de interruptores y dirigen el flujo hacia movimientos continuos, pasos angulares o revoluciones completas con temporizaciones específicas.
+
+    \begin{center}
+    \resizebox{0.6\linewidth}{!}{%
+    \begin{tikzpicture}[node distance=1.2cm and 2cm]
+
+    % --- NODOS ---
+    \node (start) [startstop] {Inicio};
+    \node (init) [process, below=0.8cm of start, text width=6cm, align=center] {Configurar Pines, PWM Zumbador y Secuencia Motor};
+    \node (read) [io, below=0.8cm of init] {Leer estado entradas};
+
+    \node (dec1) [decision, below=1cm of read] {x=$(0,0,0)$?};
+    \node (proc1) [process, right=2.2cm of dec1, text width=6cm, align=center] {Apagar Motor (Paro)};
+
+    \node (dec2) [decision, below=1.2cm of dec1] {x=$(0,0,1)$?};
+    \node (proc2) [process, right=2.2cm of dec2, text width=6cm, align=center] {Giro Continuo Horario};
+
+    \node (dec3) [decision, below=1.2cm of dec2] {x=$(0,1,0)$?};
+    \node (proc3) [process, right=2.2cm of dec3, text width=6cm, align=center] {Giro Continuo Antihorario};
+
+    \node (dec4) [decision, below=1.2cm of dec3] {x=$(0,1,1)$?};
+    \node (proc4) [process, right=2.2cm of dec4, text width=6cm, align=center] {Girar 90$^\circ$ Horario,\\Esperar 2s};
+
+    \node (dec5) [decision, below=1.3cm of dec4] {x=$(1,0,0)$?};
+    \node (proc5) [process, right=2.2cm of dec5, text width=6cm, align=center] {Girar 180$^\circ$ Antihorario,\\Esperar 3s};
+
+    \node (dec6) [decision, below=1.3cm of dec5] {x=$(1,0,1)$?};
+    \node (proc6) [process, right=2.2cm of dec6, text width=6cm, align=center] {Girar 360$^\circ$ Horario, Sonar\\Zumbador, Esperar 4s};
+
+    \node (dec7) [decision, below=1.3cm of dec6] {x=$(1,1,0)$?};
+    \node (proc7) [process, right=2.2cm of dec7, text width=6cm, align=center] {5 Revs Horario y Sonar,\\Retener hasta soltar};
+
+    \node (dec8) [decision, below=1.3cm of dec7] {x=$(1,1,1)$?};
+    \node (proc8) [process, right=2.2cm of dec8, text width=6cm, align=center] {10 Revs Antihorario y Sonar,\\Retener hasta soltar};
+
+    % Nodo invisible abajo para el cierre
+    \coordinate[below=1.2cm of dec8] (bottom);
+
+    % --- CONEXIONES DIAGRAMA (Vertical) ---
+    \draw [arrow] (start) -- (init);
+    \draw [arrow] (init) -- (read);
+    \draw [arrow] (read) -- (dec1);
+
+    \draw [arrow] (dec1) -- node[anchor=south] {Sí} (proc1);
+    \draw [arrow] (dec1) -- node[anchor=west] {No} (dec2);
+
+    \draw [arrow] (dec2) -- node[anchor=south] {Sí} (proc2);
+    \draw [arrow] (dec2) -- node[anchor=west] {No} (dec3);
+
+    \draw [arrow] (dec3) -- node[anchor=south] {Sí} (proc3);
+    \draw [arrow] (dec3) -- node[anchor=west] {No} (dec4);
+
+    \draw [arrow] (dec4) -- node[anchor=south] {Sí} (proc4);
+    \draw [arrow] (dec4) -- node[anchor=west] {No} (dec5);
+
+    \draw [arrow] (dec5) -- node[anchor=south] {Sí} (proc5);
+    \draw [arrow] (dec5) -- node[anchor=west] {No} (dec6);
+
+    \draw [arrow] (dec6) -- node[anchor=south] {Sí} (proc6);
+    \draw [arrow] (dec6) -- node[anchor=west] {No} (dec7);
+
+    \draw [arrow] (dec7) -- node[anchor=south] {Sí} (proc7);
+    \draw [arrow] (dec7) -- node[anchor=west] {No} (dec8);
+
+    \draw [arrow] (dec8) -- node[anchor=south] {Sí} (proc8);
+    \draw [arrow] (dec8) -- node[anchor=west] {No} (bottom);
+
+    % --- CONEXIONES DE BUS (Flujo de retorno sin superposición) ---
+    % 1. Bus derecho para unificar las conclusiones
+    \path (proc1.east) -- ++(1.2cm,0) coordinate (right_bus);
+
+    \draw (proc1.east) -- (proc1.east -| right_bus);
+    \draw (proc2.east) -- (proc2.east -| right_bus);
+    \draw (proc3.east) -- (proc3.east -| right_bus);
+    \draw (proc4.east) -- (proc4.east -| right_bus);
+    \draw (proc5.east) -- (proc5.east -| right_bus);
+    \draw (proc6.east) -- (proc6.east -| right_bus);
+    \draw (proc7.east) -- (proc7.east -| right_bus);
+    \draw (proc8.east) -- (proc8.east -| right_bus);
+
+    % Une todas las decisiones válidas a la ruta límite inferio
+    \draw (proc1.east -| right_bus) |- (bottom);
+
+    % 2. Ruta de regreso a la interfaz central / entrada
+    \path (read.west) -- ++(-1.5cm,0) coordinate (left_bus);
+    \draw [arrow] (bottom) -- (bottom -| left_bus) |- (read.west);
+
+    \end{tikzpicture}%
+    }
+    \end{center}
+
+    El flujo de datos de la Actividad 2 comienza con la configuración inicial de los puertos GPIO: tres pines como entrada para el interruptor DIP, cuatro pines de salida destinados a las bobinas del motor y un pin con PWM configurado para el zumbador. Además, se define una matriz con la secuencia lógica de excitación de las bobinas en paso completo. Durante el ciclo principal infinito, se leen constantemente los tres interruptores para formar una tupla representativa del estado actual. A través de una cascada de decisiones lógicas, se direcciona el programa a los métodos específicos correspondientes a cada acción. Dependiendo del caso, el sistema ejecuta rutinas de paro, movimiento continuo iterando el estado de paso, o movimientos controlados haciendo uso de las funciones de grados o revoluciones. Para las funciones controladas, el flujo invoca funciones auxiliares que iteran de forma precisa sobre los pasos exactos requeridos, activando después la señal auditiva del zumbador. Finalizado cualquier bloque de acción, se reinicia el flujo tomando la nueva lectura de hardware.
 
     \textbf{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2]{Code/Act2.py}
 
     \textbf{Análisis de resultados}
+
+    Las pruebas con el motor a pasos mostraron un control preciso del movimiento en todos los modos de operación. Con la combinación (0, 0, 1), el motor giró de forma continua en sentido horario, y al cambiar a (0, 1, 0), invirtió su dirección inmediatamente sin necesidad de detenerse primero.
+
+    Los movimientos angulares resultaron particularmente interesantes. Al probar el modo de 90 grados, el motor completó exactamente un cuarto de vuelta y se detuvo. Calculando manualmente, 90 grados corresponden a 128 pasos (512 pasos por revolución divididos entre 4), y efectivamente el eje se posicionó en el ángulo esperado cada vez.
+
+    El zumbador funcionó como indicador audible en los modos que lo requerían. Durante la prueba de 360 grados con la combinación (1, 0, 1), se escuchó claramente el tono de 1 kHz al completar cada revolución. Este tipo de retroalimentación resulta muy útil para confirmar visualmente que el programa terminó su tarea, especialmente cuando el movimiento del motor es difícil de distinguir a simple vista.
+
+    Un detalle importante fue el bloqueo implementado en los modos de múltiples revoluciones. Al activar la combinación (1, 1, 0) para las 5 revoluciones, el programa ejecutó todo el movimiento y después esperó a que se cambiaran los switches antes de repetir. Sin este mecanismo, el motor habría iniciado nuevamente las 5 vueltas de forma infinita.
 
 
     \newpage
