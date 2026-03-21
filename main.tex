@@ -1119,7 +1119,9 @@
         \item \textbf{Flores Colin Victor Jaziel:}
 
 
-        \item \textbf{Lara Hernandez Angel Husiel:} Implementar la lectura del sensor de temperatura interno del RP2040, el muestreo del potenciómetro, el control condicional del LED mediante la fotorresistencia, la comparación entre sensores térmicos y el control de brillo con PWM me sirvió mucho para entender cómo el convertidor analógico-digital transforma magnitudes físicas continuas en valores discretos que el microcontrolador puede procesar. También vi que la resolución de 16 bits del ADC permite una granularidad suficiente para distinguir cambios sutiles en el voltaje de entrada, y que relacionar directamente la lectura del potenciómetro con el ciclo de trabajo del PWM es una forma sencilla de implementar un control proporcional entre una entrada analógica y una salida modulada. 
+        \item \textbf{Lara Hernandez Angel Husiel:} 
+        
+        Implementar el control de motores DC con el puente H L293D, la secuencia de pasos del motor a pasos con el arreglo Darlington ULN2003A y el posicionamiento del servomotor SG90 mediante señales PWM me sirvió mucho para entender cómo los pines GPIO del Raspberry Pi Pico se combinan con etapas de amplificación de potencia para gobernar actuadores que exceden las capacidades eléctricas del microcontrolador. También vi que manipular las señales de dirección y habilitación del L293D permite controlar de forma independiente el sentido de giro y el estado de cada motor DC, mientras que iterar sobre una matriz de estados lógicos genera la secuencia precisa de energización de las bobinas del motor a pasos. Además, el ajuste del ciclo de trabajo de la señal PWM a 50 Hz posibilita traducir valores de ángulo a posiciones físicas del servomotor de forma directa y predecible. Con todo esto, esta práctica me dio bases muy sólidas para entender cómo se implementa el control de distintos tipos de actuadores desde un microcontrolador, evidenciando la importancia de las etapas de potencia para proteger al sistema y amplificar las señales de control.
     \end{itemize}
 
     \newpage
