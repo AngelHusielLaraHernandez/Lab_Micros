@@ -865,132 +865,230 @@
 
 
     \newpage
+
     \section*{Actividad 3}
-    De acuerdo a la distribución indicada en el circuito de la figura 5-12; realizar las acciones
-    de control indicadas en la tabla 5-4, considerar la información indicada en la figura 5-7. Conectar la
-    fuente externa con 5V.
+De acuerdo a la distribución indicada en el circuito de la figura 5-12; realizar las acciones de control indicadas en la tabla 5-4, considerar la información indicada en la figura 5-7. Conectar la fuente externa con 5V.
 
+\begin{center}
+\resizebox{0.69\linewidth}{!}{%
+\begin{tikzpicture}
 
-    \begin{center}
-    \resizebox{0.69\linewidth}{!}{%
-    \begin{tikzpicture}
-
-        % Estilos para las etiquetas tipo bandera
-        \tikzset{
-            flag left/.style={
-                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
-            },
-            flag right/.style={
-                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
-            }
+    % Estilos para las etiquetas tipo bandera
+    \tikzset{
+        flag left/.style={
+            draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+        },
+        flag right/.style={
+            draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
         }
-
-        % --- RASPBERRY PI PICO ---
-        \picoboard
-
-        % Conexiones de la Pico (Lado Derecho)
-        % GP21 (Pin 27) es el índice 14 en la macro -> y = -14*0.45 = -6.3
-        \node[flag right=green, anchor=west] at (4.4, -6.3) {Vo SERVO};
-
-
-        % --- SERVOMOTOR ---
-        % Bloque principal
-        \draw[thick] (-5, -3.5) rectangle (-3, -5.5);
-        \node[font=\sffamily] at (-4, -4) {Servo};
-
-        % Pines del Servo (Lado Izquierdo)
-        \node[right, font=\tiny\sffamily] at (-5, -4.0) {+};
-        \node[right, font=\tiny\sffamily] at (-5, -4.6) {pulse};
-        \node[right, font=\tiny\sffamily] at (-5, -5.2) {-};
-
-        % Conexiones del Servo
-        % + (5V)
-        \draw[thick, green!60!black] (-5, -4.0) -- (-6, -4.0) -- (-6, -2.8);
-        \draw[thick, green!60!black] (-6.3, -2.8) -- (-5.7, -2.8);
-        \node[above, font=\small\sffamily, text=black] at (-6, -2.8) {5V};
-
-        % pulse (Vo SERVO)
-        \draw[thick, green!60!black] (-5, -4.6) -- (-6, -4.6);
-        \node[flag left=green, anchor=east] at (-6, -4.6) {Vo SERVO};
-
-        % - (GND)
-        \draw[thick, green!60!black] (-5, -5.2) -- (-6, -5.2) -- (-6, -6.2);
-        % Símbolo GND
-        \draw[thick, green!60!black] (-6.4, -6.2) -- (-5.6, -6.2);
-        \draw[thick, green!60!black] (-6.2, -6.3) -- (-5.8, -6.3);
-        \draw[thick, green!60!black] (-6.1, -6.4) -- (-5.9, -6.4);
-
-        % Brazo del Servomotor (Lado Derecho)
-        \begin{scope}[shift={(-3, -4.5)}, rotate=-20]
-            % Contorno del brazo
-            \draw[thick, fill=white] (0, 0.2) -- (1, 0.15) arc (90:-90:0.15) -- (0, -0.2) -- cycle;
-            % Círculo base
-            \draw[thick, fill=white] (0, 0) circle (0.25);
-            % Agujero central
-            \draw[thick, fill=black] (0, 0) circle (0.05);
-            % Agujero del extremo
-            \draw[thick, fill=white] (1, 0) circle (0.05);
-        \end{scope}
-
-        % Etiqueta J1
-        \node[font=\sffamily] at (-1.5, -3.5) {J1};
-
-        % Título
-        \node[font=\sffamily] at (-1, -11) {Figura 5-12. Esquemático control del servomotor};
-
-    \end{tikzpicture}
     }
-    \end{center}
 
-    \begin{table}[ht]
+    % --- RASPBERRY PI PICO ---
+    \picoboard
+
+    % Conexiones de la Pico (Lado Derecho)
+    % GP21 (Pin 27) es el índice 14 en la macro -> y = -14*0.45 = -6.3
+    \node[flag right=green, anchor=west] at (4.4, -6.3) {Vo SERVO};
+
+
+    % --- SERVOMOTOR ---
+    % Bloque principal
+    \draw[thick] (-5, -3.5) rectangle (-3, -5.5);
+    \node[font=\sffamily] at (-4, -4) {Servo};
+
+    % Pines del Servo (Lado Izquierdo)
+    \node[right, font=\tiny\sffamily] at (-5, -4.0) {+};
+    \node[right, font=\tiny\sffamily] at (-5, -4.6) {pulse};
+    \node[right, font=\tiny\sffamily] at (-5, -5.2) {-};
+
+    % Conexiones del Servo
+    % + (5V)
+    \draw[thick, green!60!black] (-5, -4.0) -- (-6, -4.0) -- (-6, -2.8);
+    \draw[thick, green!60!black] (-6.3, -2.8) -- (-5.7, -2.8);
+    \node[above, font=\small\sffamily, text=black] at (-6, -2.8) {5V};
+
+    % pulse (Vo SERVO)
+    \draw[thick, green!60!black] (-5, -4.6) -- (-6, -4.6);
+    \node[flag left=green, anchor=east] at (-6, -4.6) {Vo SERVO};
+
+    % - (GND)
+    \draw[thick, green!60!black] (-5, -5.2) -- (-6, -5.2) -- (-6, -6.2);
+    % Símbolo GND
+    \draw[thick, green!60!black] (-6.4, -6.2) -- (-5.6, -6.2);
+    \draw[thick, green!60!black] (-6.2, -6.3) -- (-5.8, -6.3);
+    \draw[thick, green!60!black] (-6.1, -6.4) -- (-5.9, -6.4);
+
+    % Brazo del Servomotor (Lado Derecho)
+    \begin{scope}[shift={(-3, -4.5)}, rotate=-20]
+        % Contorno del brazo
+        \draw[thick, fill=white] (0, 0.2) -- (1, 0.15) arc (90:-90:0.15) -- (0, -0.2) -- cycle;
+        % Círculo base
+        \draw[thick, fill=white] (0, 0) circle (0.25);
+        % Agujero central
+        \draw[thick, fill=black] (0, 0) circle (0.05);
+        % Agujero del extremo
+        \draw[thick, fill=white] (1, 0) circle (0.05);
+    \end{scope}
+
+    % Etiqueta J1
+    \node[font=\sffamily] at (-1.5, -3.5) {J1};
+
+    % Título
+    \node[font=\sffamily] at (-1, -11) {Figura 5-12. Esquemático control del servomotor};
+
+\end{tikzpicture}
+}
+\end{center}
+
+\begin{table}[ht]
+\centering
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\arrayrulewidth}{1pt}
+    \arrayrulecolor{white}
+    \resizebox{0.68\linewidth}{!}{%
+    \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        \rowcolor{headerbg}
+        \multicolumn{5}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+        \hline
+        \rowcolor{subheaderbg}
+        \textbf{S2} & \textbf{S1} & \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{SERVOMOTOR} \\
+        \rowcolor{subheaderbg}
+        \textit{GPIO12} & \textit{GPIO11} & \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO21} \\
+        \hline
+        \rowcolor{white}
+        0 & 1 & 0 & 0 & 0 & \textbf{PARO} \\
+        \hline
+        \rowcolor{rowbg}
+        0 & 1 & 0 & 0 & 1 & \textbf{SERVO A 0$^\circ$} \\
+        \hline
+        \rowcolor{white}
+        0 & 1 & 0 & 1 & 0 & \textbf{SERVO A 45$^\circ$} \\
+        \hline
+        \rowcolor{rowbg}
+        0 & 1 & 1 & 0 & 0 & \textbf{SERVO A 90$^\circ$} \\
+        \hline
+        \rowcolor{white}
+        0 & 0 & 0 & 0 & 0 & \textbf{SERVO A 135$^\circ$} \\
+        \hline
+        \rowcolor{rowbg}
+        \textbf{1} & 1 & 0 & 0 & 0 & \textbf{SERVO A 180$^\circ$} \\
+        \hline
+    \end{tabular}
+    }
+    \caption{Tabla 5-3. Controlador; actividad 3}
+\end{table}
+
+\newpage
+
+\subsection*{Propuesta de solución}
+El programa implementa un sistema de control de posición para un servomotor mediante cinco entradas digitales: dos pulsadores (S2 y S1) y tres interruptores deslizantes (SW1\_1, SW1\_2, SW1\_3), siguiendo el esquema eléctrico de la Figura 5-12. La configuración de las entradas es mixta: S2 utiliza resistencia \texttt{PULL\_DOWN} interna, S1 utiliza \texttt{PULL\_UP}, mientras que los interruptores SW1\_1, SW1\_2 y SW1\_3 no requieren resistencias internas por su conexión directa.
+
+El servomotor se controla mediante modulación por ancho de pulso (PWM) en el pin GPIO21, configurado a una frecuencia de 50 Hz (periodo de 20 ms) Para facilitar el control, se definió la función \texttt{set\_servo\_angulo(angulo)} que convierte un ángulo de 0° a 180° en el ciclo de trabajo  donde 0.5 ms  equivale a 0° y 2.5 ms equivale a 180°.
+
+El bucle principal evalúa continuamente el estado de las cinco entradas mediante la función \texttt{leer\_entradas()}. Según la combinación detectada, se ejecuta la acción correspondiente: PARO (desactivación de la señal PWM liberando el torque del servo), o posicionamiento en los ángulos 0°, 45°, 90°, 135° o 180°. Se incluye un retardo de 100 ms para estabilizar las lecturas y evitar cambios bruscos.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+    \node (start) [startstop] {Inicio};
+    \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{PWM}, \texttt{time}};
+    \node (config) [io, below=1cm of import, text width=5cm] {Configurar entradas:\\ S2 (GPIO12) PULL\_DOWN\\ S1 (GPIO11) PULL\_UP\\ SW1\_1 (GPIO10), SW1\_2 (GPIO9),\\ SW1\_3 (GPIO8) como entradas};
+    \node (pwm) [process, below=1cm of config] {Configurar PWM en GPIO21 a 50 Hz};
+    \node (read) [process, below=1cm of pwm] {Leer estado de las 5 entradas};
+    \node (dec) [decision, below=1.2cm of read, text width=2.8cm] {Evaluar combinación de entradas};
+    
+    % Nodos lado derecho
+    \node (paro) [io, right=3.5cm of dec, text width=3cm] {PARO\\ \texttt{servo.duty\_u16(0)}};
+    \node (ang0) [io, below=0.8cm of paro, text width=3cm] {SERVO 0°\\ \texttt{set\_servo\_angulo(0)}};
+    \node (ang45) [io, below=0.8cm of ang0, text width=3cm] {SERVO 45°\\ \texttt{set\_servo\_angulo(45)}};
+    
+    % Nodos lado izquierdo
+    \node (ang90) [io, left=3.5cm of dec, text width=3cm] {SERVO 90°\\ \texttt{set\_servo\_angulo(90)}};
+    \node (ang135) [io, below=0.8cm of ang90, text width=3cm] {SERVO 135°\\ \texttt{set\_servo\_angulo(135)}};
+    \node (ang180) [io, below=0.8cm of ang135, text width=3cm] {SERVO 180°\\ \texttt{set\_servo\_angulo(180)}};
+    
+    \node (delay) [process, below=4.5cm of dec] {Esperar 100 ms};
+    
+    % Flechas desde decisión hacia lado derecho
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.5] {(0,1,0,0,0)} (paro);
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.55] {(0,1,0,0,1)} (ang0);
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.6] {(0,1,0,1,0)} (ang45);
+    
+    % Flechas desde decisión hacia lado izquierdo
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.45] {(0,1,1,0,0)} (ang90);
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.4] {(0,0,0,0,0)} (ang135);
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.35] {(1,1,0,0,0)} (ang180);
+    
+    % Flechas de retorno al delay (salida por costado izquierdo)
+    \draw [arrow] (paro.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang0.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang45.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang90.west) -- ++(-0.8,0) |- (delay.west);
+    \draw [arrow] (ang135.west) -- ++(-0.8,0) |- (delay.west);
+    \draw [arrow] (ang180.west) -- ++(-0.8,0) |- (delay.west);
+    % Retorno al inicio del bucle
+    \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=2cm]ang45.east) |- (read.east);
+
+        % Flujo principal
+    \draw [arrow] (start) -- (import);
+    \draw [arrow] (import) -- (config);
+    \draw [arrow] (config) -- (pwm);
+    \draw [arrow] (pwm) -- (read);
+    \draw [arrow] (read) -- (dec);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Desarrollo}
+
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+
+\begin{figure}[H]
     \centering
-        \renewcommand{\arraystretch}{1.2}
-        \setlength{\arrayrulewidth}{1pt}
-        \arrayrulecolor{white}
-        \resizebox{0.68\linewidth}{!}{%
-        \begin{tabular}{|c|c|c|c|c|c|}
-            \hline
-            \rowcolor{headerbg}
-            \multicolumn{5}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
-            \hline
-            \rowcolor{subheaderbg}
-            \textbf{S2} & \textbf{S1} & \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{SERVOMOTOR} \\
-            \rowcolor{subheaderbg}
-            \textit{GPIO12} & \textit{GPIO11} & \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO21} \\
-            \hline
-            \rowcolor{white}
-            0 & 1 & 0 & 0 & 0 & \textbf{PARO} \\
-            \hline
-            \rowcolor{rowbg}
-            0 & 1 & 0 & 0 & 1 & \textbf{SERVO A 0$^\circ$} \\
-            \hline
-            \rowcolor{white}
-            0 & 1 & 0 & 1 & 0 & \textbf{SERVO A 45$^\circ$} \\
-            \hline
-            \rowcolor{rowbg}
-            0 & 1 & 1 & 0 & 0 & \textbf{SERVO A 90$^\circ$} \\
-            \hline
-            \rowcolor{white}
-            0 & 0 & 0 & 0 & 0 & \textbf{SERVO A 135$^\circ$} \\
-            \hline
-            \rowcolor{rowbg}
-            \textbf{1} & 1 & 0 & 0 & 0 & \textbf{SERVO A 180$^\circ$} \\
-            \hline
-        \end{tabular}
-        }
-        \caption{Tabla 5-3. Controlador; actividad 3}
-    \end{table}
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_2.jpg}
+    \caption{Combinación (0,1,0,0,0) - PARO. El servomotor permanece sin torque.}
+    \label{fig:act3_paro}
+\end{figure}
 
-    \newpage
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_3.jpg}
+    \caption{Combinación (0,1,0,0,1) - SERVO A 0°. Posición angular mínima.}
+    \label{fig:act3_0}
+\end{figure}
 
-    \subsection*{Propuesta de solución}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_4.jpg}
+    \caption{Combinación (0,1,0,1,0) - SERVO A 45°. Posición intermedia.}
+    \label{fig:act3_45}
+\end{figure}
 
-    \subsection*{Desarrollo}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_5.jpg}
+    \caption{Combinación (0,1,1,0,0) - SERVO A 90°. Posición central.}
+    \label{fig:act3_90}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_6.jpg}
+    \caption{Combinación (0,0,0,0,0) - SERVO A 135°. Posición intermedia superior.}
+    \label{fig:act3_135}
+\end{figure}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_7.jpg}
+    \caption{Combinación (1,1,0,0,0) - SERVO A 180°. Posición  máxima.}
+    \label{fig:act3_180}
+\end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Como se aprecia en las Figuras 15 a 20 se cumple satisfactoriamente con el objetivo de controlar un servomotor mediante múltiples entradas digitales, siguiendo las combinaciones especificadas en la Tabla 5-3 donde el servomotor va girando hasta alcanzar diferentes posiciones de 0° a 190°. La configuración de resistencias internas fue vital pues S2 con \texttt{PULL\_DOWN} nos garantizó lectura en 0 cuando no está presionado, mientras que S1 con \texttt{PULL\_UP} nos da 1 en estado de reposo.
+
+    La implementación del control PWM a 50 Hz con resolución de 16 bits permitió generar pulsos precisos para posicionar el servo en los ángulos requeridos. La función \texttt{set\_servo\_angulo()} realiza la conversión lineal entre ángulo y ciclo de trabajo, facilitando la legibilidad del código. El retardo de 100 ms proporciona estabilidad en la lectura de las entradas y evita rebotes mecánicos. En resumen, esta actividad demuestra cómo combinar múltiples entradas digitales para controlar un actuador mediante PWM, sentando las bases para sistemas de control más complejos.
 
 
     \newpage
@@ -1117,6 +1215,11 @@
         \item \textbf{Espinoza Matamoros Percival Ulises:} Por medio de la realización de la práctica logre comprender y aprender a como los diferentes tipos de motor, como lo son los motores de corriente directa, motores a pasos y servomotores, ya que aunque cada unos de estos tipos de motores funcionan por medio de las señales eléctricas, cada uno tiene una forma diferente de interpretar estas señales para generar movimiento. Ya que los motores de corriente directa responden a la polaridad y magnitud del voltaje aplicado, mientras que los motores a pasos requieren una secuencia específica de pulsos para controlar su posición y velocidad. Por otro lado, los servomotores utilizan señales PWM para controlar su ángulo de rotación con precisión. Al implementar los diferentes tipos de motores en las actividades, pude observar cómo cada uno de ellos responde a las señales eléctricas de manera distinta, lo que me permitió entender mejor sus características y aplicaciones específicas. Por lo que esta práctica me ayudó a comprender la diversidad de motores y cómo se pueden utilizar en diferentes contextos según sus características de control y respuesta a las señales eléctricas, y como con MicroPython se pueden implementar de manera sencilla y práctica.
 
         \item \textbf{Flores Colin Victor Jaziel:}
+        GRacias a la realización de esta práctica se logró comprender el funcionamiento y control de distintos tipos de motores y se observó que cada uno presenta un comportamiento particular: los motores de corriente directa responden a la polaridad y magnitud del voltaje, los motores a pasos requieren secuencias específicas de activación para controlar su posición, y los servomotores utilizan señales PWM para posicionarse con precisión y todo esto se debio a la implementación en MicroPython en la Raspberry Pi Pico que permitió evidenciar estas diferencias.
+        
+        Los resultados experimentales confirmaron el correcto funcionamiento de los sistemas desarrollados. El servomotor SG90 presentó un movimiento preciso y fluido entre $0^\circ$ y $180^\circ$, validando la generación de PWM a $50\ \text{Hz}$, y el ingreso de entradas digitales permitió un control confiable de sus posiciones. El motor a pasos mostró un control angular exacto acorde a los comportamientos teóricos esperados, y el zumbador proporcionó retroalimentación útil del sistema, para hecer las modificaciones necesarias.
+
+        En el caso de los motores de corriente directa con el puente H L293D, se comprobó el control independiente del sentido de giro y estados de operación, incluyendo condiciones seguras de paro
 
 
         \item \textbf{Lara Hernandez Angel Husiel:} 
