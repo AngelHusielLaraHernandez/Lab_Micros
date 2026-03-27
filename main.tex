@@ -776,19 +776,130 @@
     \end{figure}
 
     \subsection*{Propuesta de solución}
-    
+
+    Para poder implementar las modificaciones que se solicitan en la actividad, deben realizar las implementaciones de incrementar y decrementar automáticamente el valor PWM, que esto sea en la terminal \texttt{GPIO0} y reflejar el valor inverso en el pin \texttt{GPIO1}. 
+
+    Para poder realizar esa implementación, es necesario configurar ambos pines como salidas PWM, para esto se crean dos objetos de la clase \texttt{PWM} independientes que se asocian a cada pin. Luego, se establece la misma frecuencia de 1 kHz para ambos canales.
+
+    Posteriormente se establecen los limites, ya que el ciclo de trabajo de un PWM en MicroPython se controla mediante un registro de 16 bits, lo que implica que los valores válidos van de 0 a 65535, el valor máximo se guarda en la constante \texttt{MAX\_DUTY}, adicionalmente se define un variable \texttt{PASO} con valor de \texttt{1000} esto hace que el incremento o decremento del ciclo de trabajo sea de 1000 unidades, lo que permite observar claramente el cambio en la intensidad del LED conectado a cada pin.
+
+    Posteriormente, se implementa un bucle infinito que contiene dos ciclos \texttt{for} anidados. El primer ciclo incrementa el valor de \texttt{duty} desde 0 hasta el valor máximo, aplicando el mismo valor a \texttt{pwm0} y el valor inverso a \texttt{pwm1}. Luego, el segundo ciclo hace lo contrario, decrementando el valor de \texttt{duty} desde el máximo hasta 0, manteniendo la relación inversa entre ambos canales. Se introduce un retardo de 20 milisegundos en cada iteración para que los cambios sean perceptibles visualmente.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[>=latex, scale=0.75, transform shape,
+        inicio/.style={ellipse, draw, thick, minimum width=2cm, minimum height=0.8cm, fill=green!20},
+        proceso/.style={rectangle, draw, thick, minimum width=3cm, minimum height=0.7cm, fill=blue!10, align=center, font=\footnotesize},
+        decision/.style={diamond, draw, thick, minimum width=1.5cm, minimum height=1cm, fill=yellow!20, align=center, aspect=2, font=\footnotesize},
+        flecha/.style={->, thick, rounded corners=2pt} % Esquinas redondeadas para mayor fluidez
+    ]
+        % Inicio
+        \node[inicio] (inicio) at (0, 0) {Inicio};
+
+        % Configurar PWM
+        \node[proceso] (config_pwm) at (0, -1.4) {Configurar PWM0 en GPIO0\\Configurar PWM1 en GPIO1};
+
+        % Establecer variables iniciales
+        \node[proceso] (vars) at (0, -3) {freq = 1000 Hz\\MAX\_DUTY = 65535\\PASO = 1000};
+
+        % ---------------- FASE 1 ----------------
+        % Inicializar duty Fase 1
+        \node[proceso] (init_duty1) at (0, -4.8) {duty = 0};
+
+        % Decisión del primer for
+        \node[decision] (dec_for1) at (0, -7) {duty $<$ MAX\_DUTY?};
+
+        % Aplicar PWM Fase 1 (a la derecha)
+        \node[proceso] (aplicar1) at (5.5, -7) {pwm0.duty\_u16(duty)\\pwm1.duty\_u16(MAX\_DUTY - duty)};
+
+        % Esperar Fase 1
+        \node[proceso] (esperar1) at (5.5, -8.3) {Esperar 0.02 s};
+
+        % Incrementar duty Fase 1
+        \node[proceso] (incrementar1) at (5.5, -9.6) {duty = duty + PASO};
+
+        % ---------------- FASE 2 ----------------
+        % Inicializar duty Fase 2 (abajo de la primera decisión)
+        \node[proceso] (init_duty2) at (0, -9.5) {duty = MAX\_DUTY};
+
+        % Decisión del segundo for
+        \node[decision] (dec_for2) at (0, -11.7) {duty $>$ 0?};
+
+        % Aplicar PWM Fase 2 (a la derecha)
+        \node[proceso] (aplicar2) at (5.5, -11.7) {pwm0.duty\_u16(duty)\\pwm1.duty\_u16(MAX\_DUTY - duty)};
+
+        % Esperar Fase 2
+        \node[proceso] (esperar2) at (5.5, -13.0) {Esperar 0.02 s};
+
+        % Decrementar duty Fase 2
+        \node[proceso] (decrementar2) at (5.5, -14.3) {duty = duty - PASO};
+
+        % ================= RUTAS Y FLECHAS =================
+        
+        % Flujo principal inicial
+        \draw[flecha] (inicio) -- (config_pwm);
+        \draw[flecha] (config_pwm) -- (vars);
+        \draw[flecha] (vars) -- (init_duty1);
+        \draw[flecha] (init_duty1) -- (dec_for1);
+
+        % Bucle Fase 1 - Sí (entra al for, hacia la derecha)
+        \draw[flecha] (dec_for1.east) -- node[above] {Sí} (aplicar1.west);
+        \draw[flecha] (aplicar1) -- (esperar1);
+        \draw[flecha] (esperar1) -- (incrementar1);
+        
+        % Loop de regreso de la Fase 1 
+        % Usa trazado ortogonal para ir a la derecha, arriba y luego izquierda justo antes de la decisión
+        \draw[flecha] (incrementar1.east) -- ++(2,0) |- (0, -5.9);
+
+        % Transición a Fase 2 - No (sale del for 1, hacia abajo)
+        \draw[flecha] (dec_for1.south) -- node[left] {No} (init_duty2.north);
+        \draw[flecha] (init_duty2) -- (dec_for2);
+
+        % Bucle Fase 2 - Sí (entra al for, hacia la derecha)
+        \draw[flecha] (dec_for2.east) -- node[above] {Sí} (aplicar2.west);
+        \draw[flecha] (aplicar2) -- (esperar2);
+        \draw[flecha] (esperar2) -- (decrementar2);
+        
+        % Loop de regreso de la Fase 2
+        \draw[flecha] (decrementar2.east) -- ++(2,0) |- (0, -10.6);
+
+        % Loop principal While True (Global)
+        % Sale hacia abajo, va a la izquierda y sube para reiniciar la Fase 1
+        \draw[flecha] (dec_for2.south) -- node[left] {No} ++(0,-1.5) -| (-3.5, -3.9) -- (0, -3.9);
+
+    \end{tikzpicture}
+    \caption{Diagrama de flujo del código modificado (Rutas Optimizadas)}
+    \end{figure}
+
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6,basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
     \subsection*{Análisis de resultados}
 
-    \newpage
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad6/20260325_114747.jpg}
+        \caption{Actividad 6: Ambos Leds Encendidos Pt. 1}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad6/20260325_114758.jpg}
+        \caption{Actividad 6: Ambos Leds Encendidos Pt. 2}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad6/20260325_114755.jpg}
+        \caption{Actividad 6: Ambos Leds Encendidos Pt. 2}
+    \end{figure}
+
+    A partir de la ejecución del código, se puede observar que ambos LEDs conectados a los pines GPIO0 y GPIO1 se encienden y apagan de manera inversa. Cuando el LED conectado a GPIO0 alcanza su brillo máximo, el LED conectado a GPIO1 está completamente apagado, y viceversa. Este comportamiento confirma que el programa está controlando correctamente los ciclos de trabajo de ambos canales PWM, incrementando uno mientras decrementa el otro. El efecto visual es un ciclo continuo de \texttt{fade} donde un LED se ilumina gradualmente mientras el otro se atenúa, creando un contraste dinámico entre ambos.
 
     \section*{Actividad 7}
 
-    Realizar las modificaciones necesarias para realizar el control anterior pero ahora a través de la selal analógica proveniente del potenciómetro.
-
+    Realizar las modificaciones necesarias para realizar el control anterior pero ahora a través de la señal analógica proveniente del potenciómetro.
 
     \begin{figure}[htbp]
         \centering
@@ -925,19 +1036,105 @@
         \end{tikzpicture}
     \end{figure}
 
+    \section*{Propuesta de solución}
 
-    \section*{Propuesta de solucion}
+    Para implementar el control del PWM utilizando la señal analógica proveniente del potenciómetro, es necesario importar el módulo \texttt{ADC} esto para poder leer el valor analógico del potenciómetro, ya que funciona como un convertidor analógico a digital (ADC). Posteriormente se debe de indicar al microcontrolador que el pin 26 se usará para leer una señal analógica, esto se logra creando un objeto de la clase \texttt{ADC} asociado al pin 26. Posteriormente, se establece la frecuencia del PWM para ambos canales en 1 kHz, y se define una variable \texttt{MAX\_DUTY} con el valor máximo de 65535 para controlar el ciclo de trabajo.
+
+    De igual forma qye en el ejercicio anterior, se define la constante \texttt{MAX\_DUTY} con el valor máximo de 65535 para controlar el ciclo de trabajo. Luego, se implementa un bucle infinito que lee continuamente el valor del potenciómetro utilizando el método \texttt{read\_u16()} del objeto ADC. Este método devuelve un valor de 16 bits que representa la posición del potenciómetro, donde 0 corresponde a la posición mínima y 65535 a la posición máxima. Posteriormente, se asigna este valor directamente al canal PWM conectado a GPIO0, mientras que el canal PWM conectado a GPIO1 recibe el valor inverso (calculado como \texttt{MAX\_DUTY - duty}). Esto permite que al girar el potenciómetro en una dirección, un LED se ilumine más mientras el otro se atenúa, y al girarlo en la dirección opuesta, el efecto se invierte. Se introduce un pequeño retardo de 50 milisegundos en cada iteración para que los cambios sean perceptibles visualmente.
+     
+    \begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[>=latex, scale=0.8, transform shape,
+        inicio/.style={ellipse, draw, thick, minimum width=2cm, minimum height=0.8cm, fill=green!20},
+        proceso/.style={rectangle, draw, thick, minimum width=3cm, minimum height=0.7cm, fill=blue!10, align=center, font=\footnotesize},
+        terminal/.style={rectangle, draw, thick, minimum width=2.5cm, minimum height=0.7cm, fill=orange!10, align=center, font=\footnotesize, rounded corners=5pt},
+        flecha/.style={->, thick, rounded corners=2pt} % Esquinas redondeadas para mayor fluidez
+    ]
+        % --- Bloque de Inicio ---
+        \node[inicio] (inicio) at (0, 0) {Inicio};
+
+        % --- Bloque de Configuración ---
+        % Se agrupan las configuraciones iniciales
+        \node[proceso] (config) at (0, -1.8) {
+            Configurar ADC en Pin 26 (Potenciómetro)\\
+            Configurar PWM0 en GPIO0\\
+            Configurar PWM1 en GPIO1\\
+            Frecuencia = 1000 Hz
+        };
+
+        % --- Definición de Constantes ---
+        \node[proceso] (const) at (0, -3.8) {MAX\_DUTY = 65535};
+
+        % --- Punto de entrada al bucle While True ---
+        % Usamos una coordenada vacía como punto de anclaje para el retorno del bucle
+        \coordinate (bucle) at (0, -4.8);
+
+        % --- Bloque de Lectura (Terminal/Entrada) ---
+        \node[terminal] (lectura) at (0, -5.8) {Leer ADC (read\_u16)\\Guardar en 'lectura\_pot'};
+
+        % --- Bloque de Procesamiento (Cálculos y Escritura) ---
+        \node[proceso] (proceso) at (0, -8) {
+            Establecer PWM0 = lectura\_pot\\
+            Calcular Inverso = MAX\_DUTY - lectura\_pot\\
+            Establecer PWM1 = Inverso
+        };
+
+        % --- Bloque de Espera ---
+        \node[proceso] (espera) at (0, -10) {Esperar 0.05 segundos};
+
+        % ================= RUTAS Y FLECHAS =================
+        
+        % Flujo secuencial inicial
+        \draw[flecha] (inicio) -- (config);
+        \draw[flecha] (config) -- (const);
+        
+        % Entrada al bucle
+        \draw[thick] (const) -- (bucle); % Línea continua hasta el punto de anclaje
+        \draw[flecha] (bucle) -- (lectura);
+        
+        % Flujo dentro del bucle
+        \draw[flecha] (lectura) -- (proceso);
+        \draw[flecha] (proceso) -- (espera);
+        
+        % --- Retorno del Bucle While True ---
+        % Sale de 'espera', va a la izquierda y sube hasta el punto 'bucle'
+        \draw[flecha] (espera.south) -- ++(0,-0.8) -| (-4, -4.8) -- (bucle);
+
+    \end{tikzpicture}
+    \caption{Diagrama de flujo: Control de LEDs directo e inverso mediante Potenciómetro (ADC) - Actividad 7}
+\end{figure}
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7,basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
 
     \subsection*{Análisis de resultados}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad7/20260325_114705.jpg}
+        \caption{Actividad 7: Potenciómetro con un valor bajo}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad7/20260325_114716.jpg}
+        \caption{Actividad 7: Potenciómetro con un valor medio}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad7/20260325_114719.jpg}
+        \caption{Actividad 7: Potenciómetro con un valor alto}
+    \end{figure}
+
+    Al cargar el programa desarrollado para esta actividad, se puede observar que al girar el potenciómetro, el brillo de los LEDs conectados a \texttt{GPIO0} y \texttt{GPIO1} cambia de manera inversa. Cuando el potenciómetro está en su posición mínima, el LED conectado a \texttt{GPIO0} está completamente apagado mientras que el LED conectado a \texttt{GPIO1} está en su brillo máximo. A medida que se gira el potenciómetro hacia la posición media, el LED de \texttt{GPIO0} comienza a iluminarse gradualmente mientras que el LED de \texttt{GPIO1} se atenúa. Finalmente, al girar el potenciómetro hacia su posición máxima, el LED de \texttt{GPIO0} alcanza su brillo máximo y el LED de \texttt{GPIO1} se apaga completamente. Es a partir de este comportamiento  que se puede confirmar que la lectura del ADC del potenciómetro está controlando correctamente los ciclos de trabajo de ambos canales PWM, creando un efecto dinámico donde un LED se ilumina mientras el otro se atenúa en función de la posición del potenciómetro.
+
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Por medio de las diferentes actividades realizadas en está práctica pude comprender y conocer el funcionamiento de los convertidores analógico a digital (ADC) para diversas aplicaciones como procesar señales analógicas provenientes de sensores, como el potenciómetro y el fotoresistor, de forma que para procesar esta señales por medio del microtrolador es necesario realizar las conversiones necesarias para poder interpretar correctamente la información que se obtiene de estos sensores, esto se logra por medio de la clase \texttt{ADC} en MicroPython. De igual forma, también pude comprender el funcionamiento de los módulos PWM y cómo controlar el ciclo de trabajo para lograr efectos visuales como el  efecto de \texttt{fade} en los LEDs, así como la importancia de configurar correctamente los pines y establecer frecuencias adecuadas para obtener resultados óptimos.
         
 
         \item \textbf{Flores Colin Victor Jaziel:}
