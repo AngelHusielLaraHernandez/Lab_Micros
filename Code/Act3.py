@@ -1,50 +1,30 @@
-from machine import Pin, PWM
+from machine import ADC, Pin
 import time
 
-# --- ENTRADAS ---
-S2 = Pin(12, Pin.IN, Pin.PULL_DOWN)
-S1 = Pin(11, Pin.IN, Pin.PULL_UP)
-sw1_1 = Pin(10, Pin.IN)
-sw1_2 = Pin(9, Pin.IN)
-sw1_3 = Pin(8, Pin.IN)
+# Configuración de pines según esquema
+foto_resistencia = ADC(27) # GPIO27 corresponde al ADC1
+led = Pin(7, Pin.OUT)      # LED controlado
 
-# --- SALIDA PWM (Servo) ---
-servo = PWM(Pin(21))
-servo.freq(50) # El estándar para servomotores es un periodo de 20ms (50Hz)
+# Valor de referencia umbral (Cámbialo tras ver qué rango arroja tu LDR físicamente)
+V_REF = 30000 
 
-def leer_entradas():
-    return (S2.value(), S1.value(), sw1_1.value(), sw1_2.value(), sw1_3.value())
-
-def set_servo_angulo(angulo):
-    """
-    Convierte un ángulo de 0 a 180 en el ciclo de trabajo equivalente.
-    0.5ms (1638 duty) equivale a 0°.
-    2.5ms (8192 duty) equivale a 180°.
-    """
-    min_duty = 1638
-    max_duty = 8192
-    duty = int(min_duty + (angulo / 180.0) * (max_duty - min_duty))
-    servo.duty_u16(duty)
+# Variables para guardar memoria histórica de luz
+val_max = 0
+val_min = 65535
 
 while True:
-    estado = leer_entradas()
-    if estado == (0, 1, 0, 0, 0):
-        servo.duty_u16(0) # PARO (Apaga la señal PWM, liberando el torque del servo)
-    elif estado == (0, 1, 0, 0, 1):
-        print(estado)
-        set_servo_angulo(0)
-    elif estado == (0, 1, 0, 1, 0):
-        print(estado)
-        set_servo_angulo(45)
-    elif estado == (0, 1, 1, 0, 0):
-        print(estado)
-        set_servo_angulo(90)
-    elif estado == (0, 0, 0, 0, 0):
-        print(estado)
-        set_servo_angulo(135)
-    elif estado == (1, 1, 0, 0, 0):
-        print(estado)
-        set_servo_angulo(180)
+    lectura = foto_resistencia.read_u16()
+    
+    # Actualiza los límites si se detecta un nuevo máximo o mínimo
+    if lectura > val_max: val_max = lectura
+    if lectura < val_min: val_min = lectura
         
-    time.sleep(0.1)
-
+    print(f"Luz actual: {lectura} | Min: {val_min} | Max: {val_max} | Umbral: {V_REF}")
+    
+    # Condición solicitada: si la lectura rebasa la referencia, se enciende.
+    if lectura > V_REF:
+        led.value(1) # Alto
+    else:
+        led.value(0) # Bajo
+        
+    time.sleep(0.5)

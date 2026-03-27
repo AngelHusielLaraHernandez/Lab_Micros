@@ -1,0 +1,1235 @@
+\documentclass[letterpaper,12pt]{article}
+
+% --- PAQUETES DE IDIOMA
+\usepackage[spanish,mexico]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+
+% --- PAQUETES MATEMÁTICOS --
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cancel}
+\usepackage{mathrsfs}
+
+% --- PAQUETES GRÁFICOS Y DE DISEÑO ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage[table]{xcolor}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{tikz}
+\usepackage{circuitikz}
+\usetikzlibrary{shapes.geometric, shapes.multipart, shapes.symbols, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
+
+% --- LISTAS ---
+\usepackage{enumitem}
+
+% --- PAQUETES DE CÓDIGO ---
+\usepackage{listings}
+% Configuración del estilo de listings
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}   
+\definecolor{keyword}{rgb}{0.0,0.2,0.6}     
+\definecolor{comment}{rgb}{0.25,0.5,0.35}   
+\definecolor{string}{rgb}{0.6,0.0,0.0}      
+\definecolor{number}{rgb}{0.5,0.0,0.5}      
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+% Definición de los colores utilizados en las tablas
+\definecolor{headerbg}{HTML}{5B84C4} % Azul oscuro para el encabezado principal
+\definecolor{subheaderbg}{HTML}{B4C6E7} % Azul intermedio para sub-encabezados
+\definecolor{rowbg}{HTML}{E9EDF4} % Azul claro para filas intercaladas
+
+\lstset{
+  backgroundcolor=\color{backcolour},
+  basicstyle=\ttfamily\small,
+    inputencoding=utf8,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codepurple},
+  commentstyle=\color{codegray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false,
+  literate={á}{{\'a}}1
+           {é}{{\'e}}1
+           {í}{{\'i}}1
+           {ó}{{\'o}}1
+           {ú}{{\'u}}1
+           {Á}{{\'A}}1
+           {É}{{\'E}}1
+           {Í}{{\'I}}1
+           {Ó}{{\'O}}1
+           {Ú}{{\'U}}1
+           {ñ}{{\~n}}1
+           {Ñ}{{\~N}}1
+           {¿}{{\textquestiondown}}1
+           {¡}{{\textexclamdown}}1
+           {°}{{\ensuremath{^\circ}}}1
+}
+
+% Definición del lenguaje Python para listings
+\lstdefinelanguage[LAB]{Python}{
+    morekeywords={False, None, True, and, as, assert, async, await, break,
+                                class, continue, def, del, elif, else, except, finally,
+                                for, from, global, if, import, in, is, lambda, nonlocal,
+                                not, or, pass, raise, return, try, while, with, yield,
+                                machine, Pin, PWM, ADC, Timer, sleep_ms, sleep_us},
+    morecomment=[l]{\#},
+    morestring=[b]",
+    morestring=[b]',
+    sensitive=true
+}
+
+% --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
+\tikzset{
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+  arrow/.style={thick,->,>=stealth}
+}
+
+% Macro para dibujar la Raspberry Pi Pico y sus nodos
+\newcommand{\picoboard}{
+    \draw[thick] (0,0.5) rectangle (4,-9.5);
+    \node[align=center, font=\small\sffamily] at (2, -1.5) {Raspberry PI\\[0.1cm]Pico};
+
+    % Pines Superiores
+    \draw[red, thick] (0.8, 0.5) -- (0.8, 0.8) coordinate (P41); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P41) {41};
+    \draw[red, thick] (2.0, 0.5) -- (2.0, 0.8) coordinate (P42); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P42) {42};
+    \draw[red, thick] (3.2, 0.5) -- (3.2, 0.8) coordinate (P43); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P43) {43};
+    \node[below, font=\tiny\sffamily] at (0.8, 0.5) {SW CLK};
+    \node[below, font=\tiny\sffamily] at (2.0, 0.5) {SW GND};
+    \node[below, font=\tiny\sffamily] at (3.2, 0.5) {SW DIO};
+
+    % GND Inferior
+    \draw[red, thick] (2, -9.5) -- (2, -10.2) coordinate (PGND);
+    \node[above, font=\tiny\sffamily] at (2, -9.5) {GND};
+    \node[below, font=\tiny\sffamily] at (2, -10.2) {3,8,13,18 \quad 23,28,38};
+
+    % Pines del lado Izquierdo
+    \foreach \i/\pin/\num in {
+        1/GP0/1, 2/GP1/2, 
+        4/GP2/4, 5/GP3/5, 6/GP4/6, 7/GP5/7, 
+        9/GP6/9, 10/GP7/10, 11/GP8/11, 12/GP9/12, 
+        14/GP10/14, 15/GP11/15, 16/GP12/16, 17/GP13/17, 
+        19/GP14/19, 20/GP15/20
+    } {
+        \draw[red, thick] (0, -\i*0.45) -- (-0.4, -\i*0.45) coordinate (P\num);
+        \node[right, font=\tiny\sffamily] at (0, -\i*0.45) {\pin};
+        \node[above left, font=\tiny\sffamily, inner sep=1pt] at (P\num) {\num};
+    }
+
+    % Pines del lado Derecho
+    \foreach \i/\pin/\num in {
+        1/VBUS/40, 2/VSS/39, 
+        4/3V3\_EN/37, 5/3V3/36, 6/ADC\_VREF/35, 7/GP28\_A2/34, 8/AGND/33, 
+        9/GP27\_A1/32, 10/GP26\_A0/31, 11/RUN/30, 12/GP22/29, 
+        14/GP21/27, 15/GP20/26, 16/GP19/25, 17/GP18/24, 
+        19/GP17/22, 20/GP16/21
+    } {
+        \draw[red, thick] (4, -\i*0.45) -- (4.4, -\i*0.45) coordinate (P\num);
+        \node[left, font=\tiny\sffamily] at (4, -\i*0.45) {\pin};
+        \node[above right, font=\tiny\sffamily, inner sep=1pt] at (P\num) {\num};
+    }
+}
+
+
+
+\definecolor{azulresultado}{HTML}{0072C6}
+\definecolor{rojoacarreo}{HTML}{FF0000}
+
+% Colores para la tabla
+\definecolor{headblue}{HTML}{4F81BD}
+\definecolor{subheadblue}{HTML}{B8CCE4}
+\definecolor{datablockblue}{HTML}{DCE6F1}
+
+% --- RUTAS DE IMÁGENES ---
+\graphicspath{{img/}{portada_img/}}
+
+\definecolor{armblue}{RGB}{0, 113, 188}
+
+% --- CONFIGURACIÓN DE PÁGINA (GEOMETRÍA) ---
+\usepackage[
+    left=25mm, 
+    right=25mm,
+    top=35mm,
+    bottom=30mm,
+    headheight=77pt, 
+    papersize={21.59cm,27.94cm}
+]{geometry}
+
+% --- FORMATO DE TEXTO ---
+\renewcommand{\baselinestretch}{1.25} 
+\usepackage{parskip} 
+\usepackage{lipsum}  
+
+% --- VARIABLES GLOBALES ---
+\newcommand{\materia}{}
+
+% --- ENCABEZADOS Y PIES DE PÁGINA ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 
+\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/izq.png}}
+\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/der.png}}
+\fancyfoot[C]{\thepage} 
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0pt}  
+
+% --- BIBLIOGRAFÍA ---
+\usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- HIPERVÍNCULOS ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan
+}
+
+\begin{document}
+
+    \input{portada.tex}
+
+    \newpage
+    \setcounter{page}{1}
+
+    \section{Objetivo:}
+    
+    Reforzará las habilidades para programar y configurar las funciones GPIO para controlar
+    motores de corriente directa, motores de pasos y servomotores a través del microcontrolador
+    Raspberry Pi Pico. Estudiar la importancia de los amplificadores de potencia.
+    
+    \section*{Actividad 1}
+    
+    De acuerdo a la distribución indicada en el circuito de la figura 5-10; realizar las acciones
+    de control indicadas en la tabla 5-2. Conectar la fuente externa con 5V.
+
+    \begin{center}
+    \resizebox{0.95\linewidth}{!}{%
+    \begin{tikzpicture}
+        % Estilos de las etiquetas estilo "banderas"
+        \tikzset{
+            label left/.style={
+                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, font=\tiny\sffamily, inner sep=2pt
+            },
+            label right/.style={
+                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, font=\tiny\sffamily, inner sep=2pt
+            }
+        }
+
+        % === RASPBERRY PI PICO ===
+        \picoboard
+
+        % Etiquetas en el lado izquierdo de la Pico
+        \node[label left=green, anchor=east] at (-0.4, -1*0.45) {DIR1\_M1};
+        \node[label left=green, anchor=east] at (-0.4, -2*0.45) {DIR2\_M1};
+        \node[label left=green, anchor=east] at (-0.4, -4*0.45) {DIR1\_M2};
+        \node[label left=green, anchor=east] at (-0.4, -5*0.45) {DIR2\_M2};
+
+        % Etiquetas en el lado derecho de la Pico
+        \node[label right=red, anchor=west]   at (4.4, -15*0.45) {ENABLE\_M1}; 
+        \node[label right=green, anchor=west] at (4.4, -16*0.45) {ENABLE\_M2}; 
+
+        % === DRIVER L293D ===
+        \draw[thick] (-10, -0.8) rectangle (-4, -6.4);
+        \node[font=\sffamily] at (-7, -0.5) {IC1};
+        \node[font=\small\sffamily] at (-7, -3.6) {L293D};
+
+        % Pines y textos L293D (Izquierda)
+        \foreach \i/\text/\y in {
+            1/Enable 1/-1.5,
+            2/In 1/-2.1,
+            3/Out 1 ( Controlled by Enable 1 )/-2.7,
+            4/0V/-3.3,
+            5/0V/-3.9,
+            6/Out 2 ( Controlled by Enable 1 )/-4.5,
+            7/In 2/-5.1,
+            8/+Vmotor/-5.7
+        } {
+            \node[right, font=\tiny\sffamily, text=gray!80!black] at (-10, \y) {\text};
+            \node[left, font=\tiny\sffamily, text=red] at (-10, \y+0.1) {\i};
+        }
+
+        % Pines y textos L293D (Derecha)
+        \foreach \i/\text/\y in {
+            16/+V/-1.5,
+            15/In 4/-2.1,
+            14/Out 4 ( Controlled by Enable 2 )/-2.7,
+            13/0V/-3.3,
+            12/0V/-3.9,
+            11/Out 3 ( Controlled by Enable 2 )/-4.5,
+            10/In 3/-5.1,
+            9/Enable 2/-5.7
+        } {
+            \node[left, font=\tiny\sffamily, text=gray!80!black] at (-4, \y) {\text};
+            \node[right, font=\tiny\sffamily, text=red] at (-4, \y+0.1) {\i};
+        }
+
+        % --- Conexiones Izquierda (L293D) ---
+        \draw[thick, green] (-10, -1.5) -- (-14, -1.5);
+        \node[label left=green, anchor=east] at (-14, -1.5) {ENABLE\_M\_1};
+
+        \draw[thick, green] (-10, -2.1) -- (-14, -2.1);
+        \node[label left=red, anchor=east] at (-14, -2.1) {DIR1\_M1};
+
+        \draw[thick, green] (-10, -5.1) -- (-14, -5.1);
+        \node[label left=red, anchor=east] at (-14, -5.1) {DIR2\_M1};
+
+        % Motor 1
+        \draw[thick, fill=white] (-13, -3.6) circle (0.4);
+        \node[font=\sffamily] at (-13, -3.6) {M};
+        \node[above right, font=\small\sffamily] at (-12.8, -3.2) {M1};
+        % Terminales M1
+        \draw[thick, fill=black] (-12.6, -3.4) rectangle (-12.5, -3.3);
+        \draw[thick, fill=black] (-12.6, -3.9) rectangle (-12.5, -3.8);
+        % Cables M1
+        \draw[thick, green] (-10, -2.7) -- (-11.5, -2.7) -- (-11.5, -3.35) -- (-12.5, -3.35);
+        \draw[thick, green] (-10, -4.5) -- (-11.5, -4.5) -- (-11.5, -3.85) -- (-12.5, -3.85);
+
+        % GND Izquierda
+        \draw[thick, green] (-10, -3.3) -- (-10.5, -3.3) -- (-10.5, -3.9);
+        \draw[thick, green] (-10, -3.9) -- (-11.0, -3.9) -- (-11.0, -4.5);
+        \draw[thick, green] (-11.0, -4.5) -- ++(0,-0.3);
+        \draw[thick, green] (-11.2, -4.8) -- ++(0.4,0);
+        \draw[thick, green] (-11.1, -4.9) -- ++(0.2,0);
+        \draw[thick, green] (-11.05, -5.0) -- ++(0.1,0);
+
+        % 5V Izquierda (+Vmotor)
+        \draw[thick, red] (-10, -5.7) -- (-10.5, -5.7) -- (-10.5, -6.5) -- (-11.5, -6.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % --- Conexiones Derecha (L293D) ---
+        \draw[thick, green] (-4, -2.1) -- (-2.5, -2.1);
+        \node[label right=green, anchor=west] at (-2.5, -2.1) {DIR2\_M2};
+
+        \draw[thick, green] (-4, -5.1) -- (-2.5, -5.1);
+        \node[label right=green, anchor=west] at (-2.5, -5.1) {DIR1\_M2};
+
+        \draw[thick, green] (-4, -5.7) -- (-2.5, -5.7);
+        \node[label right=red, anchor=west] at (-2.5, -5.7) {ENABLE\_M2};
+
+        % Motor 2
+        \draw[thick, fill=white] (-1.5, -3.6) circle (0.4);
+        \node[font=\sffamily] at (-1.5, -3.6) {M};
+        \node[above right, font=\small\sffamily] at (-1.3, -3.2) {M2};
+        % Terminales M2
+        \draw[thick, fill=black] (-1.9, -3.4) rectangle (-2.0, -3.3);
+        \draw[thick, fill=black] (-1.9, -3.9) rectangle (-2.0, -3.8);
+        % Cables M2
+        \draw[thick, green] (-4, -2.7) -- (-2.5, -2.7) -- (-2.5, -3.35) -- (-2.0, -3.35);
+        \draw[thick, green] (-4, -4.5) -- (-2.5, -4.5) -- (-2.5, -3.85) -- (-2.0, -3.85);
+
+        % GND Derecha
+        \draw[thick, green] (-4, -3.3) -- (-3.5, -3.3) -- (-3.5, -3.9);
+        \draw[thick, green] (-4, -3.9) -- (-3.0, -3.9) -- (-3.0, -4.5);
+        \draw[thick, green] (-3.0, -4.5) -- ++(0,-0.3);
+        \draw[thick, green] (-3.2, -4.8) -- ++(0.4,0);
+        \draw[thick, green] (-3.1, -4.9) -- ++(0.2,0);
+        \draw[thick, green] (-3.05, -5.0) -- ++(0.1,0);
+
+        % 5V Derecha (+V)
+        \draw[thick, green] (-4, -1.5) -- (-3.5, -1.5) -- (-3.5, -0.5) -- (-4.5, -0.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % === Título / Caption ===
+        \node[font=\sffamily] at (-3, -11) {Figura 5-10. Control de motores de corriente directa};
+
+        \end{tikzpicture}%
+    }
+    \end{center}
+
+    \begin{table}[ht]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \setlength{\arrayrulewidth}{1pt}
+        \arrayrulecolor{white}
+        \resizebox{0.88\linewidth}{!}{%
+        \begin{tabular}{|c|c|c|c|c|}
+            \hline
+            \rowcolor{headerbg}
+            \multicolumn{3}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{2}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+            \hline
+            \rowcolor{subheaderbg}
+            \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{MOTOR 1} & \textbf{MOTOR 2} \\
+            \rowcolor{subheaderbg}
+            \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO0 -- GPIO1-GPIO20} & \textit{GPIO2 -- GPIO3-GPIO19} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 0 & 0 & \textbf{PARO} & PARO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 0 & 1 & \textbf{GIRA HORARIO} & PARO \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 1 & 0 & \textbf{PARO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 1 & 1 & \textbf{GIRA HORARIO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 0 & 0 & \textbf{GIRA ANTIHORARIO} & GIRA HORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 0 & 1 & \textbf{GIRA HORARIO} & GIRA ANTIHORARIO \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 1 & 0 & \textbf{GIRA ANTIHORARIO} & GIRA ANTIHORARIO \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 1 & 1 & \textbf{PARO} & PARO \\
+            \hline
+        \end{tabular}
+        }
+        \caption{Tabla 5-2. Controlador; actividad 1}
+    \end{table}
+
+    \newpage
+
+
+    \subsection*{Propuesta de solución}
+
+    Para controlar de manera independiente dos motores de corriente directa (DC), se propone un algoritmo que interactúa con el driver L293D (un doble puente H). El programa requiere inicializar tres pines de entrada (\texttt{GPIO8}, \texttt{GPIO9}, \texttt{GPIO10}) con resistencias de pull-down físicas o externas para leer el estado del interruptor DIP. Simultáneamente, se configuran seis pines de salida: dos de habilitación (\texttt{ENABLE\_M1}, \texttt{ENABLE\_M2}) y cuatro de dirección (\texttt{DIR1\_M1}, \texttt{DIR2\_M1}, \texttt{DIR1\_M2}, \texttt{DIR2\_M2}). 
+
+    La lógica central encapsula el control del hardware en una función \texttt{control\_motor(motor, estado)}. Para inducir movimiento, el pin \texttt{ENABLE} correspondiente se satura a 3.3V (nivel lógico alto). El sentido de giro se determina estableciendo una diferencia de potencial en los pines de dirección: un estado alto en \texttt{DIR1} y bajo en \texttt{DIR2} generará un giro horario, mientras que la configuración inversa generará un giro antihorario. Enviar ceros lógicos a todos los terminales frena el motor. El bucle principal lee las tres entradas físicas como una tupla y la evalúa contra las combinaciones predefinidas en la tabla de verdad para enrutar las señales de voltaje a los pines correspondientes.
+
+
+
+    \begin{center}
+    \resizebox{0.55\linewidth}{!}{%
+    \begin{tikzpicture}[node distance=1.2cm and 2cm]
+
+    % --- NODOS ---
+    \node (start) [startstop] {Inicio};
+    \node (init) [process, below=0.8cm of start, text width=4.5cm, align=center] {Configurar Pines y Motores};
+    \node (read) [io, below=0.8cm of init, align=center] {Leer entradas\\$(sw_{1}, sw_{2}, sw_{3})$};
+
+    \node (dec1) [decision, below=1cm of read] {x=$(0,0,0)$?};
+    \node (proc1) [process, right=2cm of dec1, text width=4.5cm, align=center] {M1: PARO\\M2: PARO};
+
+    \node (dec2) [decision, below=1cm of dec1] {x=$(0,0,1)$?};
+    \node (proc2) [process, right=2cm of dec2, text width=4.5cm, align=center] {M1: ANTIHORARIO\\M2: PARO};
+
+    \node (dec3) [decision, below=1cm of dec2] {x=$(0,1,0)$?};
+    \node (proc3) [process, right=2cm of dec3, text width=4.5cm, align=center] {M1: PARO\\M2: HORARIO};
+
+    \node (dec4) [decision, below=1cm of dec3] {x=$(0,1,1)$?};
+    \node (proc4) [process, right=2cm of dec4, text width=4.5cm, align=center] {M1: ANTIHORARIO\\M2: HORARIO};
+
+    \node (dec5) [decision, below=1cm of dec4] {x=$(1,0,0)$?};
+    \node (proc5) [process, right=2cm of dec5, text width=4.5cm, align=center] {M1: HORARIO\\M2: HORARIO};
+
+    \node (dec6) [decision, below=1cm of dec5] {x=$(1,0,1)$?};
+    \node (proc6) [process, right=2cm of dec6, text width=4.5cm, align=center] {M1: HORARIO\\M2: HORARIO};
+
+    \node (dec7) [decision, below=1cm of dec6] {x=$(1,1,0)$?};
+    \node (proc7) [process, right=2cm of dec7, text width=4.5cm, align=center] {M1: HORARIO\\M2: ANTIHORARIO};
+
+    \node (dec8) [decision, below=1cm of dec7] {x=$(1,1,1)$?};
+    \node (proc8) [process, right=2cm of dec8, text width=4.5cm, align=center] {M1: PARO\\M2: PARO};
+
+    % Retardo general
+    \node (delay) [process, below=1.2cm of dec8] {Esperar 0.05s};
+
+    % --- CONEXIONES DIAGRAMA (Vertical) ---
+    \draw [arrow] (start) -- (init);
+    \draw [arrow] (init) -- (read);
+    \draw [arrow] (read) -- (dec1);
+
+    \draw [arrow] (dec1) -- node[anchor=south] {Sí} (proc1);
+    \draw [arrow] (dec1) -- node[anchor=west] {No} (dec2);
+
+    \draw [arrow] (dec2) -- node[anchor=south] {Sí} (proc2);
+    \draw [arrow] (dec2) -- node[anchor=west] {No} (dec3);
+
+    \draw [arrow] (dec3) -- node[anchor=south] {Sí} (proc3);
+    \draw [arrow] (dec3) -- node[anchor=west] {No} (dec4);
+
+    \draw [arrow] (dec4) -- node[anchor=south] {Sí} (proc4);
+    \draw [arrow] (dec4) -- node[anchor=west] {No} (dec5);
+
+    \draw [arrow] (dec5) -- node[anchor=south] {Sí} (proc5);
+    \draw [arrow] (dec5) -- node[anchor=west] {No} (dec6);
+
+    \draw [arrow] (dec6) -- node[anchor=south] {Sí} (proc6);
+    \draw [arrow] (dec6) -- node[anchor=west] {No} (dec7);
+
+    \draw [arrow] (dec7) -- node[anchor=south] {Sí} (proc7);
+    \draw [arrow] (dec7) -- node[anchor=west] {No} (dec8);
+
+    \draw [arrow] (dec8) -- node[anchor=south] {Sí} (proc8);
+    \draw [arrow] (dec8) -- node[anchor=west] {No} (delay);
+
+    % --- CONEXIONES DE BUS (Flujo de retorno sin superposición) ---
+    % 1. Definir un canal (bus) invisible derecho para unificar las salidas Sí hacia el "Delay"
+    \path (proc1.east) -- ++(1cm,0) coordinate (right_bus);
+
+    \draw (proc1.east) -- (proc1.east -| right_bus);
+    \draw (proc2.east) -- (proc2.east -| right_bus);
+    \draw (proc3.east) -- (proc3.east -| right_bus);
+    \draw (proc4.east) -- (proc4.east -| right_bus);
+    \draw (proc5.east) -- (proc5.east -| right_bus);
+    \draw (proc6.east) -- (proc6.east -| right_bus);
+    \draw (proc7.east) -- (proc7.east -| right_bus);
+    \draw (proc8.east) -- (proc8.east -| right_bus);
+
+    % Flecha que baja por el bus derecho y llega al delay
+    \draw [arrow] (proc1.east -| right_bus) |- (delay.east);
+
+    % 2. Retorno central izquierdo hacia la lectura
+    \path (read.west) -- ++(-1.5cm,0) coordinate (left_bus);
+    \draw [arrow] (delay.west) -- (delay.west -| left_bus) |- (read.west);
+
+    \end{tikzpicture}%
+    }
+    \end{center}
+
+    El flujo de datos comienza con la inicialización de los pines: tres entradas digitales conectadas a los interruptores DIP y seis salidas para controlar ambos motores a través del L293D. Una vez configurado el hardware, el programa entra en un ciclo infinito donde primero se captura el estado de los tres switches como una tupla binaria. Esta tupla se compara secuencialmente con las ocho combinaciones posibles definidas en la tabla de verdad. Al encontrar coincidencia, se invoca la función \texttt{control\_motor()} con los parámetros apropiados, la cual traduce el comando de alto nivel (``HORARIO'', ``ANTIHORARIO'' o ``PARO'') en señales eléctricas específicas para los pines de habilitación y dirección. Finalmente, se introduce una pausa de 50 milisegundos antes de reiniciar el ciclo, lo cual estabiliza las lecturas y evita oscilaciones por rebote mecánico de los interruptores.
+
+    \subsection*{Desarrollo}
+
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_1.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 1). El microcontrolador habilita únicamente el canal 1 del driver L293D. Se aprecia mediante el difuminado por movimiento que el Motor 1 (rueda izquierda) gira en sentido horario, mientras que el Motor 2 permanece estático en estado de PARO.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_3.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 0). Transición de las señales de control: el microcontrolador retira el voltaje de habilitación del Motor 1 y satura el pin de \texttt{ENABLE} del Motor 2. La llanta derecha muestra el giro en sentido horario mientras la izquierda entra en reposo absoluto.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_5.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 1). Sincronización de salidas. Ambos canales del arreglo L293D son excitados simultáneamente con la misma polaridad en sus respectivos pines de dirección. El efecto mecánico resultante es el giro horario en ambas llantas, lo que en un chasis físico se traduce en desplazamiento frontal lineal.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_9.jpg}
+        \caption{Comprobación de giro diferencial (ej. estado 1, 0, 1). La lectura de los interruptores genera señales opuestas para cada puente H. Ambos motores giran a plena capacidad, pero con los campos magnéticos invertidos entre sí (uno horario y el otro antihorario), demostrando el control independiente y aislado que proporciona el driver para la tracción del circuito.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_15.jpg}
+        \caption{Comprobación del estado lógico (1, 1, 0). Inversión de polaridad sincronizada. El microcontrolador conmuta los niveles lógicos de los pines de dirección, aplicando un voltaje inverso en ambas terminales del puente H. El difuminado constante en ambas llantas confirma el giro en sentido antihorario, lo que físicamente se traduce en el retroceso del chasis.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad1/Act1_17.jpg}
+        \caption{Comprobación de los estados de reposo (ej. 0, 0, 0 o 1, 1, 1). La lectura de estas combinaciones en los interruptores instruye al microcontrolador a drenar el voltaje de los pines \texttt{ENABLE} o a igualar las salidas de dirección a 0V. La nitidez absoluta en los rines de ambas llantas evidencia la ausencia de diferencia de potencial en los motores, confirmando el estado de PARO total.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Al colocar los switches en la posición (0, 0, 0), ambos motores permanecieron completamente detenidos, lo cual confirmó que el estado de reposo funciona como se esperaba.
+
+    Cuando se activó únicamente el tercer switch, formando la combinación (0, 0, 1), el Motor 1 comenzó a girar en sentido horario mientras el Motor 2 permaneció inmóvil. Este comportamiento demostró que el control individual de cada motor opera de manera independiente, tal como lo requiere la tabla de verdad.
+
+    Un aspecto interesante se observó al probar la combinación (1, 1, 1): a pesar de tener todas las entradas en alto, los motores se detienen. Esto tiene sentido desde el punto de vista del diseño, ya que permite usar esta configuración como un ``freno de emergencia'' o estado seguro del sistema.
+
+    El retardo de 50 milisegundos al final de cada ciclo resultó fundamental para eliminar lecturas erráticas causadas por el rebote mecánico de los interruptores. Sin este filtro, los motores presentaban cambios abruptos de dirección incluso cuando los switches estaban fijos.
+
+    \vspace{2.6cm}
+    \section*{Actividad 2}
+
+    De acuerdo a la distribución indicada en el circuito de la figura 5-11; realizar las acciones
+    de control indicadas en la tabla 5-3, considerar la secuencia indicada en la figura 5-4. Conectar la
+    fuente externa con 5V.
+
+    \begin{center}
+    \resizebox{0.95\linewidth}{!}{%
+    \begin{tikzpicture}
+
+        % Estilos exactos para las etiquetas tipo bandera (blancas con borde de color)
+        \tikzset{
+            flag left/.style={
+                draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            },
+            flag right/.style={
+                draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+            }
+        }
+
+        % --- RASPBERRY PI PICO ---
+        \picoboard
+
+        % Conexiones de la Pico (Lado Izquierdo)
+        % GP4 (Pin 6)
+        \draw[thick, red] (-0.4, -2.7) -- (-1.2, -2.7);
+        \node[flag left=green, anchor=east] at (-1.2, -2.7) {IN1};
+
+        % GP5 (Pin 7)
+        \draw[thick, red] (-0.4, -3.15) -- (-1.2, -3.15);
+        \node[flag left=green, anchor=east] at (-1.2, -3.15) {IN2};
+
+        % GP6 (Pin 9)
+        \draw[thick, red] (-0.4, -4.05) -- (-1.2, -4.05);
+        \node[flag left=green, anchor=east] at (-1.2, -4.05) {IN3};
+
+        % GP7 (Pin 10)
+        \draw[thick, red] (-0.4, -4.5) -- (-1.2, -4.5);
+        \node[flag left=green, anchor=east] at (-1.2, -4.5) {IN4};
+
+
+        % --- ULN2003A (IC2) ---
+        \draw[thick] (-12, -0.8) rectangle (-7, -7.5);
+        \node[font=\sffamily] at (-9.5, -0.5) {IC2};
+        \node[font=\small\sffamily] at (-9.5, -4.15) {ULN2003A};
+
+        % Pines del ULN2003A (Lado Izquierdo) - Solo texto, las líneas se dibujan abajo
+        \foreach \i/\text/\y in {
+            16/Out 1/-1.5, 15/Out 2/-2.3, 14/Out 3/-3.1, 13/Out 4/-3.9,
+            12/Out 5/-4.7, 11/Out 6/-5.5, 10/Out 7/-6.3, 9/COM - Common/-7.1
+        } {
+            \node[right, font=\tiny\sffamily, text=gray!80!black] at (-12, \y) {\text};
+            \node[left, font=\tiny\sffamily, text=red] at (-12, \y+0.1) {\i};
+        }
+
+        % Pines del ULN2003A (Lado Derecho) - Solo texto
+        \foreach \i/\text/\y in {
+            1/In 1/-1.5, 2/In 2/-2.3, 3/In 3/-3.1, 4/In 4/-3.9,
+            5/In 5/-4.7, 6/In 6/-5.5, 7/In 7/-6.3, 8/0V/-7.1
+        } {
+            \node[left, font=\tiny\sffamily, text=gray!80!black] at (-7, \y) {\text};
+            \node[right, font=\tiny\sffamily, text=red] at (-7, \y+0.1) {\i};
+        }
+
+        % --- Conexiones ULN2003A Izquierda ---
+        % BOBINAS
+        \draw[thick, red] (-12, -1.5) -- (-12.8, -1.5); \node[flag left=red, anchor=east] at (-12.8, -1.5) {BOBINA A};
+        \draw[thick, red] (-12, -2.3) -- (-12.8, -2.3); \node[flag left=red, anchor=east] at (-12.8, -2.3) {BOBINA B};
+        \draw[thick, red] (-12, -3.1) -- (-12.8, -3.1); \node[flag left=red, anchor=east] at (-12.8, -3.1) {BOBINA C};
+        \draw[thick, red] (-12, -3.9) -- (-12.8, -3.9); \node[flag left=red, anchor=east] at (-12.8, -3.9) {BOBINA D};
+
+        % 5V (desde pin 9)
+        \draw[thick, red] (-12, -7.1) -- (-12.5, -7.1) -- (-12.5, -7.5) -- (-12.8, -7.5) node[left, font=\small\sffamily, text=black] {5V};
+
+        % --- Conexiones ULN2003A Derecha ---
+        % INs
+        \draw[thick, red] (-7, -1.5) -- (-6.2, -1.5); \node[flag right=green, anchor=west] at (-6.2, -1.5) {IN4};
+        \draw[thick, red] (-7, -2.3) -- (-6.2, -2.3); \node[flag right=green, anchor=west] at (-6.2, -2.3) {IN3};
+        \draw[thick, red] (-7, -3.1) -- (-6.2, -3.1); \node[flag right=green, anchor=west] at (-6.2, -3.1) {IN2};
+        \draw[thick, red] (-7, -3.9) -- (-6.2, -3.9); \node[flag right=green, anchor=west] at (-6.2, -3.9) {IN1};
+
+        % GND (desde pin 8)
+        \draw[thick, red] (-7, -7.1) -- (-6.2, -7.1);
+        \draw[thick, black] (-6.2, -7.1) -- (-6.2, -7.4);
+        \draw[thick, black] (-6.6, -7.4) -- (-5.8, -7.4); % Línea superior GND
+        \draw[thick, black] (-6.4, -7.5) -- (-6.0, -7.5); % Línea media GND
+        \draw[thick, black] (-6.3, -7.6) -- (-6.1, -7.6); % Línea inferior GND
+
+        % Título
+        \node[font=\sffamily] at (-4, -10.5) {Figura 5-11. Esquemático; actividad 2};
+
+    \end{tikzpicture}
+    }
+    \end{center}
+
+    \begin{table}[ht]
+        \centering
+        \renewcommand{\arraystretch}{1.15}
+        \setlength{\arrayrulewidth}{1pt}
+        \arrayrulecolor{white}
+        \resizebox{0.88\linewidth}{!}{%
+        \begin{tabular}{|c|c|c|c|}
+            \hline
+            \rowcolor{headerbg}
+            \multicolumn{3}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+            \hline
+            \rowcolor{subheaderbg}
+            \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{Motor a pasos} \\
+            \rowcolor{subheaderbg}
+            \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO7 -- GPIO6-GPIO5 -- GPIO4} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 0 & 0 & \textbf{PARO} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 0 & 1 & \textbf{GIRA HORARIO} \\
+            \hline
+            \rowcolor{white}
+            \textbf{0} & 1 & 0 & \textbf{GIRA SENTIDO ANTIHORARIO} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{0} & 1 & 1 & \textbf{GIRA 90$^\circ$ SENTIDO HORARIO cada 2 seg} \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 0 & 0 & \textbf{GIRA 180$^\circ$ SENTIDO ANTIHORARIO cada 3 seg} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 0 & 1 & \textbf{GIRA 360$^\circ$ SENTIDO HORARIO cada 4 seg *} \\
+            \hline
+            \rowcolor{white}
+            \textbf{1} & 1 & 0 & \textbf{GIRA 5 REVOLUCIONES SENTIDO HORARIO *} \\
+            \hline
+            \rowcolor{rowbg}
+            \textbf{1} & 1 & 1 & \textbf{GIRAR 10 REVOLUCIONES SENTIDO ANTIHORARIO *} \\
+            \hline
+        \end{tabular}%
+        }
+
+        \vspace{0.3cm}
+        \begin{minipage}{0.88\linewidth}
+        \footnotesize \textbf{*} \textit{Para los tres últimos casos, cada que se concluya una revolución en el motor a pasos, activar el Zumbador conectado en el GPIO22 durante 300 ms.}
+        \end{minipage}
+
+        \caption{Tabla 5-2. Controlador; actividad 2}
+    \end{table}
+
+    \newpage
+
+    \subsection*{Propuesta de solución}
+
+    El control de un motor a pasos unipolar requiere energizar sus bobinas en un patrón estricto. La solución implementa una matriz de secuencias de paso completo (\texttt{[(1,1,0,0), (0,1,1,0), (0,0,1,1), (1,0,0,1)]}), donde cada fila representa los estados lógicos necesarios en los cuatro pines de salida acoplados al driver Darlington ULN2003A. Se establece una constante \texttt{PASOS\_POR\_REV} (512 o 2048, según la reducción interna del motor) para traducir rotaciones angulares en iteraciones de código.
+
+    Se añaden funciones trigonométricas y repetitivas: \texttt{girar\_grados()} divide el ángulo objetivo entre 360 y lo multiplica por los pasos por revolución para determinar el número exacto de cambios de fase requeridos; \texttt{girar\_revoluciones()} encapsula rotaciones completas. Adicionalmente, se integra retroalimentación acústica configurando el GPIO 22 con Modulación por Ancho de Pulso (PWM). Al finalizar un ciclo específico, el programa activa el PWM a una frecuencia audible para excitar un zumbador pasivo. Las condicionales del bucle principal leen la tupla de interruptores y dirigen el flujo hacia movimientos continuos, pasos angulares o revoluciones completas con temporizaciones específicas.
+
+    \begin{center}
+    \resizebox{0.6\linewidth}{!}{%
+    \begin{tikzpicture}[node distance=1.2cm and 2cm]
+
+    % --- NODOS ---
+    \node (start) [startstop] {Inicio};
+    \node (init) [process, below=0.8cm of start, text width=6cm, align=center] {Configurar Pines, PWM Zumbador y Secuencia Motor};
+    \node (read) [io, below=0.8cm of init] {Leer estado entradas};
+
+    \node (dec1) [decision, below=1cm of read] {x=$(0,0,0)$?};
+    \node (proc1) [process, right=2.2cm of dec1, text width=6cm, align=center] {Apagar Motor (Paro)};
+
+    \node (dec2) [decision, below=1.2cm of dec1] {x=$(0,0,1)$?};
+    \node (proc2) [process, right=2.2cm of dec2, text width=6cm, align=center] {Giro Continuo Horario};
+
+    \node (dec3) [decision, below=1.2cm of dec2] {x=$(0,1,0)$?};
+    \node (proc3) [process, right=2.2cm of dec3, text width=6cm, align=center] {Giro Continuo Antihorario};
+
+    \node (dec4) [decision, below=1.2cm of dec3] {x=$(0,1,1)$?};
+    \node (proc4) [process, right=2.2cm of dec4, text width=6cm, align=center] {Girar 90$^\circ$ Horario,\\Esperar 2s};
+
+    \node (dec5) [decision, below=1.3cm of dec4] {x=$(1,0,0)$?};
+    \node (proc5) [process, right=2.2cm of dec5, text width=6cm, align=center] {Girar 180$^\circ$ Antihorario,\\Esperar 3s};
+
+    \node (dec6) [decision, below=1.3cm of dec5] {x=$(1,0,1)$?};
+    \node (proc6) [process, right=2.2cm of dec6, text width=6cm, align=center] {Girar 360$^\circ$ Horario, Sonar\\Zumbador, Esperar 4s};
+
+    \node (dec7) [decision, below=1.3cm of dec6] {x=$(1,1,0)$?};
+    \node (proc7) [process, right=2.2cm of dec7, text width=6cm, align=center] {5 Revs Horario y Sonar,\\Retener hasta soltar};
+
+    \node (dec8) [decision, below=1.3cm of dec7] {x=$(1,1,1)$?};
+    \node (proc8) [process, right=2.2cm of dec8, text width=6cm, align=center] {10 Revs Antihorario y Sonar,\\Retener hasta soltar};
+
+    % Nodo invisible abajo para el cierre
+    \coordinate[below=1.2cm of dec8] (bottom);
+
+    % --- CONEXIONES DIAGRAMA (Vertical) ---
+    \draw [arrow] (start) -- (init);
+    \draw [arrow] (init) -- (read);
+    \draw [arrow] (read) -- (dec1);
+
+    \draw [arrow] (dec1) -- node[anchor=south] {Sí} (proc1);
+    \draw [arrow] (dec1) -- node[anchor=west] {No} (dec2);
+
+    \draw [arrow] (dec2) -- node[anchor=south] {Sí} (proc2);
+    \draw [arrow] (dec2) -- node[anchor=west] {No} (dec3);
+
+    \draw [arrow] (dec3) -- node[anchor=south] {Sí} (proc3);
+    \draw [arrow] (dec3) -- node[anchor=west] {No} (dec4);
+
+    \draw [arrow] (dec4) -- node[anchor=south] {Sí} (proc4);
+    \draw [arrow] (dec4) -- node[anchor=west] {No} (dec5);
+
+    \draw [arrow] (dec5) -- node[anchor=south] {Sí} (proc5);
+    \draw [arrow] (dec5) -- node[anchor=west] {No} (dec6);
+
+    \draw [arrow] (dec6) -- node[anchor=south] {Sí} (proc6);
+    \draw [arrow] (dec6) -- node[anchor=west] {No} (dec7);
+
+    \draw [arrow] (dec7) -- node[anchor=south] {Sí} (proc7);
+    \draw [arrow] (dec7) -- node[anchor=west] {No} (dec8);
+
+    \draw [arrow] (dec8) -- node[anchor=south] {Sí} (proc8);
+    \draw [arrow] (dec8) -- node[anchor=west] {No} (bottom);
+
+    % --- CONEXIONES DE BUS (Flujo de retorno sin superposición) ---
+    % 1. Bus derecho para unificar las conclusiones
+    \path (proc1.east) -- ++(1.2cm,0) coordinate (right_bus);
+
+    \draw (proc1.east) -- (proc1.east -| right_bus);
+    \draw (proc2.east) -- (proc2.east -| right_bus);
+    \draw (proc3.east) -- (proc3.east -| right_bus);
+    \draw (proc4.east) -- (proc4.east -| right_bus);
+    \draw (proc5.east) -- (proc5.east -| right_bus);
+    \draw (proc6.east) -- (proc6.east -| right_bus);
+    \draw (proc7.east) -- (proc7.east -| right_bus);
+    \draw (proc8.east) -- (proc8.east -| right_bus);
+
+    % Une todas las decisiones válidas a la ruta límite inferio
+    \draw (proc1.east -| right_bus) |- (bottom);
+
+    % 2. Ruta de regreso a la interfaz central / entrada
+    \path (read.west) -- ++(-1.5cm,0) coordinate (left_bus);
+    \draw [arrow] (bottom) -- (bottom -| left_bus) |- (read.west);
+
+    \end{tikzpicture}%
+    }
+    \end{center}
+
+    El flujo de datos de la Actividad 2 comienza con la configuración inicial de los puertos GPIO: tres pines como entrada para el interruptor DIP, cuatro pines de salida destinados a las bobinas del motor y un pin con PWM configurado para el zumbador. Además, se define una matriz con la secuencia lógica de excitación de las bobinas en paso completo. Durante el ciclo principal infinito, se leen constantemente los tres interruptores para formar una tupla representativa del estado actual. A través de una cascada de decisiones lógicas, se direcciona el programa a los métodos específicos correspondientes a cada acción. Dependiendo del caso, el sistema ejecuta rutinas de paro, movimiento continuo iterando el estado de paso, o movimientos controlados haciendo uso de las funciones de grados o revoluciones. Para las funciones controladas, el flujo invoca funciones auxiliares que iteran de forma precisa sobre los pasos exactos requeridos, activando después la señal auditiva del zumbador. Finalizado cualquier bloque de acción, se reinicia el flujo tomando la nueva lectura de hardware.
+
+    \subsection*{Desarrollo}
+
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_1.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 0). Condición de PARO. El microcontrolador ejecuta la función \texttt{apagar\_motor()}, enviando ceros lógicos a los cuatro canales del arreglo Darlington ULN2003A. Las bobinas del motor a pasos se desenergizan y la flecha roja permanece estática, evitando el sobrecalentamiento del hardware.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_2.jpg}
+        \caption{Comprobación del estado lógico (0, 0, 1). Giro Horario Continuo. El programa itera secuencialmente sobre la matriz de pasos incrementando el índice (\texttt{idx\_continuo + 1}). Las señales conmutan los transistores del driver, arrastrando el campo magnético y provocando el giro constante de la flecha roja en el sentido de las manecillas del reloj.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_3.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 0). Giro Antihorario Continuo. Al detectar esta combinación, el algoritmo invierte la lectura de la matriz (\texttt{idx\_continuo - 1}). El flujo de corriente en las bobinas se invierte secuencialmente, obligando al rotor y a la flecha roja a girar en sentido contrario de manera ininterrumpida.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_4.jpg}
+        \caption{Comprobación del estado lógico (0, 1, 1). Desplazamiento de 90° Horario. La función \texttt{girar\_grados(90)} calcula la fracción exacta de pasos por revolución. La flecha roja demuestra un desplazamiento ortogonal preciso antes de que el procesador entre en un bloqueo (\texttt{time.sleep(2)}), manteniendo la posición por 2 segundos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_5.jpg}
+        \caption{Comprobación del estado lógico (1, 0, 0). Desplazamiento de 180° Antihorario. El microcontrolador envía los trenes de pulsos equivalentes a media revolución angular. La flecha roja finaliza su movimiento de manera diametralmente opuesta a su punto de partida, pausando la ejecución durante 3 segundos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_6.jpg}
+        \caption{Comprobación del estado lógico (1, 0, 1). Revolución de 360° Horario y activación de PWM. La flecha roja completa una rotación entera regresando a su origen. De manera paralela, el microcontrolador activa el canal PWM en el GPIO 22, emitiendo una onda cuadrada de 1000 Hz que acciona el zumbador acústico durante 300 ms al finalizar la vuelta.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth, angle=-180]{img/Actividad2/Act2_7.jpg}
+        \caption{Comprobación del estado lógico (1, 1, 0). Múltiples Revoluciones (5 vueltas). El código encapsula la rutina de 360° dentro de un bucle \texttt{for}, ordenando a la flecha roja girar 5 veces en sentido horario, detonando el zumbador tras cada iteración.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, angle=-180]{img/Actividad2/Act2_8.jpg}
+            \caption{Iteración intermedia.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, angle=-180]{img/Actividad2/Act2_9.jpg}
+            \caption{Avance del bucle antihorario.}
+        \end{subfigure}
+        \caption{Comprobación del estado lógico (1, 1, 1) y aislamiento del bucle iterativo (10 vueltas). Las imágenes evidencian a la flecha roja en pleno recorrido antihorario. Al ser un ciclo largo, el arreglo de LEDs indicadores muestra la rápida conmutación de las fases. El procesador se mantiene enclavado en esta rutina mediante un ciclo de guarda (\texttt{while leer\_entradas() == (1,1,1)}), asegurando que la secuencia de 10 revoluciones y 10 activaciones del zumbador se ejecute por completo (tipo \textit{one-shot}) antes de permitir una nueva lectura del hardware.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Las pruebas con el motor a pasos mostraron un control preciso del movimiento en todos los modos de operación. Con la combinación (0, 0, 1), el motor giró de forma continua en sentido horario, y al cambiar a (0, 1, 0), invirtió su dirección inmediatamente sin necesidad de detenerse primero.
+
+    Los movimientos angulares resultaron particularmente interesantes. Al probar el modo de 90 grados, el motor completó exactamente un cuarto de vuelta y se detuvo. Calculando manualmente, 90 grados corresponden a 128 pasos (512 pasos por revolución divididos entre 4), y efectivamente el eje se posicionó en el ángulo esperado cada vez.
+
+    El zumbador funcionó como indicador audible en los modos que lo requerían. Durante la prueba de 360 grados con la combinación (1, 0, 1), se escuchó claramente el tono de 1 kHz al completar cada revolución. Este tipo de retroalimentación resulta muy útil para confirmar visualmente que el programa terminó su tarea, especialmente cuando el movimiento del motor es difícil de distinguir a simple vista.
+
+
+    \newpage
+
+    \section*{Actividad 3}
+De acuerdo a la distribución indicada en el circuito de la figura 5-12; realizar las acciones de control indicadas en la tabla 5-4, considerar la información indicada en la figura 5-7. Conectar la fuente externa con 5V.
+
+\begin{center}
+\resizebox{0.69\linewidth}{!}{%
+\begin{tikzpicture}
+
+    % Estilos para las etiquetas tipo bandera
+    \tikzset{
+        flag left/.style={
+            draw=#1, thick, shape=signal, signal to=west, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+        },
+        flag right/.style={
+            draw=#1, thick, shape=signal, signal to=east, signal from=nowhere, fill=white, text=black, font=\tiny\sffamily, inner sep=2pt
+        }
+    }
+
+    % --- RASPBERRY PI PICO ---
+    \picoboard
+
+    % Conexiones de la Pico (Lado Derecho)
+    % GP21 (Pin 27) es el índice 14 en la macro -> y = -14*0.45 = -6.3
+    \node[flag right=green, anchor=west] at (4.4, -6.3) {Vo SERVO};
+
+
+    % --- SERVOMOTOR ---
+    % Bloque principal
+    \draw[thick] (-5, -3.5) rectangle (-3, -5.5);
+    \node[font=\sffamily] at (-4, -4) {Servo};
+
+    % Pines del Servo (Lado Izquierdo)
+    \node[right, font=\tiny\sffamily] at (-5, -4.0) {+};
+    \node[right, font=\tiny\sffamily] at (-5, -4.6) {pulse};
+    \node[right, font=\tiny\sffamily] at (-5, -5.2) {-};
+
+    % Conexiones del Servo
+    % + (5V)
+    \draw[thick, green!60!black] (-5, -4.0) -- (-6, -4.0) -- (-6, -2.8);
+    \draw[thick, green!60!black] (-6.3, -2.8) -- (-5.7, -2.8);
+    \node[above, font=\small\sffamily, text=black] at (-6, -2.8) {5V};
+
+    % pulse (Vo SERVO)
+    \draw[thick, green!60!black] (-5, -4.6) -- (-6, -4.6);
+    \node[flag left=green, anchor=east] at (-6, -4.6) {Vo SERVO};
+
+    % - (GND)
+    \draw[thick, green!60!black] (-5, -5.2) -- (-6, -5.2) -- (-6, -6.2);
+    % Símbolo GND
+    \draw[thick, green!60!black] (-6.4, -6.2) -- (-5.6, -6.2);
+    \draw[thick, green!60!black] (-6.2, -6.3) -- (-5.8, -6.3);
+    \draw[thick, green!60!black] (-6.1, -6.4) -- (-5.9, -6.4);
+
+    % Brazo del Servomotor (Lado Derecho)
+    \begin{scope}[shift={(-3, -4.5)}, rotate=-20]
+        % Contorno del brazo
+        \draw[thick, fill=white] (0, 0.2) -- (1, 0.15) arc (90:-90:0.15) -- (0, -0.2) -- cycle;
+        % Círculo base
+        \draw[thick, fill=white] (0, 0) circle (0.25);
+        % Agujero central
+        \draw[thick, fill=black] (0, 0) circle (0.05);
+        % Agujero del extremo
+        \draw[thick, fill=white] (1, 0) circle (0.05);
+    \end{scope}
+
+    % Etiqueta J1
+    \node[font=\sffamily] at (-1.5, -3.5) {J1};
+
+    % Título
+    \node[font=\sffamily] at (-1, -11) {Figura 5-12. Esquemático control del servomotor};
+
+\end{tikzpicture}
+}
+\end{center}
+
+\begin{table}[ht]
+\centering
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\arrayrulewidth}{1pt}
+    \arrayrulecolor{white}
+    \resizebox{0.68\linewidth}{!}{%
+    \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        \rowcolor{headerbg}
+        \multicolumn{5}{|c|}{\textcolor{white}{\textbf{Entradas}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acciones}}} \\
+        \hline
+        \rowcolor{subheaderbg}
+        \textbf{S2} & \textbf{S1} & \textbf{SW1\_1} & \textbf{SW1\_2} & \textbf{SW1\_3} & \textbf{SERVOMOTOR} \\
+        \rowcolor{subheaderbg}
+        \textit{GPIO12} & \textit{GPIO11} & \textit{GPIO10} & \textit{GPIO9} & \textit{GPIO8} & \textit{GPIO21} \\
+        \hline
+        \rowcolor{white}
+        0 & 1 & 0 & 0 & 0 & \textbf{PARO} \\
+        \hline
+        \rowcolor{rowbg}
+        0 & 1 & 0 & 0 & 1 & \textbf{SERVO A 0$^\circ$} \\
+        \hline
+        \rowcolor{white}
+        0 & 1 & 0 & 1 & 0 & \textbf{SERVO A 45$^\circ$} \\
+        \hline
+        \rowcolor{rowbg}
+        0 & 1 & 1 & 0 & 0 & \textbf{SERVO A 90$^\circ$} \\
+        \hline
+        \rowcolor{white}
+        0 & 0 & 0 & 0 & 0 & \textbf{SERVO A 135$^\circ$} \\
+        \hline
+        \rowcolor{rowbg}
+        \textbf{1} & 1 & 0 & 0 & 0 & \textbf{SERVO A 180$^\circ$} \\
+        \hline
+    \end{tabular}
+    }
+    \caption{Tabla 5-3. Controlador; actividad 3}
+\end{table}
+
+\newpage
+
+\subsection*{Propuesta de solución}
+El programa implementa un sistema de control de posición para un servomotor mediante cinco entradas digitales: dos pulsadores (S2 y S1) y tres interruptores deslizantes (SW1\_1, SW1\_2, SW1\_3), siguiendo el esquema eléctrico de la Figura 5-12. La configuración de las entradas es mixta: S2 utiliza resistencia \texttt{PULL\_DOWN} interna, S1 utiliza \texttt{PULL\_UP}, mientras que los interruptores SW1\_1, SW1\_2 y SW1\_3 no requieren resistencias internas por su conexión directa.
+
+El servomotor se controla mediante modulación por ancho de pulso (PWM) en el pin GPIO21, configurado a una frecuencia de 50 Hz (periodo de 20 ms) Para facilitar el control, se definió la función \texttt{set\_servo\_angulo(angulo)} que convierte un ángulo de 0° a 180° en el ciclo de trabajo  donde 0.5 ms  equivale a 0° y 2.5 ms equivale a 180°.
+
+El bucle principal evalúa continuamente el estado de las cinco entradas mediante la función \texttt{leer\_entradas()}. Según la combinación detectada, se ejecuta la acción correspondiente: PARO (desactivación de la señal PWM liberando el torque del servo), o posicionamiento en los ángulos 0°, 45°, 90°, 135° o 180°. Se incluye un retardo de 100 ms para estabilizar las lecturas y evitar cambios bruscos.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+    \node (start) [startstop] {Inicio};
+    \node (import) [process, below=1cm of start] {Importar \texttt{Pin}, \texttt{PWM}, \texttt{time}};
+    \node (config) [io, below=1cm of import, text width=5cm] {Configurar entradas:\\ S2 (GPIO12) PULL\_DOWN\\ S1 (GPIO11) PULL\_UP\\ SW1\_1 (GPIO10), SW1\_2 (GPIO9),\\ SW1\_3 (GPIO8) como entradas};
+    \node (pwm) [process, below=1cm of config] {Configurar PWM en GPIO21 a 50 Hz};
+    \node (read) [process, below=1cm of pwm] {Leer estado de las 5 entradas};
+    \node (dec) [decision, below=1.2cm of read, text width=2.8cm] {Evaluar combinación de entradas};
+    
+    % Nodos lado derecho
+    \node (paro) [io, right=3.5cm of dec, text width=3cm] {PARO\\ \texttt{servo.duty\_u16(0)}};
+    \node (ang0) [io, below=0.8cm of paro, text width=3cm] {SERVO 0°\\ \texttt{set\_servo\_angulo(0)}};
+    \node (ang45) [io, below=0.8cm of ang0, text width=3cm] {SERVO 45°\\ \texttt{set\_servo\_angulo(45)}};
+    
+    % Nodos lado izquierdo
+    \node (ang90) [io, left=3.5cm of dec, text width=3cm] {SERVO 90°\\ \texttt{set\_servo\_angulo(90)}};
+    \node (ang135) [io, below=0.8cm of ang90, text width=3cm] {SERVO 135°\\ \texttt{set\_servo\_angulo(135)}};
+    \node (ang180) [io, below=0.8cm of ang135, text width=3cm] {SERVO 180°\\ \texttt{set\_servo\_angulo(180)}};
+    
+    \node (delay) [process, below=4.5cm of dec] {Esperar 100 ms};
+    
+    % Flechas desde decisión hacia lado derecho
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.5] {(0,1,0,0,0)} (paro);
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.55] {(0,1,0,0,1)} (ang0);
+    \draw [arrow] (dec) -- node[anchor=south, pos=0.6] {(0,1,0,1,0)} (ang45);
+    
+    % Flechas desde decisión hacia lado izquierdo
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.45] {(0,1,1,0,0)} (ang90);
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.4] {(0,0,0,0,0)} (ang135);
+    \draw [arrow] (dec) -- node[anchor=north, pos=0.35] {(1,1,0,0,0)} (ang180);
+    
+    % Flechas de retorno al delay (salida por costado izquierdo)
+    \draw [arrow] (paro.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang0.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang45.east) -- ++(-0.8,0) -| ([xshift=1cm]ang45.east) |- (delay.east);
+    \draw [arrow] (ang90.west) -- ++(-0.8,0) |- (delay.west);
+    \draw [arrow] (ang135.west) -- ++(-0.8,0) |- (delay.west);
+    \draw [arrow] (ang180.west) -- ++(-0.8,0) |- (delay.west);
+    % Retorno al inicio del bucle
+    \draw [arrow] (delay.south) -- ++(0,-0.6) -| ([xshift=2cm]ang45.east) |- (read.east);
+
+        % Flujo principal
+    \draw [arrow] (start) -- (import);
+    \draw [arrow] (import) -- (config);
+    \draw [arrow] (config) -- (pwm);
+    \draw [arrow] (pwm) -- (read);
+    \draw [arrow] (read) -- (dec);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Desarrollo}
+
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_2.jpg}
+    \caption{Combinación (0,1,0,0,0) - PARO. El servomotor permanece sin torque.}
+    \label{fig:act3_paro}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_3.jpg}
+    \caption{Combinación (0,1,0,0,1) - SERVO A 0°. Posición angular mínima.}
+    \label{fig:act3_0}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_4.jpg}
+    \caption{Combinación (0,1,0,1,0) - SERVO A 45°. Posición intermedia.}
+    \label{fig:act3_45}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_5.jpg}
+    \caption{Combinación (0,1,1,0,0) - SERVO A 90°. Posición central.}
+    \label{fig:act3_90}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_6.jpg}
+    \caption{Combinación (0,0,0,0,0) - SERVO A 135°. Posición intermedia superior.}
+    \label{fig:act3_135}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_7.jpg}
+    \caption{Combinación (1,1,0,0,0) - SERVO A 180°. Posición  máxima.}
+    \label{fig:act3_180}
+\end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Como se aprecia en las Figuras 15 a 20 se cumple satisfactoriamente con el objetivo de controlar un servomotor mediante múltiples entradas digitales, siguiendo las combinaciones especificadas en la Tabla 5-3 donde el servomotor va girando hasta alcanzar diferentes posiciones de 0° a 190°. La configuración de resistencias internas fue vital pues S2 con \texttt{PULL\_DOWN} nos garantizó lectura en 0 cuando no está presionado, mientras que S1 con \texttt{PULL\_UP} nos da 1 en estado de reposo.
+
+    La implementación del control PWM a 50 Hz con resolución de 16 bits permitió generar pulsos precisos para posicionar el servo en los ángulos requeridos. La función \texttt{set\_servo\_angulo()} realiza la conversión lineal entre ángulo y ciclo de trabajo, facilitando la legibilidad del código. El retardo de 100 ms proporciona estabilidad en la lectura de las entradas y evita rebotes mecánicos. En resumen, esta actividad demuestra cómo combinar múltiples entradas digitales para controlar un actuador mediante PWM, sentando las bases para sistemas de control más complejos.
+
+
+    \newpage
+    \section*{Actividad 4}
+
+    Realizar un programa, de manera que controle la posición del servo de forma automática, iniciando en la posición de 0o hasta 180º y viceversa.
+
+
+    \subsection*{Propuesta de solución}
+
+    Para poder controlar la posición del servomotor es necesario realizar la importación de la biblioteca de \texttt{machine} para poder interactuar con el hardware físico, se seleccionan los módulos \texttt{Pin} para poder seleccionar el pin físico de la placa y el módulo \texttt{PWM} para poder generar la señal de modulación por ancho de pulso el cual es la señal eléctrica para poder manipular la posición del servomotor. Adicionalmente, se importa el módulo \texttt{time} para poder generar retardos en la ejecución del programa y así poder observar el movimiento del servo.
+
+    Una vez se han importado las bibliotecas necesarias, se procede a configurar el pin físico del GPIO 21 como una salida PWM, asignándole una frecuencia de 50 Hz, ya que este es el valor usual para el servomotor SG90, de forma que un ciclo completo de la señal corresponda a 20 [ms].
+
+    Posteriormente se define la función \texttt{set\_servo\_angulo} la cual se encarga de la lógica de movimiento del servomotor, donde se definen el máximo y mínimo ciclo de trabajo, esto considerando que MicroPython maneja el PWM con una resolución de 16 bits, por lo que el ciclo de trabajo se define en un rango de 0 a 65535. Donde el servomotor requiere un pulso de 0.5 [ms] para posicionarse en $0^\circ$, un pulso de 1.5 [ms] (1638) y un pulso de 2.5 [ms] (8192) para posicionarse en $180^\circ$. Es a partir de estos valores que se define una relación lineal entre el ángulo deseado y el ciclo de trabajo, utilizando una regla de tres simple para calcular el ciclo de trabajo correspondiente a cualquier ángulo entre 0 y 180 grados. Una vez calculado el ciclo de trabajo, se asigna este valor al canal PWM para generar la señal eléctrica que posicionará el servomotor en el ángulo deseado.
+
+    Para que se realice los movimiento de barrido se implemento un bucle infinito con dos ciclos for, donde el primer ciclo for va desde los ceros grados a los 180 grados, incrementando de 5 en 5 grados, donde se envía el angulo a la función \texttt{set\_servo\_angulo} y se genera un retardo de 0.5 segundos para poder observar el movimiento del servo. Posteriormente, el segundo ciclo for va desde los 180 grados a los ceros grados, decrementando de 5 en 5 grados, donde se repite el mismo proceso que el ciclo for anterior, pero en sentido contrario, generando así un movimiento de barrido continuo entre los 0 y 180 grados.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.2cm and 2cm]
+            % --- NODOS ---
+            \node (start) [startstop] {Inicio};
+
+            % Configuración inicial
+            \node (init) [process, below=0.8cm of start, text width=4.5cm, align=center] {Configurar PWM\\(Pin 21, Freq=50Hz)};
+
+            % --- BUCLE 1: ASCENDENTE ---
+            \node (init_asc) [process, below=1cm of init] {$\text{angulo} = 0$};
+            \node (cond_asc) [decision, below=1cm of init_asc] {$\text{angulo} \le 180$?};
+
+            % Proceso con la fórmula matemática integrada
+            \node (body_asc) [process, right=1.5cm of cond_asc, text width=6.5cm, align=center] {
+                $duty = 1638 + \left(\frac{\text{angulo}}{180}\right) \times (8192 - 1638)$\\
+                Escribir $duty$ en PWM\\
+                Esperar $0.05s$
+            };
+            \node (inc_asc) [process, below=0.8cm of body_asc] {$\text{angulo} = \text{angulo} + 5$};
+
+            % --- BUCLE 2: DESCENDENTE ---
+            \node (init_desc) [process, below=1.5cm of cond_asc] {$\text{angulo} = 180$};
+            \node (cond_desc) [decision, below=1cm of init_desc] {$\text{angulo} \ge 0$?};
+
+            % Proceso con la fórmula matemática integrada
+            \node (body_desc) [process, right=1.5cm of cond_desc, text width=6.5cm, align=center] {
+                $duty = 1638 + \left(\frac{\text{angulo}}{180}\right) \times (8192 - 1638)$\\
+                Escribir $duty$ en PWM\\
+                Esperar $0.05s$
+            };
+            \node (inc_desc) [process, below=0.8cm of body_desc] {$\text{angulo} = \text{angulo} - 5$};
+
+            % --- CONEXIONES PRINCIPALES ---
+            \draw [arrow] (start) -- (init);
+
+            % Punto de entrada al bucle infinito (while True)
+            \path (init) -- (init_asc) coordinate[midway] (loop_start);
+            \draw [arrow] (init) -- (init_asc);
+
+            % Flujo Ascendente
+            \draw [arrow] (init_asc) -- (cond_asc);
+            \draw [arrow] (cond_asc) -- node[anchor=south] {Sí} (body_asc);
+            \draw [arrow] (cond_asc) -- node[anchor=east] {No} (init_desc);
+            \draw [arrow] (body_asc) -- (inc_asc);
+
+            % Flujo Descendente
+            \draw [arrow] (init_desc) -- (cond_desc);
+            \draw [arrow] (cond_desc) -- node[anchor=south] {Sí} (body_desc);
+            \draw [arrow] (body_desc) -- (inc_desc);
+
+            % --- CONEXIONES DE RETORNO (BUSES) ---
+            % 1. Retorno del for ascendente
+            \path (inc_asc.south) -- ++(0,-0.9cm) coordinate (ret_asc);
+            \draw [arrow] (inc_asc.south) -- (ret_asc) -| ([xshift=-1.5cm]cond_asc.west) -- (cond_asc.west);
+
+            % 2. Retorno del for descendente
+            \path (inc_desc.south) -- ++(0,-0.4cm) coordinate (ret_desc);
+            \draw [arrow] (inc_desc.south) -- (ret_desc) -| ([xshift=-1.5cm]cond_desc.west) -- (cond_desc.west);
+
+            % 3. Retorno del while True
+            \path (cond_desc.south) -- ++(0,-0.8cm) coordinate (ret_while);
+            \draw [arrow] (cond_desc.south) -- node[anchor=east] {No} (ret_while) -| ([xshift=-3cm]cond_asc.west) |- (loop_start);
+        \end{tikzpicture}
+    \end{figure}
+
+    \newpage
+
+    \subsection*{Desarrollo}
+
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4]{Code/Act4.py}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_1.jpg}
+        \caption{Movimiento Servomotor Barrido Positivo Pt.1}
+    \end{figure}
+    
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_3.jpg}
+        \caption{Movimiento Servomotor Barrido Positivo Pt.2}
+    \end{figure}
+    
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Movimiento Servomotor Barrido Negativo Pt.1}
+    \end{figure}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_4.jpg}
+        \caption{Movimiento Servomotor Barrido Negativo Pt.2}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Al cargar el programa descrito anteriormente en la raspberry pi pico, se pudo observar que el servomotor SG90 comenzó a realizar un movimiento de barrido continuo positivo entre los 0 y 180 grados. Donde se pudo observar que el movimiento era fluido y sin interrupciones, con un retardo de 0.5 segundos entre cada cambio de posición, lo que permitió apreciar claramente el desplazamiento del brazo del servomotor. Posteriormente, al completar el ciclo ascendente, el programa inició el ciclo descendente, donde el servomotor comenzó a realizar un movimiento de barrido continuo negativo entre los 180 y 0 grados. Al igual que en el ciclo ascendente, el movimiento fue fluido y sin interrupciones, con el mismo retardo de 0.5 segundos entre cada cambio de posición. Este comportamiento confirmó que la lógica implementada para controlar la posición del servomotor a través de la modulación por ancho de pulso (PWM) funcionaba correctamente, permitiendo un control preciso y repetible del ángulo del servo.
+
+
+    \newpage
+    \section{Conclusiones:}
+
+    \begin{itemize}
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Por medio de la realización de la práctica logre comprender y aprender a como los diferentes tipos de motor, como lo son los motores de corriente directa, motores a pasos y servomotores, ya que aunque cada unos de estos tipos de motores funcionan por medio de las señales eléctricas, cada uno tiene una forma diferente de interpretar estas señales para generar movimiento. Ya que los motores de corriente directa responden a la polaridad y magnitud del voltaje aplicado, mientras que los motores a pasos requieren una secuencia específica de pulsos para controlar su posición y velocidad. Por otro lado, los servomotores utilizan señales PWM para controlar su ángulo de rotación con precisión. Al implementar los diferentes tipos de motores en las actividades, pude observar cómo cada uno de ellos responde a las señales eléctricas de manera distinta, lo que me permitió entender mejor sus características y aplicaciones específicas. Por lo que esta práctica me ayudó a comprender la diversidad de motores y cómo se pueden utilizar en diferentes contextos según sus características de control y respuesta a las señales eléctricas, y como con MicroPython se pueden implementar de manera sencilla y práctica.
+
+        \item \textbf{Flores Colin Victor Jaziel:}
+        GRacias a la realización de esta práctica se logró comprender el funcionamiento y control de distintos tipos de motores y se observó que cada uno presenta un comportamiento particular: los motores de corriente directa responden a la polaridad y magnitud del voltaje, los motores a pasos requieren secuencias específicas de activación para controlar su posición, y los servomotores utilizan señales PWM para posicionarse con precisión y todo esto se debio a la implementación en MicroPython en la Raspberry Pi Pico que permitió evidenciar estas diferencias.
+        
+        Los resultados experimentales confirmaron el correcto funcionamiento de los sistemas desarrollados. El servomotor SG90 presentó un movimiento preciso y fluido entre $0^\circ$ y $180^\circ$, validando la generación de PWM a $50\ \text{Hz}$, y el ingreso de entradas digitales permitió un control confiable de sus posiciones. El motor a pasos mostró un control angular exacto acorde a los comportamientos teóricos esperados, y el zumbador proporcionó retroalimentación útil del sistema, para hecer las modificaciones necesarias.
+
+        En el caso de los motores de corriente directa con el puente H L293D, se comprobó el control independiente del sentido de giro y estados de operación, incluyendo condiciones seguras de paro
+
+
+        \item \textbf{Lara Hernandez Angel Husiel:} 
+        
+        Implementar el control de motores DC con el puente H L293D, la secuencia de pasos del motor a pasos con el arreglo Darlington ULN2003A y el posicionamiento del servomotor SG90 mediante señales PWM me sirvió mucho para entender cómo los pines GPIO del Raspberry Pi Pico se combinan con etapas de amplificación de potencia para gobernar actuadores que exceden las capacidades eléctricas del microcontrolador. También vi que manipular las señales de dirección y habilitación del L293D permite controlar de forma independiente el sentido de giro y el estado de cada motor DC, mientras que iterar sobre una matriz de estados lógicos genera la secuencia precisa de energización de las bobinas del motor a pasos. Además, el ajuste del ciclo de trabajo de la señal PWM a 50 Hz posibilita traducir valores de ángulo a posiciones físicas del servomotor de forma directa y predecible. Con todo esto, esta práctica me dio bases muy sólidas para entender cómo se implementa el control de distintos tipos de actuadores desde un microcontrolador, evidenciando la importancia de las etapas de potencia para proteger al sistema y amplificar las señales de control.
+    \end{itemize}
+
+    \newpage
+
+    % Impresión Referencias
+    \nocite{*}
+    \printbibliography[heading=bibintoc, title={Referencias}]
+\end{document}
