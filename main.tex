@@ -215,196 +215,427 @@
     
     Conocer el funcionamiento del ADC (convertidor analógico digital) para realizar aplicaciones que requieran procesar señales en el mundo continuo, convertir señales provenientes de sensores; aprender el funcionamiento del control PWM.
     
-    \section*{Actividad 1}
-    Comentar el siguiente programa, e indicar que hace:
+   \section*{Actividad 1}
+Comentar el siguiente programa, e indicar que hace:
 
-    \lstinputlisting[language={[LAB]Python}, caption=Figura 6.3. Código de prueba, basicstyle=\ttfamily\scriptsize]{Code/Ac1SinNombres.py}
+\lstinputlisting[language={[LAB]Python}, caption=Figura 6.3. Código de prueba, basicstyle=\ttfamily\scriptsize]{Code/Ac1SinNombres.py}
 
+\subsection*{Propuesta de solución}
+El programa implementa la lectura del sensor de temperatura interno del microcontrolador RP2040 y utiliza un convertidor analógico-digital (ADC). El  sensor de temperatura está conectado internamente al canal 4 del ADC, permitiendo medir la temperatura del chip sin necesidad de componentes externos.
 
-    \subsection*{Propuesta de solución}
+Para lograr esta actividad primero se configura el ADC en el canal 4 mediante la clase \texttt{ADC(4)}. Dentro de un bucle infinito, se realiza la lectura del valor bruto de 16 bits (0 a 65535) que representa el voltaje proporcional a la temperatura. Este valor se convierte a voltaje real mediante la fórmula \texttt{Valor * (3.3 / 65535)}. Posteriormente, se aplica la ecuación oficial del fabricante para transformar el voltaje en grados Celsius: 
+\[
+T = 27 - \frac{V - 0.706}{0.001721}
+\]
+Finalmente, se imprime la temperatura y se aplica un retardo de 1 segundo para evitar saturar la salida serial y tener una visualización cómoda de las lecturas.
 
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+    \node (start) [startstop] {Inicio};
+    
+    \node (import) [process, below=1cm of start] 
+    {Importar \texttt{ADC}, \texttt{Pin}, \texttt{time}};
+    
+    \node (config) [process, below=1cm of import, text width=4.5cm] 
+    {Configurar ADC canal 4\\ (sensor de temperatura interno)};
+    
+    \node (read) [process, below=1cm of config, text width=4.5cm] 
+    {Leer ADC y convertir a voltaje:\\ $Valor = lectura \times (3.3 / 65535)$};
+    
+    \node (temp) [process, below=1cm of read, text width=4.5cm] 
+    {Calcular temperatura:\\ $Temp = 27 - (Valor - 0.706) / 0.001721$};
+    
+    \node (print) [process, below=1cm of temp] 
+    {Imprimir temperatura};
+    
+    \node (delay) [process, below=1cm of print] 
+    {Esperar 1 segundo};
+    
+    % Flechas
+    \draw [arrow] (start) -- (import);
+    \draw [arrow] (import) -- (config);
+    \draw [arrow] (config) -- (read);
+    \draw [arrow] (read) -- (temp);
+    \draw [arrow] (temp) -- (print);
+    \draw [arrow] (print) -- (delay);
+    
+    % Loop infinito
+    \draw [arrow] (delay) -- ++(4.0 cm,0) |- (read.east);
 
+\end{tikzpicture}
+\end{center}
 
-    \subsection*{Desarrollo}
+El flujo de datos comienza importando los módulos necesarios y configurando el ADC en el canal 4, que internamente está conectado al sensor de temperatura del RP2040. Dentro del bucle infinito, se lee el valor bruto de 16 bits del ADC, el cual representa la señal analógica convertida a digital. Este valor se convierte a voltaje real mediante una regla de tres simple, considerando que el ADC tiene un rango de 0 a 65535 para 0 a 3.3V.
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+Una vez obtenido el voltaje, se aplica la ecuación característica del sensor de temperatura proporcionada por el fabricante (Raspberry Pi), que establece una relación lineal entre voltaje y temperatura. El resultado se imprime en la consola de Thonny y se espera 1 segundo antes de repetir el ciclo, permitiendo una visualización ordenada y evitando saturar el buffer de salida.
 
+\subsection*{Desarrollo}
 
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
-    \subsection*{Análisis de resultados}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad1/Act1_1.jpg}
+    \caption{Lecturas iniciales del sensor de temperatura. Se observan valores estables alrededor de 26.1°C a 27.9°C.}
+    \label{fig:act1_1}
+\end{figure}
 
-    \newpage
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad1/Act1_2.jpg}
+    \caption{Continuidad de lecturas tras varios ciclos. La lectura se mantiene estable.}
+    \label{fig:act1_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad1/Act1_3.jpg}
+    \caption{Lecturas posteriores mostrando pequeñas variaciones.}
+    \label{fig:act1_3}
+\end{figure}
+
+\subsection*{Análisis de resultados}
+
+El programa cumple con el objetivo de leer y mostrar la temperatura interna del RP2040 mediante su ADC interno. Las lecturas obtenidas (26.1°C a 27.9°C) son consistentes con la temperatura normal del chip. La conversión de valor bruto a voltaje y la aplicación de la ecuación del fabricante permiten obtener temperaturas con precisión aceptable y las pequeñas variaciones entre lecturas son normales debido a la actividad del procesador y condiciones ambientales. Esto fue posible gracias al uso del ADC interno, la aplicación de fórmulas de calibración y la implementación de bucles con retardos para adquisición periódica de datos.
+
+    
     \section*{Actividad 2}
 
-    Realizar un programa que despliegue en la consola de Thonny el resultado de la conversión y el voltaje generado por el potenciómetro; actualizar cada segundo.
+Realizar un programa que despliegue en la consola de Thonny el resultado de la conversión y el voltaje generado por el potenciómetro; actualizar cada segundo.
 
-    \begin{figure}[htbp]
-        \centering
-        % Se mantiene la escala y transform shape
-        \begin{tikzpicture}[>=latex, scale=0.9, transform shape]
+\begin{figure}[htbp]
+    \centering
+    % Se mantiene la escala y transform shape
+    \begin{tikzpicture}[>=latex, scale=0.9, transform shape]
 
-            % 1. Dibujar la Raspberry Pi Pico (esto se mantiene igual)
-            \picoboard
+        % 1. Dibujar la Raspberry Pi Pico (esto se mantiene igual)
+        \picoboard
 
-            % 2. Conexiones del Potenciómetro (Moveremos la columna X principal)
-            % Nueva coordenada X principal para la columna del potenciómetro: 6.2 (antes 5.2)
+        % 2. Conexiones del Potenciómetro (Moveremos la columna X principal)
+        % Nueva coordenada X principal para la columna del potenciómetro: 6.2 (antes 5.2)
 
-            % Línea verde de señal al pin GP26_A0 (P31). Se extiende a la nueva X=6.2
-            \draw[green!70!black, thick] (P31) -- (6.2, -4.5);
-            \fill[green!70!black] (6.2, -4.5) circle (1.5pt); % Nodo de conexión superior
+        % Línea verde de señal al pin GP26_A0 (P31). Se extiende a la nueva X=6.2
+        \draw[green!70!black, thick] (P31) -- (6.2, -4.5);
+        \fill[green!70!black] (6.2, -4.5) circle (1.5pt); % Nodo de conexión superior
 
-            % Línea roja a 3.3V (se mueve a X=6.2)
-            \draw[red, thick] (6.2, -4.5) -- (6.2, -3.5);
-            
-            % Símbolo de 3.3V (se mueve y se ajusta el centrado a X=6.2)
-            \draw[thick] (5.9, -3.5) -- (6.5, -3.5); % Antes 4.9 a 5.5
-            \node[above, font=\sffamily] at (6.2, -3.5) {3.3V};
+        % Línea roja a 3.3V (se mueve a X=6.2)
+        \draw[red, thick] (6.2, -4.5) -- (6.2, -3.5);
+        
+        % Símbolo de 3.3V (se mueve y se ajusta el centrado a X=6.2)
+        \draw[thick] (5.9, -3.5) -- (6.5, -3.5); % Antes 4.9 a 5.5
+        \node[above, font=\sffamily] at (6.2, -3.5) {3.3V};
 
-            % Símbolo de resistencia del potenciómetro (zigzag) (se mueve a X=6.2)
-            \draw[thick, decoration={zigzag, segment length=3.5mm, amplitude=1.5mm}, decorate] (6.2, -4.5) -- (6.2, -6.5);
+        % Símbolo de resistencia del potenciómetro (zigzag) (se mueve a X=6.2)
+        \draw[thick, decoration={zigzag, segment length=3.5mm, amplitude=1.5mm}, decorate] (6.2, -4.5) -- (6.2, -6.5);
 
-            % Línea roja a Tierra (GND) (se mueve a X=6.2)
-            \draw[red, thick] (6.2, -6.5) -- (6.2, -7.5);
-            
-            % Símbolo de Tierra (GND) (se mueve y se ajusta el centrado a X=6.2)
-            \draw[thick] (5.8, -7.5) -- (6.6, -7.5); % Antes 4.8 a 5.6
-            \draw[thick] (5.95, -7.65) -- (6.45, -7.65); % Antes 4.95 a 5.45
-            \draw[thick] (6.1, -7.8) -- (6.3, -7.8); % Antes 5.1 a 5.3
-            \draw[thick] (6.18, -7.95) -- (6.22, -7.95); % Antes 5.18 a 5.22
+        % Línea roja a Tierra (GND) (se mueve a X=6.2)
+        \draw[red, thick] (6.2, -6.5) -- (6.2, -7.5);
+        
+        % Símbolo de Tierra (GND) (se mueve y se ajusta el centrado a X=6.2)
+        \draw[thick] (5.8, -7.5) -- (6.6, -7.5); % Antes 4.8 a 5.6
+        \draw[thick] (5.95, -7.65) -- (6.45, -7.65); % Antes 4.95 a 5.45
+        \draw[thick] (6.1, -7.8) -- (6.3, -7.8); % Antes 5.1 a 5.3
+        \draw[thick] (6.18, -7.95) -- (6.22, -7.95); % Antes 5.18 a 5.22
 
-            % Flecha y etiqueta del potenciómetro (se mueven)
-            % La flecha sale de la nueva X=6.2 y va a X=7.2 (antes 6.2)
-            \draw[->, thick] (6.2, -5.5) -- (7.2, -6.2);
-            \node[right, font=\sffamily, align=left] at (7.2, -6.2) {Potenciómetro\\10k$\Omega$};
+        % Flecha y etiqueta del potenciómetro (se mueven)
+        % La flecha sale de la nueva X=6.2 y va a X=7.2 (antes 6.2)
+        \draw[->, thick] (6.2, -5.5) -- (7.2, -6.2);
+        \node[right, font=\sffamily, align=left] at (7.2, -6.2) {Potenciómetro\\10k$\Omega$};
 
-            % Pequeños números indicadores de pin (grises) (se mueven a la izquierda de la nueva X=6.2)
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.3) {3};
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.7) {1};
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -6.3) {2};
+        % Pequeños números indicadores de pin (grises) (se mueven a la izquierda de la nueva X=6.2)
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.3) {3};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.7) {1};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -6.3) {2};
 
-            % 3. Cuadro Amarillo de Conversión (También se mueve para evitar solapamiento)
-            % Se ajustó la posición (anchor=west) a X=6.5 (antes 5.5) para mantener la separación
-            \node[draw=goldbox, thick, text=goldbox, align=left, font=\sffamily\large\bfseries, inner sep=6pt, fill=white, anchor=west] 
-            at (6.5, -1.5) {Conversión = 65535 ; Voltaje = 3.30 Volts\\[0.1cm]Conversión = 0 ; Voltaje = 0 Volts};
+        % 3. Cuadro Amarillo de Conversión (También se mueve para evitar solapamiento)
+        % Se ajustó la posición (anchor=west) a X=6.5 (antes 5.5) para mantener la separación
+        \node[draw=goldbox, thick, text=goldbox, align=left, font=\sffamily\large\bfseries, inner sep=6pt, fill=white, anchor=west] 
+        at (6.5, -1.5) {Conversión = 65535 ; Voltaje = 3.30 Volts\\[0.1cm]Conversión = 0 ; Voltaje = 0 Volts};
 
-            % 4. Título de la figura en la parte inferior (se mantiene igual)
-            \node[font=\sffamily\Large] at (3.5, -11.5) {Figura 6-4. Circuito y ejecución; actividad 2};
+        % 4. Título de la figura en la parte inferior (se mantiene igual)
+        \node[font=\sffamily\Large] at (3.5, -11.5) {Figura 6-4. Circuito y ejecución; actividad 2};
 
-        \end{tikzpicture}
-    \end{figure}
-
-
-
-    \newpage
-
-    \subsection*{Propuesta de solución}
+    \end{tikzpicture}
+\end{figure}
 
 
+\subsection*{Propuesta de solución}
 
-    \subsection*{Desarrollo}
+El programa implementa la lectura de un potenciómetro conectado al pin analógico GPIO26 (ADC0) de la Raspberry Pi Pico. Utiliza el convertidor analógico-digital (ADC) interno del RP2040 para obtener un valor digital de 16 bits (0 a 65535) proporcional al voltaje aplicado en la entrada analógica y este valor lo convertimos posteriormente a voltaje real en el rango de 0 a 3.3 V mediante una regla de tres. Para lograrolo, primero se configura el ADC en el pin GPIO26 mediante la clase \texttt{ADC(26)}. Dentro de un bucle infinito, se realiza la lectura del valor bruto de 16 bits mediante el método \texttt{read\_u16()}. Este valor se convierte a voltaje real aplicando la fórmula:
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
+\[
+V = \text{lectura} \times \frac{3.3}{65535}
+\]
 
+Finalmente, se imprime en la terminal de thony el valor de conversión como el voltaje calculado con dos decimales, y se espera 1 segundo antes de repetir el ciclo para una visualización ordenada y evitando saturar la salida serial.
 
+El diagrama de flujo a continuación ilustra el proceso:
 
-    \subsection*{Análisis de resultados}
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+    \node (start) [startstop] {Inicio};
+    
+    \node (import) [process, below=1cm of start] 
+    {Importar \texttt{ADC}, \texttt{time}};
+    
+    \node (config) [process, below=1cm of import, text width=4.5cm] 
+    {Configurar ADC en pin GPIO26 (ADC0)};
+    
+    \node (read) [process, below=1cm of config, text width=4.5cm] 
+    {Leer ADC con \texttt{read\_u16()} \\ \texttt{conversion = valor digital (0-65535)}};
+    
+    \node (volt) [process, below=1cm of read, text width=4.5cm] 
+    {Calcular voltaje:\\ \texttt{voltaje = conversion * (3.3 / 65535)}};
+    
+    \node (print) [process, below=1cm of volt] 
+    {Imprimir: \texttt{conversion} y \texttt{voltaje}};
+    
+    \node (delay) [process, below=1cm of print] 
+    {Esperar 1 segundo};
+    
+    % Flechas
+    \draw [arrow] (start) -- (import);
+    \draw [arrow] (import) -- (config);
+    \draw [arrow] (config) -- (read);
+    \draw [arrow] (read) -- (volt);
+    \draw [arrow] (volt) -- (print);
+    \draw [arrow] (print) -- (delay);
+    
+    % Loop infinito
+    \draw [arrow] (delay) -- ++(4.0 cm,0) |- (read.east);
 
+\end{tikzpicture}
+\end{center}
 
+El flujo de datos comienza importando los módulos necesarios y configurando el ADC en el pin GPIO26, que corresponde al canal 0 del convertidor analógico-digital y dentro del bucle infinito, se lee el valor bruto de 16 bits del ADC, el cual representa la señal analógica del potenciómetro convertida a digital. Este valor se convierte a voltaje real mediante una regla de tres simple, considerando que el ADC tiene un rango de 0 a 65535 para 0 a 3.3 V. El resultado se imprime en la consola de Thonny con el formato solicitado y se espera 1 segundo antes de repetir el ciclo.
 
-    \newpage
+\subsection*{Desarrollo}
 
-    \section*{Actividad 3}
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
-    Empleando el divisor de voltaje generado por la foto-resistencia; tomar la lectura de voltaje, registrar el máximo y mínimo obtenido, fijar un valor de referencia. Mientras la lectura es menor a la referencia, mantenga en bajo el GPIO7 y cuando sobrepase el valor configurado lo ponga en alto.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Act2_1.jpg}
+    \caption{Lecturas iniciales con el potenciómetro en una posición fija intermedia. Se observan valores estables alrededor de 1.78 V.}
+    \label{fig:act2_1}
+\end{figure}
 
-    \begin{figure}[htbp]
-        \centering
-        \begin{tikzpicture}[>=latex, scale=0.85, transform shape]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Act2_2.jpg}
+    \caption{Lecturas al variar el potenciómetro. Se observa un aumento progresivo hasta alcanzar el máximo de 3.30 V.}
+    \label{fig:act2_2}
+\end{figure}
 
-            % 1. Dibujar la Raspberry Pi Pico
-            \picoboard
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Act2_3.jpg}
+    \caption{Continuidad de lecturas cerca del máximo. Se muestran valores cercanos a 3.30 V con ligeras variaciones.}
+    \label{fig:act2_3}
+\end{figure}
 
-            % 2. Conexiones del Divisor de Voltaje
-            \draw[green!70!black, thick] (P32) -- (6.2, -4.05);
-            \fill[green!70!black] (6.2, -4.05) circle (1.5pt);
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Act2_4.jpg}
+    \caption{Sr varia el potenciometro y los valores bajan a a lrededor de 1.85 V.}
+    \label{fig:act2_4}
+\end{figure}
 
-            % --- Foto-resistencia ---
-            \draw[red, thick] (6.2, -4.05) -- (6.2, -3.0);
-            \draw[thick, rounded corners=8pt] (5.8, -3.0) rectangle (6.6, -1.5);
-            \draw[thick, rounded corners=2pt] (6.2, -3.0) -- (6.2, -2.8) 
-                        -- (5.9, -2.8) -- (5.9, -2.55) 
-                        -- (6.5, -2.55) -- (6.5, -2.3)
-                        -- (5.9, -2.3) -- (5.9, -2.05)
-                        -- (6.5, -2.05) -- (6.5, -1.8)
-                        -- (6.2, -1.8) -- (6.2, -1.5);
-            \draw[red, thick] (6.2, -1.5) -- (6.2, -0.5);
-            \node[right, font=\sffamily] at (6.6, -2.25) {Fotoresistencia};
-            \draw[thick] (5.9, -0.5) -- (6.5, -0.5);
-            \node[above, font=\sffamily] at (6.2, -0.5) {3.3V};
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Act2_5.jpg}
+    \caption{Lecturas finales al reducir el voltaje hasta valores bajos cercanos a 0.88 V.}
+    \label{fig:act2_5}
+\end{figure}
 
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -1.0) {2};
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -3.5) {1};
+\subsection*{Análisis de resultados}
 
-            % --- Resistencia R1 ---
-            \draw[green!70!black, thick] (6.2, -4.05) -- (6.2, -4.5);
-            \draw[thick, decoration={zigzag, segment length=3.5mm, amplitude=1.5mm}, decorate] (6.2, -4.5) -- (6.2, -6.0);
-            \draw[red, thick] (6.2, -6.0) -- (6.2, -6.5);
-            \node[right, font=\sffamily, align=left] at (6.5, -5.25) {R1\\10k$\Omega$};
-            
-            \draw[thick] (5.8, -6.5) -- (6.6, -6.5);
-            \draw[thick] (5.95, -6.65) -- (6.45, -6.65);
-            \draw[thick] (6.1, -6.8) -- (6.3, -6.8);
+El programa cumple con el objetivo de leer el potenciómetro y mostrar el valor de conversión y voltaje en consola. En la Figura \ref{fig:act2_1} se observan lecturas estables en posición intermedia (35352-35409, 1.78 V), demostrando la estabilidad del ADC y al variar el potenciómetro (Figura \ref{fig:act2_2}), el valor aumenta progresivamente hasta 65535 (3.30 V), con una transición suave y lineal que confirma la correcta relación resistencia-voltaje. Las Figuras \ref{fig:act2_3}, \ref{fig:act2_4} y \ref{fig:act2_5} muestran lecturas consistentes en distintas posiciones: máximo, intermedio y bajo y la conversión de 16 bits ofrece buena precisión y el retardo de 1 segundo permite una visualización clara en consola.
 
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.3) {2};
-            \node[left, font=\tiny\sffamily, text=gray] at (6.1, -6.2) {1};
+\section*{Actividad 3}
 
-            % 3. Elementos de Lectura (Lado Derecho)
-            % Desplazados hacia la derecha para no encimarse con "Fotoresistencia"
-            \node[draw=goldbox, thick, text=goldbox, font=\sffamily\Large\bfseries, inner sep=5pt, anchor=west] 
-            at (8.5, -1) {Lectura de la foto-resistencia:};
+Empleando el divisor de voltaje generado por la foto-resistencia; tomar la lectura de voltaje, registrar el máximo y mínimo obtenido, fijar un valor de referencia. Mientras la lectura es menor a la referencia, mantenga en bajo el GPIO7 y cuando sobrepase el valor configurado lo ponga en alto.
 
-            \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -2.5) {V\textsubscript{MIN} =};
-            \draw[gray, thick] (11.8, -2.6) -- (17.5, -2.6);
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[>=latex, scale=0.85, transform shape]
 
-            \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -3.5) {V\textsubscript{MAX} =};
-            \draw[gray, thick] (11.8, -3.6) -- (17.5, -3.6);
+        % 1. Dibujar la Raspberry Pi Pico
+        \picoboard
 
-            \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -4.5) {V\textsubscript{REF} =};
-            \draw[gray, thick] (11.8, -4.6) -- (17.5, -4.6);
+        % 2. Conexiones del Divisor de Voltaje
+        \draw[green!70!black, thick] (P32) -- (6.2, -4.05);
+        \fill[green!70!black] (6.2, -4.05) circle (1.5pt);
 
-            % 4. Tabla de Condiciones Inferior
-            \fill[goldbox!20] (7.5, -6.6) rectangle (17.5, -7.4);
-            
-            \draw[goldbox, thick] (7.5, -5.8) rectangle (17.5, -7.4); 
-            \draw[goldbox, thick] (7.5, -6.6) -- (17.5, -6.6); 
-            \draw[goldbox, thick] (12.5, -5.8) -- (12.5, -7.4); 
+        % --- Foto-resistencia ---
+        \draw[red, thick] (6.2, -4.05) -- (6.2, -3.0);
+        \draw[thick, rounded corners=8pt] (5.8, -3.0) rectangle (6.6, -1.5);
+        \draw[thick, rounded corners=2pt] (6.2, -3.0) -- (6.2, -2.8) 
+                    -- (5.9, -2.8) -- (5.9, -2.55) 
+                    -- (6.5, -2.55) -- (6.5, -2.3)
+                    -- (5.9, -2.3) -- (5.9, -2.05)
+                    -- (6.5, -2.05) -- (6.5, -1.8)
+                    -- (6.2, -1.8) -- (6.2, -1.5);
+        \draw[red, thick] (6.2, -1.5) -- (6.2, -0.5);
+        \node[right, font=\sffamily] at (6.6, -2.25) {Fotoresistencia};
+        \draw[thick] (5.9, -0.5) -- (6.5, -0.5);
+        \node[above, font=\sffamily] at (6.2, -0.5) {3.3V};
 
-            % Textos de la tabla (Fila 1) 
-            \node[text=goldbox, font=\sffamily\normalsize\bfseries] at (10.0, -6.2) {V\textsubscript{Foto\_resistencia} $<$ V\textsubscript{REF}};
-            \node[text=goldbox, font=\sffamily\normalsize\bfseries] at (15.0, -6.2) {V\textsubscript{Foto\_resistencia} $>$ V\textsubscript{REF}};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -1.0) {2};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -3.5) {1};
 
-            % Textos de la tabla (Fila 2)
-            \node[text=goldbox, font=\sffamily\Large\bfseries] at (10.0, -7.0) {GPIO7 = '0'};
-            \node[text=goldbox, font=\sffamily\Large\bfseries] at (15.0, -7.0) {GPIO7 = '1'};
+        % --- Resistencia R1 ---
+        \draw[green!70!black, thick] (6.2, -4.05) -- (6.2, -4.5);
+        \draw[thick, decoration={zigzag, segment length=3.5mm, amplitude=1.5mm}, decorate] (6.2, -4.5) -- (6.2, -6.0);
+        \draw[red, thick] (6.2, -6.0) -- (6.2, -6.5);
+        \node[right, font=\sffamily, align=left] at (6.5, -5.25) {R1\\10k$\Omega$};
+        
+        \draw[thick] (5.8, -6.5) -- (6.6, -6.5);
+        \draw[thick] (5.95, -6.65) -- (6.45, -6.65);
+        \draw[thick] (6.1, -6.8) -- (6.3, -6.8);
 
-            % 5. Título de la figura en la parte inferior
-            \node[font=\sffamily\Large] at (7.5, -11.5) {Figura 6-5. Circuito de foto-resistencia; actividad 3};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -4.3) {2};
+        \node[left, font=\tiny\sffamily, text=gray] at (6.1, -6.2) {1};
 
-        \end{tikzpicture}
-    \end{figure}
-    \newpage
+        % 3. Elementos de Lectura (Lado Derecho)
+        % Desplazados hacia la derecha para no encimarse con "Fotoresistencia"
+        \node[draw=goldbox, thick, text=goldbox, font=\sffamily\Large\bfseries, inner sep=5pt, anchor=west] 
+        at (8.5, -1) {Lectura de la foto-resistencia:};
 
-    \subsection*{Propuesta de solución}
+        \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -2.5) {V\textsubscript{MIN} =};
+        \draw[gray, thick] (11.8, -2.6) -- (17.5, -2.6);
 
+        \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -3.5) {V\textsubscript{MAX} =};
+        \draw[gray, thick] (11.8, -3.6) -- (17.5, -3.6);
 
-    \subsection*{Desarrollo}
+        \node[anchor=west, font=\sffamily\Large\bfseries] at (9.8, -4.5) {V\textsubscript{REF} =};
+        \draw[gray, thick] (11.8, -4.6) -- (17.5, -4.6);
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+        % 4. Tabla de Condiciones Inferior
+        \fill[goldbox!20] (7.5, -6.6) rectangle (17.5, -7.4);
+        
+        \draw[goldbox, thick] (7.5, -5.8) rectangle (17.5, -7.4); 
+        \draw[goldbox, thick] (7.5, -6.6) -- (17.5, -6.6); 
+        \draw[goldbox, thick] (12.5, -5.8) -- (12.5, -7.4); 
 
+        % Textos de la tabla (Fila 1) 
+        \node[text=goldbox, font=\sffamily\normalsize\bfseries] at (10.0, -6.2) {V\textsubscript{Foto\_resistencia} $<$ V\textsubscript{REF}};
+        \node[text=goldbox, font=\sffamily\normalsize\bfseries] at (15.0, -6.2) {V\textsubscript{Foto\_resistencia} $>$ V\textsubscript{REF}};
 
+        % Textos de la tabla (Fila 2)
+        \node[text=goldbox, font=\sffamily\Large\bfseries] at (10.0, -7.0) {GPIO7 = '0'};
+        \node[text=goldbox, font=\sffamily\Large\bfseries] at (15.0, -7.0) {GPIO7 = '1'};
 
-    \subsection*{Análisis de resultados}
+        % 5. Título de la figura en la parte inferior
+        \node[font=\sffamily\Large] at (7.5, -11.5) {Figura 6-5. Circuito de foto-resistencia; actividad 3};
 
+    \end{tikzpicture}
+\end{figure}
+
+\newpage
+
+\subsection*{Propuesta de solución}
+
+El programa implementa un sistema de control de iluminación basado en una fotoresistencia (LDR) conectada al pin analógico GPIO27 (ADC1) de la Raspberry Pi Pico. La fotoresistencia forma un divisor de voltaje junto con una resistencia fija de 10 k$\Omega$, generando un voltaje variable que depende de la cantidad de luz incidente y este voltaje se convierte a un valor digital de 16 bits o de 0 a 65535 mediante el convertidor analógico-digital (ADC) interno como en activiades pasadas.
+
+Para conseguir implementar lo solicitado, primero se configura el ADC en el pin GPIO27 mediante la clase \texttt{ADC(27)} y se configura el pin GPIO7 como salida digital para controlar un LED, además se definen otras variables para almacenar los valores máximo y mínimo históricos de luz, así como un valor de referencia (umbral) que determina cuándo se debe encender el LED. Dentro de un bucle infinito, se realiza la lectura del valor digital de la fotoresistencia, se actualizan los valores máximo y mínimo si es necesario, y se compara la lectura actual con el umbral: si la lectura supera el umbral, se enciende el LED; en caso contrario, se apaga.
+
+El diagrama de flujo a continuación ilustra el proceso:
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, scale=0.78, transform shape, every node/.style={font=\small}]
+    \node (start) [startstop] {Inicio};
+    
+    \node (import) [process, below=1cm of start] 
+    {Importar \texttt{ADC}, \texttt{Pin}, \texttt{time}};
+    
+    \node (config) [process, below=1cm of import, text width=4.5cm] 
+    {Configurar ADC en GPIO27\\ Configurar GPIO7 como salida};
+    
+    \node (vars) [process, below=1cm of config, text width=4.5cm] 
+    {Inicializar: \texttt{V\_REF = 30000}\\ \texttt{val\_max = 0}\\ \texttt{val\_min = 65535}};
+    
+    \node (read) [process, below=1cm of vars, text width=4.5cm] 
+    {Leer ADC: \texttt{lectura = read\_u16()}};
+    
+    \node (update) [process, below=1cm of read, text width=4.5cm] 
+    {Actualizar \texttt{val\_max} y \texttt{val\_min}};
+    
+    \node (compare) [decision, below=1cm of update, text width=3cm] 
+    {¿\texttt{lectura > V\_REF}?};
+    
+    \node (led_on) [process, below=1cm of compare, text width=2.5cm, yshift=-0.5cm] 
+    {LED = 1\\ (Encendido)};
+    
+    \node (led_off) [process, below=1cm of compare, text width=2.5cm, yshift=-0.5cm] 
+    {LED = 0\\ (Apagado)};
+    
+    \node (print) [process, below=2cm of led_on, text width=5cm] 
+    {Imprimir: \texttt{lectura}, \texttt{val\_min}, \texttt{val\_max}, \texttt{V\_REF}};
+    
+    \node (delay) [process, below=1cm of print] 
+    {Esperar 0.5 segundos};
+    
+    % Flechas
+    \draw [arrow] (start) -- (import);
+    \draw [arrow] (import) -- (config);
+    \draw [arrow] (config) -- (vars);
+    \draw [arrow] (vars) -- (read);
+    \draw [arrow] (read) -- (update);
+    \draw [arrow] (update) -- (compare);
+    
+    \draw [arrow] (compare) -- node[anchor=west] {Sí} (led_on);
+    \draw [arrow] (compare) -- node[anchor=east] {No} (led_off);
+    
+    \draw [arrow] (led_on) -- (print);
+    \draw [arrow] (led_off) -- (print);
+    \draw [arrow] (print) -- (delay);
+    
+    % Loop infinito
+    \draw [arrow] (delay) -- ++(4.0 cm,0) |- (read.east);
+
+\end{tikzpicture}
+\end{center}
+
+El flujo de datos comienza importando los módulos necesarios y configurando los pines correspondientes: el GPIO27 como entrada analógica para la fotoresistencia y el GPIO7 como salida digital para controlar el LED. Dentro del bucle infinito, se lee el valor analógico de la fotoresistencia, se actualizan los valores máximos y mínimos históricos, y se compara la lectura actual con el umbral predefinido. Esta comparación determina el estado del LED, que se enciende cuando hay suficiente luz (lectura mayor al umbral) y se apaga cuando la luz es insuficiente. Los resultados se muestran en consola cada 0.5 segundos.
+
+\subsection*{Desarrollo}
+
+\lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_1.jpg}
+    \caption{Lecturas iniciales con luz ambiental constante. Se observan valores estables alrededor de 38800-39353 y como son mayores que el valor umbral el led se mantiene en alto (encendido).}
+    \label{fig:act3_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_2.jpg}
+    \caption{Al tapar la fotoresistencia se disminuye drasticamente el valor máximo de la iluminación pasando de 7569 a 2688 lo que provoca la desactivación del LED.}
+    \label{fig:act3_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_3.jpg}
+    \caption{Al retirar la mano y aumentar drasticamente la iluminación a 398097 el Led vuelve a encenderse.}
+    \label{fig:act3_3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad3/Act3_4.jpg}
+    \caption{Por último al tapar una vez más la fotorrsistencia vuelve a haber un cambio drástico en la iluminación (4833)por lo que el led vuelve a apagarse.}
+    \label{fig:act3_4}
+\end{figure}
+
+\subsection*{Análisis de resultados}
+
+El programa logra ek objetivo de controlar el estado del LED en función de la cantidad de luz que incide sobre la fotoresistencia. En la Figura \ref{fig:act3_1} se observan lecturas estables con luz ambiental constante, donde los valores de conversión se mantienen alrededor de 38800-39353. Al ser estos valores superiores al umbral establecido, el LED permanece encendido, demostrando la correcta configuración inicial del sistema. En la Figura \ref{fig:act3_2}, al tapar la fotoresistencia, el valor de iluminación disminuye drásticamente desde 7569 hasta 2688, lo que provoca que la lectura quede por debajo del umbral y, por tanto, el LED se desactive. Esta respuesta evidencia la sensibilidad del sensor y la eficacia de la lógica de control implementada.
+
+Al retirar la mano (Figura \ref{fig:act3_3}), la iluminación aumenta de manera abrupta alcanzando un valor de 398097, superando nuevamente el umbral y provocando que el LED se encienda y finalmente, en la Figura \ref{fig:act3_4}, al tapar una vez más la fotoresistencia, el valor desciende a 4833, ubicándose por debajo del umbral y apagando el LED nuevamente. En todos los casos, el sistema responde de forma inmediata y consistente ante los cambios en las condiciones de iluminación, validando el correcto funcionamiento del ADC, la actualización de los valores máximo y mínimo, y la lógica de comparación con el umbral de referencia.
 
 
     \newpage
@@ -1178,6 +1409,9 @@
         
 
         \item \textbf{Flores Colin Victor Jaziel:}
+        El desarrollo de esta práctica me permitió comprender de mejor manera la adquisición y procesamiento de señales analógicas mediante el convertidor analógico-digital (ADC) del RP2040, así como la generación de señales digitales mediante modulación por ancho de pulso (PWM). A través de las actividades realizadas, se exploraron diferentes configuraciones del ADC: el uso del canal 0 (GPIO26) para leer un potenciómetro, el canal 1 (GPIO27) para una fotoresistencia en configuración de divisor de voltaje, y el canal 4 interno para acceder al sensor de temperatura del chip y para cada caso se aplicaron las ecuaciones de transferencia correspondientes para escalar los valores digitales de 16 bits a unidades como voltios o grados Celsius para interpretar correctamente las magnitudes físicas.
+
+        Asimismo, se implementó un sistema de control basado en umbrales utilizando la fotoresistencia, donde el registro dinámico de valores máximos y mínimos permitió establecer puntos de referencia adaptativos para activar una salida digital y además se generaron efectos visuales con los leds mediante señales PWM en los pines GPIO0 y GPIO1, variando el ciclo de trabajo para lograr transiciones suaves de intensidad luminosa (efecto \texttt{fade}) y comportamientos complementarios entre dos LEDs. Todas estas actividades me ayudaron a entender la importancia del microcontrolador para interactuar con el mundo físico, combinando sensores analógicos, actuadores digitales y técnicas de procesamiento de señales en aplicaciones de automatización y control.
 
         \item \textbf{Lara Hernandez Angel Husiel:}
 
