@@ -567,6 +567,29 @@
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Estado inicial de las lecturas. El sensor interno del microcontrolador registra una temperatura estable de 26.1 °C. A su vez, la lectura de voltaje en el GPIO28 (simulando el TMP36) se calcula en 25.7 °C. El programa compara ambas variables numéricas y la terminal muestra correctamente que el sensor interno tiene el valor mayor.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_4.jpg}
+        \caption{Actualización dinámica en tiempo real. Al aumentar físicamente el voltaje de entrada en el pin analógico, el ADC detecta el cambio al instante. El código procesa el nuevo nivel eléctrico, obteniendo 28.5 °C para el TMP36. El bloque condicional reacciona a este incremento y actualiza la consola indicando el cambio de estado a favor del sensor externo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_5.jpg}
+        \caption{Transición a la baja. Se disminuye el voltaje inyectado al convertidor analógico, lo que hace que la temperatura calculada para el TMP36 caiga a 25.2 °C. El ciclo de muestreo capta este descenso y la terminal refleja la corrección, devolviendo el veredicto lógico al sensor interno de forma automática.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad4/Act4_6.jpg}
+        \caption{Seguimiento continuo y estabilidad. Al elevar nuevamente la señal analógica, la lectura simulada alcanza un pico de 29.7 °C, superando de nuevo a los 26.1 °C fijos del encapsulado. Esto comprueba que ambos canales del convertidor operan de forma aislada e independiente, permitiendo un monitoreo cruzado confiable cada 2 segundos.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
@@ -652,11 +675,28 @@
 
     El diagrama de flujo representa el control de un LED mediante modulación por ancho de pulso (PWM). El programa inicia configurando el pin GPIO1 como salida PWM y estableciendo una frecuencia de 1000 Hz. Dentro de un ciclo infinito (while), se inicializa la variable duty en 0 y comienza un ciclo for que incrementa gradualmente el ciclo de trabajo. En cada iteración del ciclo for, se verifica si duty es menor a 65535 (valor máximo de 16 bits); si es así, se aplica el valor de duty al PWM, se espera 0.05 segundos y se incrementa duty en 500 unidades, creando un efecto de aumento gradual de brillo en el LED. Cuando duty alcanza o supera 65535, el ciclo for termina, se apaga el PWM estableciendo duty en 0, y el programa espera 2 segundos antes de reiniciar todo el proceso, generando un efecto de respiración continuo en el LED.
 
-    \newpage
+
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5 Comentado,basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad5/Act5_4.jpg}
+        \caption{Estado de reposo. El registro del ciclo de trabajo se encuentra en cero (\texttt{pwm.duty\_u16(0)}), por lo que el pin GPIO1 no entrega voltaje y el LED se mantiene apagado. Este estado representa tanto el punto de partida del programa como la pausa de 2 segundos programada al final del bucle principal.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad5/Act5_3.jpg}
+        \caption{Inicio del incremento gradual (\textit{fade-in}). Al entrar al ciclo \texttt{for}, el valor de la variable de trabajo comienza a subir. En esta etapa temprana, el ancho de los pulsos activos es corto, entregando un voltaje promedio bajo a la salida que hace que el LED se ilumine de forma muy tenue.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Pico máximo de iluminación. El contador del ciclo se acerca a su límite de 16 bits (65535). En este punto, la señal PWM permanece en nivel alto la mayor parte de su periodo de 1 milisegundo. Esto suministra el voltaje eficaz máximo (cercano a 3.3V) a la carga, haciendo que el LED alcance su brillo total justo antes de cortarse la señal para reiniciar el proceso.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
@@ -1139,9 +1179,10 @@
 
         \item \textbf{Flores Colin Victor Jaziel:}
 
-        \item \textbf{Lara Hernandez Angel Husiel:} 
-        
-        
+        \item \textbf{Lara Hernandez Angel Husiel:}
+
+        Implementar la conversión analógico-digital mediante el módulo ADC del RP2040 para leer señales provenientes del potenciómetro, la fotoresistencia y el sensor de temperatura TMP36 me sirvió mucho para entender cómo el microcontrolador traduce magnitudes físicas continuas a valores discretos de 16 bits que pueden ser procesados y escalados al voltaje de referencia del sistema. También vi que configurar los canales ADC en los pines GPIO26, GPIO27 y GPIO28, así como emplear el canal 4 para acceder al sensor de temperatura interno, permite capturar múltiples señales de forma simultánea aplicando las ecuaciones de transferencia específicas de cada sensor para obtener unidades de ingeniería como voltios, grados Celsius o comparaciones lógicas con umbrales de referencia. Además, controlar el ciclo de trabajo de las señales PWM en los pines GPIO0 y GPIO1 a frecuencias fijas de 1 kHz posibilita generar efectos visuales como el fade progresivo en LEDs variando el duty cycle de 0 a 65535, e incluso sincronizar dos salidas con valores inversos para producir comportamientos complementarios. 
+
     \end{itemize}
 
     \newpage
