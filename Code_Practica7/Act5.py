@@ -24,28 +24,28 @@ while True:
         
         if cmd == '1':
             voltaje = pot.read_u16() * (3.3 / 65535)
-            uart.write(f"Potenciometro: {voltaje:.2f} V\n") [cite: 358]
+            uart.write(f"Potenciometro: {voltaje:.2f} V\n")  
             
         elif cmd == '2':
             val_ldr = ldr.read_u16()
-            uart.write(f"LDR (Hex): {hex(val_ldr)}\n") [cite: 358]
+            uart.write(f"LDR (Hex): {hex(val_ldr)}\n")  
             
         elif cmd == '3':
             v_tmp = tmp36.read_u16() * (3.3 / 65535)
             temp_c = (v_tmp - 0.5) * 100
             temp_f = (temp_c * 9/5) + 32
             temp_k = temp_c + 273.15
-            uart.write(f"TMP36: {temp_c:.1f} C, {temp_f:.1f} F, {temp_k:.1f} K\n") [cite: 358]
+            uart.write(f"TMP36: {temp_c:.1f} C, {temp_f:.1f} F, {temp_k:.1f} K\n")  
             
         elif cmd == '4':
-            uart.write("Reproduciendo DO...\n") [cite: 358]
+            uart.write("Reproduciendo DO...\n")  
             buzzer.freq(261) # Frecuencia DO
             buzzer.duty_u16(32768)
             time.sleep(0.5)
             buzzer.duty_u16(0)
             
         elif cmd == '5':
-            uart.write("Parpadeo 5 veces\n") [cite: 358]
+            uart.write("Parpadeo 5 veces\n")  
             for _ in range(5):
                 for led in leds: led.value(1)
                 time.sleep(0.2)
@@ -53,7 +53,7 @@ while True:
                 time.sleep(0.2)
                 
         elif cmd == '6':
-            uart.write("Corrimiento Derecha\n") [cite: 358]
+            uart.write("Corrimiento Derecha\n")  
             apagar_leds()
             for i in range(8):
                 leds[i].value(1)
@@ -61,7 +61,7 @@ while True:
                 leds[i].value(0)
                 
         elif cmd == '7':
-            uart.write("Corrimiento Izquierda\n") [cite: 358]
+            uart.write("Corrimiento Izquierda\n")  
             apagar_leds()
             for i in range(7, -1, -1):
                 leds[i].value(1)

@@ -16,8 +16,8 @@ while True:
         ch = sys.stdin.read(1) 
         if ch == '1':
             led.value(1) # Enciende el LED 
-            print("Acción: GPIO25 = ON") [cite: 351]
+            print("Acción: GPIO25 = ON") 
         elif ch == '0':
             led.value(0) # Apaga el LED 
-            print("Acción: GPIO25 = OFF") [cite: 351]
+            print("Acción: GPIO25 = OFF") 
     time.sleep(0.1)
