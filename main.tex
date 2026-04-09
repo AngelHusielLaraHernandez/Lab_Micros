@@ -216,26 +216,78 @@
     Aprender el funcionamiento de la comunicación serial en la modalidad asíncrona para la
     transferencia de información entre diferentes dispositivos por medios alámbricos e inalámbricos.
 
-   \section*{Actividad 1}
-   Escribir el siguiente programa:
-   \lstinputlisting[language={[LAB]Python}, caption=Código de ejemplo; actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1Normal.py}
+    \section*{Actividad 1}
+    Escribir el siguiente programa:
+    \lstinputlisting[language={[LAB]Python}, caption=Código de ejemplo; actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1Normal.py}
     \begin{enumerate}
         \item Comentar el código.
-        \item Indicar que hace.
+        \item Indicar que hace: 
+        El programa implementa un sistema de lectura de datos a través del puerto serie de manera asíncrona o no bloqueante. Inicialmente, configura un objeto de sondeo (\textit{polling}) para monitorear el flujo de entrada estándar (\texttt{sys.stdin}). Durante su ciclo de ejecución infinito, el microcontrolador verifica continuamente si el usuario ha tecleado un dato en la consola sin detener el hilo principal de procesamiento. En el momento en que detecta información en el búfer de entrada, extrae exactamente un carácter y responde enviando cadenas de texto predefinidas ("Dato recibido" y "Hola UNAM") hacia el monitor serial, finalizando la iteración con un retardo de 100 milisegundos para no saturar los recursos de la CPU.
+        
         \item Ejecutar
         \item Ingresar datos desde la consola de Thonny.
         \item Explicar la diferencia entre:
         \begin{itemize}
-            \item \textbf{sys.stdout.write("Esperando recepción de datos $\backslash$n"):}
-            \item \textbf{print("Teclea un caracter y luego enter"):}
+            \item \textbf{\texttt{sys.stdout.write()}:} Es una función de bajo nivel que interactúa directamente con el flujo de salida estándar del sistema  . Escribe la cadena de texto de forma estricta, sin agregar ningún formato adicional. Por esta razón, el programador debe incluir explícitamente el salto de línea (\texttt{$\backslash$n}) al final de la cadena si desea pasar al siguiente renglón.
+            \item \textbf{\texttt{print()}:} Es una función de alto nivel en Python que internamente utiliza \texttt{sys.stdout.write()}, pero funciona como una envoltura (\textit{wrapper}) que procesa los datos  . Automáticamente inserta espacios entre múltiples argumentos y, por defecto, agrega un salto de línea al final de la impresión, facilitando la lectura humana en la consola.
         \end{itemize}
     \end{enumerate}
 
     \subsection*{Propuesta de solución}
+    El objetivo del código es implementar un sistema de lectura de datos a través del puerto serie (USB) de manera no bloqueante. Tradicionalmente, funciones como \texttt{input()} detienen por completo la ejecución del procesador hasta que el usuario ingresa un dato. Para evitar esto, se propone el uso del módulo \texttt{select}, el cual permite sondear (\textit{polling}) el búfer de entrada estándar (\texttt{sys.stdin})  . El programa registra este flujo de entrada y, mediante un ciclo infinito, verifica si hay algún byte esperando ser leído en el búfer sin detener el procesador  . Si se detecta información, se extrae exactamente un carácter y se imprime un mensaje de confirmación  .
+
+     El flujo de datos de este código inicia con la importación de las bibliotecas necesarias para monitorear el flujo de entrada en la consola. Se registra la entrada estándar y se manda a imprimir un mensaje indicando que se está esperando un carácter. Posteriormente, el programa entra en un bucle infinito que constantemente comprueba la función \texttt{poll(0)}. Si llega alguna información desde Thonny al microcontrolador a través del USB, el condicional se activa, lee exactamente un dato e imprime inmediatamente un respectivo "Hola UNAM". Independientemente de si detecta datos o no, se realiza una pausa de 100 milisegundos al final de cada iteración para que el procesador no se sature.
+
+    \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=1.5cm, every node/.style={scale=0.8}]
+                \node (start) [startstop] {Inicio};
+                \node (import) [process, below of=start] {Importar módulos};
+                \node (init) [process, below of=import] {Inicializar \texttt{poll\_obj}};
+                \node (reg) [process, below of=init] {Registrar \texttt{sys.stdin}};
+                \node (print) [io, below of=reg, align=center] {Mostrar mensajes\\iniciales};
+                \node (loop) [decision, below of=print, yshift=-0.8cm] {¿\texttt{poll(0)} es True?};
+                
+                % 1. Aumentamos el xshift a 4cm para separar la caja del rombo
+                \node (read) [process, right of=loop, xshift=4cm] {Leer carácter (\texttt{ch})};
+                
+                \node (print2) [io, below of=read, yshift=-0.5cm, align=center] {Imprimir \texttt{'Dato recibido'}\\y \texttt{'Hola UNAM'}};
+                
+                % 2. Bajamos un poco más la pausa (yshift=-2.5cm) para que la flecha de print2 no quede apretada
+                \node (delay) [process, below of=loop, yshift=-2.5cm] {Pausa (\texttt{time.sleep(0.1)})};
+                
+                \draw [arrow] (start) -- (import);
+                \draw [arrow] (import) -- (init);
+                \draw [arrow] (init) -- (reg);
+                \draw [arrow] (reg) -- (print);
+                \draw [arrow] (print) -- (loop);
+                
+                % 3. Ajustamos la posición del texto "Sí" (pos=0.4) y lo levantamos un poquito (yshift=0.05cm)
+                \draw [arrow] (loop) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (read);
+                
+                \draw [arrow] (read) -- (print2);
+                \draw [arrow] (print2) |- (delay);
+                \draw [arrow] (loop) -- node[anchor=east] {No} (delay);
+                \draw [arrow] (delay.south) -- ++(0,-0.5) -| +(-3,0) |- (loop.west);
+            \end{tikzpicture}
+            \caption{Diagrama de flujo representativo de la Actividad 1}
+            \label{fig:flujo_act1}
+    \end{figure}
 
     \subsection*{Desarrollo}
 
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{ img/Actividad1/Act1_1.png}
+        \caption{Interacción asíncrona a través de la terminal serial. La consola muestra los mensajes de inicialización solicitando la entrada del usuario. Al teclear un carácter, el objeto \texttt{poll} detecta de forma instantánea la actividad en el búfer de entrada (\texttt{sys.stdin}). El microcontrolador extrae el dato y ejecuta las instrucciones de impresión ("Dato recibido" y "Hola UNAM"), demostrando la lectura exitosa sin detener el flujo continuo del procesador.}
+    \end{figure}
+
     \subsection*{Análisis de resultados}
+    Al ejecutar el programa en Thonny, pudimos comprobar que la recepción de datos de manera asíncrona funciona correctamente. Mientras el usuario no presione ninguna tecla o envíe parámetros, la instrucción \texttt{poll\_obj.poll(0)} le dice al procesador principal que, al no haber datos en el puerto, puede realizar su pausa de 0.1 s y seguir dando vueltas en lugar de quedarse trabado esperando. En el momento en que enviamos desde la consola un carácter y presionamos Enter, el carácter viaja a la memoria desde la computadora usando el puerto serie y en el siguiente ciclo será detectado; en ese momento el sistema lee y vacía un byte del \textit{buffer} para finalmente dar la señal de mostrar los mensajes confirmatorios. Gracias a esto comprobamos el beneficio del ``no-bloqueo".
+
+    \newpage
 
     \newpage
 
@@ -251,9 +303,6 @@
 
 
     \subsection*{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
-
 
 
     \subsection*{Análisis de resultados}
@@ -277,20 +326,83 @@
 
     \vspace{0.5cm}
 
-
-
     \subsection*{Propuesta de solución}
+    Esta actividad combina la lectura no bloqueante del puerto serie con el control directo de las salidas digitales del microcontrolador . Se configura el pin físico \texttt{GPIO25} (conectado al LED integrado de la Raspberry Pi Pico) como una salida digital (\texttt{Pin.OUT}) . Replicando la estructura de sondeo con el módulo \texttt{select}, el programa extrae los caracteres entrantes desde la consola de Thonny .
 
+    El control se realiza mediante una estructura condicional \texttt{if-elif} . El carácter recuperado por \texttt{sys.stdin.read(1)} se compara contra los caracteres ASCII de control definidos en la tabla . Si el programa recibe el carácter \texttt{'1'}, saturará el pin a nivel alto ; si recibe \texttt{'0'}, drenará el voltaje a nivel bajo . Cualquier otro carácter (como letras o el retorno de carro enviado al presionar Enter) será simplemente ignorado por el flujo condicional, evitando falsas activaciones.
+
+    \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=1.5cm, every node/.style={scale=0.75}]
+                \node (start) [startstop] {Inicio};
+                \node (init) [process, below of=start] {Configurar LED y \texttt{poll\_obj}};
+                \node (reg) [process, below of=init] {Registrar \texttt{sys.stdin}};
+                \node (print) [io, below of=reg, align=center] {Mostrar instrucciones};
+                \node (loop) [decision, below of=print, yshift=-0.5cm] {¿\texttt{poll(0)} es True?};
+                \node (read) [process, right of=loop, xshift=4cm] {Leer (\texttt{ch = read(1)})};
+                \node (cond1) [decision, below of=read, yshift=-1.5cm] {¿\texttt{ch} == '1'?};
+                
+                % 1. Aumentamos el xshift a 3.8cm para alargar más la flecha
+                \node (ledOn) [process, right of=cond1, xshift=3.8cm, align=center] {Encender LED y print};
+                
+                \node (cond2) [decision, below of=cond1, yshift=-1.5cm] {¿\texttt{ch} == '0'?};
+                
+                % 1. Aumentamos el xshift a 3.8cm también aquí
+                \node (ledOff) [process, right of=cond2, xshift=3.8cm, align=center] {Apagar LED y print};
+                
+                \node (delay) [process, below of=loop, yshift=-7.5cm] {Pausa (\texttt{time.sleep(0.1)})};
+                
+                \draw [arrow] (start) -- (init);
+                \draw [arrow] (init) -- (reg);
+                \draw [arrow] (reg) -- (print);
+                \draw [arrow] (print) -- (loop);
+                \draw [arrow] (loop) -- node[anchor=south] {Sí} (read);
+                \draw [arrow] (read) -- (cond1);
+                
+                % 2. Añadimos pos=0.4 para acercar el "Sí" al rombo y yshift=0.05cm para despegarlo de la línea
+                \draw [arrow] (cond1) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (ledOn);
+                \draw [arrow] (cond1) -- node[anchor=east] {No} (cond2);
+                
+                % 2. Mismo ajuste para esta flecha
+                \draw [arrow] (cond2) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (ledOff);
+                
+                \draw [arrow] (loop) -- node[anchor=east] {No} (delay);
+                \draw [arrow] (ledOn) |- (delay);
+                \draw [arrow] (ledOff) |- (delay);
+                \draw [arrow] (cond2) |- node[anchor=east, pos=0.15] {No} (delay);
+                \draw [arrow] (delay.south) -- ++(0,-0.5) -| +(-3.8,0) |- (loop.west);
+            \end{tikzpicture}
+            \caption{Diagrama de flujo de la Acción 3}
+            \label{fig:flujo_act3}
+    \end{figure}
+
+    Este flujo inicializa estableciendo el pin del LED (25) como salida, configurando al igual el objeto para leer el teclado con \texttt{select.poll()}, y luego, notifica al usuario qué presionar dentro del panel interactivo de Thonny. Para evitar bloqueos, un ciclo eterno va sondeando si se recibe algún byte mediante  el condicional del objeto \texttt{poll}. De ser afirmativo, almacena la cadena; entra al subproceso de comprobación anidados por medio de \texttt{if} y compara, si tecleó '1' pasará voltaje positivo, y si la coincidencia fue '0' apaga dicho Pin. Tras efectuar las comprobaciones de los posibles escenarios o de no haberse escrito absolutamente nada en consola, detiene por 0.1 segundos el procedimiento de barrido principal y todo vuelve a empezar.
 
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{ img/Actividad3/Act3_1.jpg}
+        \caption{Activación del actuador interno. El usuario ingresa el carácter '1' a través de la terminal USB. El microcontrolador RP2040 intercepta el dato mediante el sondeo del búfer, evaluando la primera condicional como verdadera. Inmediatamente, satura el pin físico GPIO 25, encendiendo el LED verde integrado en la tarjeta y confirmando la acción en consola.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{ img/Actividad3/Act3_2.jpg}
+        \caption{Desactivación mediante consola. Al teclear el carácter '0', el sistema captura el nuevo evento de entrada. La rutina de control procesa el carácter ASCII, el flujo salta a la segunda rama condicional y el hardware drena el voltaje del GPIO 25 (0V). Esto apaga el LED físico y envía la confirmación de la acción completada al monitor serial.}
+    \end{figure}
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.6\textwidth]{ img/Actividad3/Act3_3.png}
+        \caption{Monitor serial Thonny. Captura de pantalla evidenciando la bitácora bidireccional (\textit{log}) de la comunicación asíncrona entre el entorno de desarrollo y el hardware embebido.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
-
-
+    Este ejercicio ilustra de manera muy visual cómo lograr una interacción en tiempo real de control mediante un bucle cerrado; entre la computadora principal desde la que mandamos instrucciones y el \textit{hardware} esclavo que las recibe. Cuando corremos este código, observamos que luego de un simple mensaje se mantiene monitoreando pacientemente el monitor y dejando libre el micro. Si le escribimos un '1', la tarjeta responde físicamente alimentando el encendido del LED conectado al GPIO 25, con su debida contestación en la interfaz de "GPIO25 = ON". Algo análogo sucede si enviamos un '0', se drenaría hacia masa apagándose visiblemente al instante. Demostrando cómo el manejo de comandos básicos sobre comunicación UART y lectura asíncrona construyen programas más estables en cualquier sistema electrónico empotrado contemporáneo de bajo coste sin importar las pausas del usuario.
+    
     \newpage
     \section*{Actividad 4}
     Realizar el siguiente procedimiento:
@@ -438,8 +550,9 @@
 
         \item \textbf{Flores Colin Victor Jaziel:}
 
-        \item \textbf{Lara Hernandez Angel Husiel:}
-
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica comprendí la importancia y el funcionamiento de la comunicación serial asíncrona, enfocándome en el uso del módulo \texttt{select} para evitar bloqueos en el microcontrolador. Al utilizar funciones como \texttt{poll(0)} y \texttt{read(1)}, noté cómo el procesador puede seguir ejecutando otras tareas de fondo mientras está a la espera de recibir instrucciones, lo que es un enfoque muchísimo más eficiente que detener todo el flujo del programa esperando que el usuario ingrese un comando.
+        
+        Implementar este envío y recepción de  datos para desencadenar acciones físicas, como encender un LED o configurar el giro y paro de motores de corriente directa con un módulo Bluetooth, me sirvió mucho para ver la aplicación práctica de estos conceptos. 
 
     \end{itemize}
 
