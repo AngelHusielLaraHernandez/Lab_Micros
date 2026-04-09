@@ -49,28 +49,35 @@ Pendientes  : [ ##########   ] 5 / 7
 
 ## Estructura del proyecto
 
-\\	ext
+
+```
 Practica1/
 ├── Code/                    # Códigos fuente en MicroPython
-│   ├── Act1Normal.py        # Código asíncrono base
-│   ├── Act1.py              # Actividad 1 — Lectura serial asíncrona
-│   ├── Act2.py              # Actividad 2 — Terminal COM
-│   ├── Act3.py              # Actividad 3 — Control de LED asíncrono
-│   ├── Act4Normal.py        # Código base CP2102
-│   ├── Act4.py              # Actividad 4 — Módulo CP2102 UART
-│   ├── Act5.py              # Actividad 5 — Menú de sensores/actuadores
-│   ├── Act6.py              # Actividad 6 — Control Bluetooth (LEDs)
-│   └── Act7.py              # Actividad 7 — Control Motores vía Bluetooth
+│   ├── Ac1SinNombres.py     # Código base sin comentarios (Act. 1)
+│   ├── Act1.py              # Actividad 1 — Lectura ADC comentada
+│   ├── Act2.py              # Actividad 2 — ADC con potenciómetro
+│   ├── Act3.py              # Actividad 3 — Sensor temperatura interno
+│   ├── Act4.py              # Actividad 4 — Sensor interno + TMP36
+│   ├── Act5SinNombre.py     # Código base sin comentarios (Act. 5)
+│   ├── Act5.py              # Actividad 5 — PWM con duty cycle
+│   ├── Act6.py              # Actividad 6 — PWM auto inc/dec
+│   └── Act7.py              # Actividad 7 — PWM con potenciómetro
 ├── img/                     # Fotografías del hardware
-│   ├── Actividades 1 a 7/
+│   ├── Actividad1/          # Montaje y pruebas Act. 1
+│   ├── Actividad2/          # Montaje y pruebas Act. 2
+│   ├── Actividad3/          # Montaje y pruebas Act. 3
+│   ├── Actividad4/          # Montaje y pruebas Act. 4
+│   ├── Actividad5/          # Montaje y pruebas Act. 5
+│   ├── Actividad6/          # Montaje y pruebas Act. 6
+│   └── Actividad7/          # Montaje y pruebas Act. 7
 ├── portada_img/             # Escudos UNAM / FI para la portada
 ├── PracticasPasadas/        # Prácticas anteriores (1 a 5)
 ├── main.tex                 # Documento principal LaTeX
 ├── portada.tex              # Portada del reporte
-├── main.pdf                 # PDF compilado con flujogramas actualizados
+├── referencias.bib          # Referencias bibliográficas
+├── main.pdf                 # PDF compilado
 └── README.md                # Este archivo
-\
----
+```
 
 ## Diagramas incluidos
 
