@@ -1,18 +1,22 @@
-from machine import ADC, Pin
+import select   # Importa la librería para monitorear eventos en flujos de datos [cite: 341]
+import sys      # Importa la librería para acceder a la entrada/salida estándar (consola) [cite: 341]
 import time
+import machine
 
-# Configura el ADC interno (canal 4) que corresponde al sensor de temperatura interno del RP2040
-Sensor = ADC(4)
+# Crea un objeto 'poll' para verificar si hay datos listos para leerse [cite: 341]
+poll_obj = select.poll() 
+# Registra la entrada estándar (teclado/consola) para ser monitoreada [cite: 341]
+poll_obj.register(sys.stdin, 1)
+
+# Imprime un mensaje directo al flujo de salida (sin agregar salto de línea automático) [cite: 341]
+sys.stdout.write("Esperando recepción de datos \n")
+# Imprime usando la función estándar de Python [cite: 341]
+print("Teclea un carácter y luego <enter>")
 
 while True:
-    # Lee el valor bruto de 16 bits (0 a 65535) y lo convierte a su equivalente en voltaje (0 a 3.3V)
-    Valor = Sensor.read_u16() * (3.3 / 65535)
-    
-    # Utiliza la ecuación oficial del fabricante para transformar el voltaje leído a °C
-    Temp = 27 - (Valor - 0.706) / 0.001721
-    
-    # Imprime la temperatura en consola
-    print(Temp)
-    
-    # (Buena práctica): Retardo para evitar saturar la consola de Thonny
-    time.sleep(1)
+    # poll(0) verifica instantáneamente si se tecleó algo sin bloquear el código [cite: 341]
+    if poll_obj.poll(0): 
+        ch = sys.stdin.read(1) # Lee exactamente 1 carácter tecleado [cite: 341]
+        sys.stdout.write("Dato recibido \n") [cite: 341]
+        print("Hola UNAM") [cite: 341]
+    time.sleep(0.1) # Breve pausa para no saturar el procesador [cite: 341]

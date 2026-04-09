@@ -1,30 +1,21 @@
-from machine import ADC
+from machine import Pin, UART
 import time
 
-sensor_interno = ADC(4) # Sensor nativo del chip
-sensor_tmp36 = ADC(28)  # TMP36 en el GPIO28
+# Configura el UART0 a 9600 baudios usando el GPIO16(TX) y GPIO17(RX) 
+uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+# Formato estándar: 8 bits de datos, sin paridad, 1 bit de paro 
+uart.init(bits=8, parity=None, stop=1)
+led = Pin(25, Pin.OUT)
+
+# Envía mensaje al módulo USB-TTL 
+uart.write('Inicia Comunicacion Serie\n')
 
 while True:
-    # --- SENSOR INTERNO ---
-    v_int = sensor_interno.read_u16() * (3.3 / 65535)
-    temp_c_int = 27 - (v_int - 0.706) / 0.001721
-    temp_f_int = (temp_c_int * 9/5) + 32
+    # Comprueba si hay datos en el buffer de recepción UART 
+    if uart.any() > 0: 
+        data = uart.read() # Lee todos los datos disponibles 
+        uart.write(data)   # Eco: retransmite lo mismo que recibió 
+        led.toggle()       # Cambia el estado del LED interno 
     
-    # --- SENSOR TMP36 ---
-    # El TMP36 da 10mV por cada 1°C y tiene un offset (desplazamiento) de 500mV (0.5V) a 0°C
-    v_tmp = sensor_tmp36.read_u16() * (3.3 / 65535)
-    temp_c_tmp = (v_tmp - 0.5) * 100
-    temp_f_tmp = (temp_c_tmp * 9/5) + 32
-    
-    # --- DESPLIEGUE ---
-    print(f"Temperatura interna = {temp_c_int:.1f}°C; {temp_f_int:.1f}°F")
-    print(f"Temperatura TMP36 = {temp_c_tmp:.1f}°C; {temp_f_tmp:.1f}°F")
-    
-    if temp_c_int > temp_c_tmp:
-        print("El sensor interno tiene el valor mayor de temperatura.\n")
-    elif temp_c_tmp > temp_c_int:
-        print("El sensor TMP36 tiene el valor mayor de temperatura.\n")
-    else:
-        print("Ambos sensores registran lo mismo.\n")
-        
-    time.sleep(2)
+    # Se ajusta a 0.1s para mayor fluidez, en el manual dice 1s pero eso causa retrasos al teclear.
+    time.sleep(0.1)

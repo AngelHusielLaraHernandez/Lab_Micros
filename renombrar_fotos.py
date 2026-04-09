@@ -4,8 +4,8 @@ def renombrar_fotos_img(ruta_base):
     # Carpeta principal donde están las subcarpetas de actividades
     actividades = [d for d in os.listdir(ruta_base) if os.path.isdir(os.path.join(ruta_base, d))]
     for carpeta in actividades:
-        if carpeta in ["Actividad6", "Actividad7"]:
-            continue
+        #if carpeta in ["Actividad6", "Actividad7"]:
+        #    continue
         ruta_carpeta = os.path.join(ruta_base, carpeta)
         fotos = [f for f in os.listdir(ruta_carpeta) if f.lower().endswith('.jpg')]
         fotos.sort()  # Ordena para que el renombrado sea consistente

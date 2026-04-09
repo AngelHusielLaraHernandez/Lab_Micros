@@ -1,26 +1,51 @@
-from machine import ADC, Pin, PWM
+from machine import Pin, UART
 import time
 
-# Potenciómetro como entrada analógica en ADC0
-potenciometro = ADC(26)
+uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
 
-# LEDs como salidas PWM
-pwm0 = PWM(Pin(0))
-pwm1 = PWM(Pin(1))
-pwm0.freq(1000)
-pwm1.freq(1000)
+# --- Configuración Motores (Práctica 5) ---
+# Motor 1
+dir1_m1 = Pin(0, Pin.OUT)
+dir2_m1 = Pin(1, Pin.OUT)
+en_m1 = Pin(20, Pin.OUT)
 
-MAX_DUTY = 65535
+# Motor 2
+dir1_m2 = Pin(2, Pin.OUT)
+dir2_m2 = Pin(3, Pin.OUT)
+en_m2 = Pin(19, Pin.OUT)
+
+def control_motor(motor, estado):
+    if motor == 1:
+        dir1, dir2, en = dir1_m1, dir2_m1, en_m1
+    else:
+        dir1, dir2, en = dir1_m2, dir2_m2, en_m2
+        
+    if estado == "PARO":
+        en.value(0); dir1.value(0); dir2.value(0)
+    elif estado == "HORARIO":
+        en.value(1); dir1.value(1); dir2.value(0)
+    elif estado == "ANTIHORARIO":
+        en.value(1); dir1.value(0); dir2.value(1)
+
+control_motor(1, "PARO")
+control_motor(2, "PARO")
 
 while True:
-    # La lectura del ADC da valores entre 0 y 65535 de forma nativa
-    lectura_pot = potenciometro.read_u16()
-    
-    # Asignamos la lectura de voltaje directamente al ciclo de trabajo del PWM
-    pwm0.duty_u16(lectura_pot)
-    
-    # El pin 1 refleja el inverso matemático de la perilla del potenciómetro
-    pwm1.duty_u16(MAX_DUTY - lectura_pot)
-    
-    # Breve pausa para no forzar la lectura del ADC
-    time.sleep(0.05)
+    if uart.any() > 0:
+        cmd = uart.read(1).decode('utf-8').upper()
+        
+        if cmd == 'S': # PARO 
+            control_motor(1, "PARO")
+            control_motor(2, "PARO")
+        elif cmd == 'A': # ADELANTE (Ambos horario) 
+            control_motor(1, "HORARIO")
+            control_motor(2, "HORARIO")
+        elif cmd == 'R' or cmd == 'T': # REVERSA/ATRÁS (Ambos antihorario) 
+            control_motor(1, "ANTIHORARIO")
+            control_motor(2, "ANTIHORARIO")
+        elif cmd == 'D': # DERECHA 
+            control_motor(1, "HORARIO")
+            control_motor(2, "ANTIHORARIO")
+        elif cmd == 'I': # IZQUIERDA 
+            control_motor(1, "ANTIHORARIO")
+            control_motor(2, "HORARIO")
