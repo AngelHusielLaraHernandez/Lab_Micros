@@ -291,22 +291,52 @@
 
     \newpage
 
-    \section*{Actividad 2}
-    Para este ejercicio, realizar los pasos siguientes:
-    \begin{enumerate}
-        \item Ubicar el COM de conexión de la Raspberry Pi.
-        \item Abrir la terminal de su preferencia.
-        \item Explicar si existe alguna diferencia en la ejecución y cuál sería el motivo.
-    \end{enumerate}
-        
-    \subsection*{Propuesta de solución}
+\section*{Actividad 2}
+Para este ejercicio, realizar los pasos siguientes:
+\begin{enumerate}
+    \item Ubicar el COM de conexión de la Raspberry Pi.
+    \item Abrir la terminal de su preferencia.
+    \item Explicar si existe alguna diferencia en la ejecución y cuál sería el motivo.
+\end{enumerate}
 
+\subsection*{Propuesta de solución}
 
-    \subsection*{Desarrollo}
+Para esta actividad, se requiere identificar el puerto COM asignado a la Raspberry Pi Pico en el sistema operativo, y posteriormente establecer una conexión serie utilizando un programa terminal externo (como PuTTY o el Monitor Serie de Arduino) para verificar que la comunicación funciona correctamente, para actividades posteriores.
 
+\subsection*{Desarrollo}
 
-    \subsection*{Análisis de resultados}
-    
+\textbf{Paso 1: Identificación del puerto COM}
+
+Primero, se conectó la Raspberry Pi Pico a la computadora mediante el cable USB. Luego, se abrió el Administrador de Dispositivos de Windows y se localizó la sección \textbf{Puertos (COM y LPT)} tal y como se muestra en la siguiente figura y en este caso el dispositivo apareció identificado como \textbf{Dispositivo serie USB (COM7)}:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/Actividad2/Captura de pantalla 2026-04-08 121057.png}
+    \caption{Administrador de dispositivos mostrando el puerto COM7 asignado a la Raspberry Pi Pico}
+    \label{fig:admin-dispositivos}
+\end{figure}
+
+\textbf{Paso 2: Conexión a través de una terminal externa}
+
+Una vez identificado el puerto, se procedió a abrir una terminal externa de PuTTY. En esta práctica se utilizó el Monitor Serie del IDE de Arduino, configurándolo con los siguientes parámetros:
+
+\begin{itemize}
+    \item \textbf{Puerto:} COM7
+    \item \textbf{Baud rate:} 9600
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/Actividad2/Captura de pantalla 2026-04-08 120651.png}
+    \caption{Conexión establecida en el Monitor Serie de Arduino}
+    \label{fig:monitor-serie}
+\end{figure}
+
+Como se observa en la imagen de arriba, al establecer la conexión apareció el prompt \texttt{>>>} de MicroPython, confirmando que la comunicación serie funciona correctamente y que se puede interactuar con la Raspberry Pi Pico desde esta terminal externa.
+
+\subsection*{Análisis de resultados}
+
+Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o el Monitor Serie de Arduino, se observan diferencias significativas. Thonny ofrece una interfaz gráfica completa con editor, depurador, resaltado de sintaxis, gestión de archivos y botones de control, pero añade una capa de abstracción que puede causar problemas de sincronización o latencia. Las terminales externas ofrecen únicamente una ventana de texto pero con mayor estabilidad y control directo sobre el REPL de MicroPython. En esta actividad se logró identificar correctamente el puerto COM7 asignado a la Raspberry Pi Pico y se estableció comunicación exitosa a través de una terminal externa, comprobando que ambas formas de conexión son funcionales: las terminales externas son más adecuadas para pruebas de comunicación serie puras y Thonny resulta más práctico para el desarrollo y depuración de código.
 
     \newpage
     \section*{Actividad 3}
@@ -409,28 +439,65 @@
 
     \begin{enumerate}
         \item Escribir el siguiente programa.
-        \item Comentar el código e indicar que hace
+        \item Comentar el código e indicar qué hace.
         \item Conectar el módulo CP2102.
         \item Ubicar el puerto asignado.
-        \item Comprobar el funcionamiento
+        \item Comprobar el funcionamiento.
     \end{enumerate}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de ejemplo; actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4Normal.py}
-
-
-
+    \lstinputlisting[language={[LAB]Python}, caption={Código de ejemplo - Actividad 4}, basicstyle=\ttfamily\scriptsize]{Code/Act4Normal.py}
 
     \subsection*{Propuesta de solución}
 
+    El objetivo de esta actividad es establecer una comunicación bidireccional entre la Raspberry Pi Pico y una computadora usando el protocolo UART. Para ello, se utiliza un módulo conversor USB-TTL basado en el chip CP2102, que permite conectar la Pico a un puerto USB de la computadora lo que emula un puerto serie.
 
+    El programa implementa un echo que significa que todo carácter enviado desde la computadora hacia la Pico es retransmitido de vuelta a la computadora y cada vez que se recibe un dato, el LED interno de la Pico cambia de estado (toggle) para que se más facil apreciar la comunicación.
 
     \subsection*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
+    El código implementado se muestra a continuación:
 
+    \lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 4 - Comunicación UART}, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    \textbf{Explicación del código:}
+
+    \begin{itemize}
+        \item \textbf{Líneas 1-2:} Importación de las librerías necesarias. \texttt{machine} proporciona el control de pines y UART, mientras que \texttt{time} permite gestionar retardos.
+        
+        \item \textbf{Líneas 5-6:} Configuración del UART0. Se establece una velocidad de 9600 baudios, y se asignan los pines GPIO16 (TX) y GPIO17 (RX) como canales de transmisión y recepción respectivamente.
+        
+        \item \textbf{Línea 8:} Inicialización del formato de trama estándar: 8 bits de datos, sin bit de paridad y 1 bit de paro.
+        
+        \item \textbf{Línea 9:} Configuración del LED interno (GPIO25) como salida para indicar visualmente la actividad.
+        
+        \item \textbf{Línea 12:} Envío de un mensaje inicial a través del puerto serie para confirmar que la comunicación se ha establecido correctamente.
+        
+        \item \textbf{Línea 15:} \texttt{uart.any()} verifica si hay datos disponibles en el buffer de recepción. Si es mayor que 0, significa que se ha recibido información.
+        
+        \item \textbf{Línea 16:} \texttt{uart.read()} lee todos los datos disponibles.
+        
+        \item \textbf{Línea 17:} \texttt{uart.write(data)} envía los mismos datos de vuelta (efecto eco).
+        
+        \item \textbf{Línea 18:} \texttt{led.toggle()} invierte el estado del LED interno, encendiéndolo o apagándolo cada vez que se recibe un dato.
+        
+        \item \textbf{Línea 21:} Pausa de 0.1 segundos para evitar saturar el procesador y permitir una respuesta fluida al tecleo.
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad4/Act4_1.png}
+        \caption{Código cargado en la Raspberry Pi Pico y ejecución en la consola de Thonny. Se observa el mensaje Inicia Comunicacion Serie enviado por la Pico.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad4/Act4_2.png}
+        \caption{Identificación del puerto COM asignado al módulo CP2102. En el Administrador de dispositivos se localiza el "Silicon Labs CP210x USB to UART Bridge (COM8)", este driver fue instalado porque no venía por defecto.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Una vez cargado el programa en la Raspberry Pi Pico y conectado el módulo CP2102 a la computadora, se verificó que el dispositivo apareciera en el Administrador de dispositivos como COM8. Al abrir un monitor serie a 9600 baudios, se recibió el mensaje "Inicia Comunicacion Serie", confirmando la transmisión exitosa. Durante la ejecución, cada carácter escrito fue retransmitido de vuelta (efecto eco) mientras el LED interno de la Pico (GPIO25) cambiaba su estado con cada carácter recibido, proporcionando una clara indicación visual. Se observó una comunicación bidireccional correcta sin pérdida de datos, con una respuesta ágil gracias al uso de \texttt{time.sleep(0.1)}.
 
 
     \newpage
@@ -439,7 +506,7 @@
 
     Siguiendo el procedimiento de la actividad No. 4; realizar un programa que ejecute las acciones indicadas.
 
-    \begin{table}[h]
+    \begin{table}[H]
         \centering
         \begin{tabular}{|c|l|}
             \hline
@@ -458,19 +525,187 @@
 
     \vspace{0.5cm}
 
-
     \subsection*{Propuesta de solución}
 
+    En esta actividad se implementó un sistema de control basado en comandos enviados a través de comunicación UART, especificamente se nos pidió que la Raspberry Pi Pico pueda recibir caracteres del 1 al 7 que ejecuten diferentes acciones como las de la tabla 7.3 que involucran sensores y una matriz de 8 LEDs conectados a los pines GPIO0 a GPIO7.
+
+    El programa utiliza un bucle principal que monitorea constantemente el buffer de recepción UART. Al recibir un comando, se decodifica y se ejecuta la acción correspondiente, enviando los resultados de vuelta a través del mismo puerto serie para su visualización en la terminal.
 
     \subsection*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5 Comentado,basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
+    El código implementado se muestra a continuación:
 
-
+    \lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 5 Comentado}, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
     \subsection*{Análisis de resultados}
 
+    En la imagen siguiente se muestra la ejecución del programa y los resultados. Para la acción 1 se muestra el voltaje actual del potenciometro que es de 3.10. Para la acción 2 se muestra el resultado de la conversión AD de la foto-resistencia en hexadecimal. Para la acción 3 se muestra la temperatura del sensor TMP36 en grados C, F y K. Para la acción 4 se muestra un menseje indicando la activación del zumbador mostrando la nota Do y de igual forma se muestran mensajes indicando la acción que se esta ejecundo actualmente.
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad5/Act5_0.png}
+        \caption{Programa cargado y ejecutándose en la Raspberry Pi Pico.}
+    \end{figure}
+
+    Las siguientes imegenes muestran el funcionamiento de las actividades 5, 6 y 7.
+
+    \textbf{Actividad 5} Prender y apagar 5 veces GPIO0 al GPIO7.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Apagado del GPIO0 al GPIO7}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad5/Act5_1_2.jpg}
+        \caption{Encendido del GPIO0 al GPIO7}
+    \end{subfigure}
+    \caption{Ciclo de encendido y apagado.}
+\end{figure}
+
+\textbf{Actividad 6} Corrimiento a la derecha de los 8 leds GPIO0 – GPIO7
+
+\begin{figure}[H]
+    \centering
+    % Primera fila: 4 imagenes
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_3.jpg}
+        \caption{Posición 1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_4.jpg}
+        \caption{Posición 2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_5.jpg}
+        \caption{Posición 3}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_6.jpg}
+        \caption{Posición 4}
+    \end{subfigure}
+
+    \vspace{0.5cm} % Espacio entre filas
+
+    % Segunda fila: 4 imagenes
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_7.jpg}
+        \caption{Posición 5}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_8.jpg}
+        \caption{Posición 6}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_9.jpg}
+        \caption{Posición 7}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_2.jpg}
+        \caption{Posición 8}
+    \end{subfigure}
+    \caption{Secuencia de corrimiento a la derecha (Comando '6').}
+\end{figure}
+
+\textbf{Actividad 7} Corrimiento a la izquierda de los 8 leds GPIO0 – GPIO7
+
+\begin{figure}[H]
+    \centering
+    % Secuencia invertida para corrimiento a la izquierda
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_2.jpg}
+        \caption{Posición 1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_9.jpg}
+        \caption{Posición 2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_8.jpg}
+        \caption{Posición 3}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_7.jpg}
+        \caption{Posición 4}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_6.jpg}
+        \caption{Posición 5}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_5.jpg}
+        \caption{Posición 6}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_4.jpg}
+        \caption{Posición 7}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_3.jpg}
+        \caption{Posición 8}
+    \end{subfigure}
+    \caption{Secuencia de corrimiento a la izquierda (Comado ´7').}
+\end{figure}
+
+
+    \textbf{Verificación de funcionamiento:}
+
+    \begin{itemize}
+        \item \textbf{Comando `1':} Se leyó correctamente el valor del potenciómetro conectado al pin ADC26, mostrando el voltaje en volts con dos decimales.
+        
+        \item \textbf{Comando `2':} La fotorresistencia (ADC27) entregó su valor de conversión analógico-digital en formato hexadecimal, variando según la luz incidente.
+        
+        \item \textbf{Comando `3':} El sensor TMP36 (ADC28) reportó la temperatura ambiente en las tres escalas: Celsius, Fahrenheit y Kelvin, con una precisión de un decimal.
+        
+        \item \textbf{Comando `4':} Se generó la nota musical DO (261 Hz) durante 0.5 segundos mediante el PWM conectado al pin 22, produciendo un tono audible.
+        
+        \item \textbf{Comando `5':} Los 8 LEDs (GPIO0 a GPIO7) parpadearon simultáneamente 5 veces, con una pausa de 0.2 segundos entre cada cambio de estado.
+        
+        \item \textbf{Comando `6':} Se realizó un corrimiento de luz hacia la derecha: cada LED se encendió y apagó secuencialmente desde GPIO0 hasta GPIO7.
+        
+        \item \textbf{Comando `7':} Se realizó un corrimiento de luz hacia la izquierda: cada LED se encendió y apagó secuencialmente desde GPIO7 hasta GPIO0.
+    \end{itemize}
+
+    \textbf{Observaciones generales:}
+
+    La comunicación UART a 9600 baudios funcionó de manera estable y sin pérdida de datos. El uso de \texttt{uart.read(1)} permitió leer un solo carácter a la vez, simplificando el parseo de comandos. La respuesta del sistema fue inmediata al enviar cada comando, gracias al tiempo de sleep de 50 ms en el bucle principal.
+
+    En conclusión, se logró implementar un sistema de control versátil que integra múltiples periféricos (ADC, PWM, GPIO) controlados remotamente a través de comunicación serie, demostrando el potencial de la Raspberry Pi Pico como plataforma para adquisición de datos y control de actuadores.
     \newpage
 
     \section*{Actividad 6}
@@ -548,7 +783,9 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
 
-        \item \textbf{Flores Colin Victor Jaziel:}
+        \item \textbf{Flores Colin Victor Jaziel:} En esta septima práctica, comprendí la importancia y el funcionamiento de la comunicación serie asíncrona UART, enfocándome en la identificación y configuración de puertos COM para establecer comunicación entre la Raspberry Pi Pico y una laptop o computadora. Al utilizar terminales externas como PuTTY o el Monitor Serie de Arduino, noté cómo la conexión se establece de manera transparente a una velocidad específica (9600 baudios), permitiendo interactuar directamente con el REPL de MicroPython sin intermediarios, lo que resulta más estable y predecible que la consola integrada de Thonny para aplicaciones de comunicación serie pura.
+
+        Identificar el puerto COM asignado a la Pico a través del Administrador de Dispositivos y configurar correctamente la terminal externa me sirvió para comprender la importancia de los parámetros de comunicación (baud rate, bits de datos, bits de paro) y cómo estos deben coincidir en ambos extremos para lograr una transmisión exitosa. Esta práctica me permitió diferenciar claramente entre las herramientas de desarrollo (Thonny) y las herramientas de comunicación serie (terminales externas), entendiendo que cada una tiene aplicaciones específicas: Thonny es ideal para programar y depurar, mientras que las terminales externas son más adecuadas para pruebas de comunicación y aplicaciones que requieren interacción directa con el REPL.
 
         \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica comprendí la importancia y el funcionamiento de la comunicación serial asíncrona, enfocándome en el uso del módulo \texttt{select} para evitar bloqueos en el microcontrolador. Al utilizar funciones como \texttt{poll(0)} y \texttt{read(1)}, noté cómo el procesador puede seguir ejecutando otras tareas de fondo mientras está a la espera de recibir instrucciones, lo que es un enfoque muchísimo más eficiente que detener todo el flujo del programa esperando que el usuario ingrese un comando.
         
