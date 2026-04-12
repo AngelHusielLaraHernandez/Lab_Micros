@@ -531,6 +531,100 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
 
     El programa utiliza un bucle principal que monitorea constantemente el buffer de recepción UART. Al recibir un comando, se decodifica y se ejecuta la acción correspondiente, enviando los resultados de vuelta a través del mismo puerto serie para su visualización en la terminal.
 
+    \newpage
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=0.5cm,
+            every node/.style={scale=0.65, font=\small},
+            % Estilos de los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=4.5cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % --- 1. BLOQUES DE INICIALIZACIÓN ---
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below=of start] {Importar \texttt{machine}, \texttt{time}};
+            \node (cfg_uart) [process, below=of import] {Configurar UART0 (9600 bps)};
+            \node (cfg_periph) [process, below=of cfg_uart] {Configurar ADC (Pot, LDR, TMP36)\\y PWM (Buzzer)};
+            \node (cfg_leds) [process, below=of cfg_periph] {Configurar Array de 8 LEDs\\y definir \texttt{apagar\_leds()}};
+            \node (menu_msg) [io, below=of cfg_leds] {Enviar Mensaje de Menú\\vía UART};
+
+            % --- 2. PUNTO DE RE-ENTRADA Y BUCLE ---
+            \node (uart_check) [decision, below=1.4cm of menu_msg] {¿\texttt{uart.any() > 0}?};
+            
+            % Coordenada de re-entrada (80% hacia abajo)
+            \coordinate (loop_entry) at ($(menu_msg.south)!0.8!(uart_check.north)$);
+
+            \node (read) [io, below=of uart_check] {Leer \texttt{cmd} (1 byte)};
+
+            % --- 3. ESTRUCTURA DE DECISIÓN (MENÚ 1-7) ---
+            \node (dec1) [decision, below=0.7cm of read] {¿Es '1'?};
+            \node (exec1) [process, right=1.5cm of dec1] {Leer Potenciómetro\\y enviar Voltaje};
+
+            \node (dec2) [decision, below=0.7cm of dec1] {¿Es '2'?};
+            \node (exec2) [process, right=1.5cm of dec2] {Leer LDR\\y enviar Hexadecimal};
+
+            \node (dec3) [decision, below=0.7cm of dec2] {¿Es '3'?};
+            \node (exec3) [process, right=1.5cm of dec3] {Calcular y enviar Temp\\(C, F y K)};
+
+            \node (dec4) [decision, below=0.7cm of dec3] {¿Es '4'?};
+            \node (exec4) [process, right=1.5cm of dec4] {Reproducir tono DO\\en Buzzer (0.5s)};
+
+            \node (dec5) [decision, below=0.7cm of dec4] {¿Es '5'?};
+            \node (exec5) [process, right=1.5cm of dec5] {Parpadeo general\\(5 veces)};
+
+            \node (dec6) [decision, below=0.7cm of dec5] {¿Es '6'?};
+            \node (exec6) [process, right=1.5cm of dec6] {Corrimiento LEDs\\Hacia Derecha};
+
+            \node (dec7) [decision, below=0.7cm of dec6] {¿Es '7'?};
+            \node (exec7) [process, right=1.5cm of dec7] {Corrimiento LEDs\\Hacia Izquierda};
+
+            % --- 4. CONEXIONES ---
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (cfg_uart);
+            \draw [arrow] (cfg_uart) -- (cfg_periph);
+            \draw [arrow] (cfg_periph) -- (cfg_leds);
+            \draw [arrow] (cfg_leds) -- (menu_msg);
+            
+            % Conexión vertical hacia el rombo
+            \draw [thick] (menu_msg.south) -- (loop_entry);
+            \draw [arrow] (loop_entry) -- (uart_check);
+
+            % Flujo UART (Si/No)
+            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
+            \draw [arrow] (uart_check.west) -- ++(-0.8,0) node[anchor=south] {No} |- (loop_entry);
+
+            \draw [arrow] (read) -- (dec1);
+
+            % Cascada de decisiones
+            \foreach \current/\next in {1/2, 2/3, 3/4, 4/5, 5/6, 6/7} {
+                \draw [arrow] (dec\current) -- node[anchor=south] {Sí} (exec\current);
+                \draw [arrow] (dec\current) -- node[anchor=east] {No} (dec\next);
+            }
+            \draw [arrow] (dec7) -- node[anchor=south] {Sí} (exec7);
+
+            % --- 5. BUS DE RETORNO ---
+            \coordinate (bus) at ($(exec1.east) + (1.0,0)$); 
+            
+            \foreach \i in {1, 2, 3, 4, 5, 6, 7} {
+                \draw [arrow] (exec\i.east) -- (bus |- exec\i.east);
+            }
+            
+            % Retorno del bus al punto de unión
+            \draw [arrow] (bus |- exec7.east) -- (bus) |- (loop_entry);
+
+            % Caso "No" final (comando no reconocido o fin de menú)
+            \draw [arrow] (dec7.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec7.east);
+
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de flujo para la Actividad 5.}
+    \end{figure}
+
     \subsection*{Desarrollo}
 
     El código implementado se muestra a continuación:
@@ -567,7 +661,8 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
     \caption{Ciclo de encendido y apagado.}
 \end{figure}
 
-\textbf{Actividad 6} Corrimiento a la derecha de los 8 leds GPIO0 – GPIO7
+\newpage
+\textbf{Actividad 6} Corrimiento a la derecha de los 8 leds GPIO0 - GPIO7
 
 \begin{figure}[H]
     \centering
@@ -625,7 +720,7 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
     \caption{Secuencia de corrimiento a la derecha (Comando '6').}
 \end{figure}
 
-\textbf{Actividad 7} Corrimiento a la izquierda de los 8 leds GPIO0 – GPIO7
+\textbf{Actividad 7} Corrimiento a la izquierda de los 8 leds GPIO0 - GPIO7
 
 \begin{figure}[H]
     \centering
@@ -730,9 +825,100 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
 
     \vspace{0.5cm}
 
-
     \subsection*{Propuesta de solución}
 
+    Para poder implementar la tabla de control de la actividad 6, es necesario configurar la comunicación UART a través del módulo Bluetooth. Debido a que se va requerir controlar los pines GPIO es necesario impotar los modulos \texttt{Pin} y \texttt{UART} de la librería \texttt{machine}. 
+
+    Una vez importados los módulos, se configura la comunicación UART a través del módulo Bluetooth, para esto por medio de la función \texttt{UART} se establece la velocidad de comunicación \textit{baudrate} a 9600 baudios, se asignan los pines de transmisión y recepción (TX = \texttt{PIN 16} y RX = \texttt{PIN 17}).
+
+    Posteriormente, se configuran los pines GPIO0 a GPIO3 como salidas digitales (\texttt{Pin.OUT}) para controlar los LEDs que se encuentran conectados a estos pines.
+
+    Posteriormente a declarar los pines, se procede a implementar un bucle infinito el cual constantemente monitorea el buffer de recepción del puerto serie, utilizando la función \texttt{uart.any()} para verificar si hay datos disponibles. Si se recibe un comando, se lee el primmer carácter del buffer con \texttt{uart.read(1)}, se convierte los bytes recibidos a una cadena de texto usando \texttt{decode('utf-8')} además por medio del método \texttt{upper()} se asegura que el comando se interprete correctamente sin importar si el usuario lo ingresa en mayúscula o minúscula.
+
+    Al obtener el comando recibido, por medio de una estructura condicional \texttt{if-elif} se identifica que acción se debe ejecutar, dependiendo del comando se asignan los valores necesarios a los pines para lograr el encendido o apagado deseado.
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=0.5cm,
+            every node/.style={scale=0.75, font=\small},
+            % Estilos de los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3.8cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % --- 1. BLOQUES DE INICIALIZACIÓN ---
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below=of start] {Importar \texttt{Pin}, \texttt{UART}};
+            \node (uart_cfg) [process, below=of import] {Configurar UART0\\(9600 bps, Pins 16, 17)};
+            \node (led_cfg) [process, below=of uart_cfg] {Configurar Pins LED\\(0, 1, 2, 3) como OUT};
+
+            % --- 2. PUNTO DE RE-ENTRADA Y BUCLE ---
+            \node (uart_check) [decision, below=1.5cm of led_cfg] {¿\texttt{uart.any() > 0}?};
+            
+            % Coordenada de re-entrada (80% hacia abajo)
+            \coordinate (loop_entry) at ($(led_cfg.south)!0.8!(uart_check.north)$);
+
+            \node (read) [io, below=of uart_check] {Leer \texttt{data}\\(Decode + Upper)};
+
+            % --- 3. ESTRUCTURA DE CONTROL (IF/ELIF) ---
+            \node (dec_a) [decision, below=0.8cm of read] {¿Es 'A'?};
+            \node (exec_a) [process, right=2cm of dec_a] {\texttt{led0.value(1)}};
+
+            \node (dec_t) [decision, below=0.8cm of dec_a] {¿Es 'T'?};
+            \node (exec_t) [process, right=2cm of dec_t] {\texttt{led1.value(1)}};
+
+            \node (dec_d) [decision, below=0.8cm of dec_t] {¿Es 'D'?};
+            \node (exec_d) [process, right=2cm of dec_d] {\texttt{led2.value(1)}};
+
+            \node (dec_i) [decision, below=0.8cm of dec_d] {¿Es 'I'?};
+            \node (exec_i) [process, right=2cm of dec_i] {\texttt{led3.value(1)}};
+
+            \node (dec_s) [decision, below=0.8cm of dec_i] {¿Es 'S'?};
+            \node (exec_s) [process, right=2cm of dec_s] {Apagar todos\\los LEDs};
+
+            % --- 4. CONEXIONES ---
+            
+            % Inicialización
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (uart_cfg);
+            \draw [arrow] (uart_cfg) -- (led_cfg);
+            
+            % Bucle principal
+            \draw [thick] (led_cfg.south) -- (loop_entry);
+            \draw [arrow] (loop_entry) -- (uart_check);
+
+            % Flujo UART
+            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
+            \draw [arrow] (uart_check.west) -- ++(-1,0) node[anchor=south] {No} |- (loop_entry);
+
+            \draw [arrow] (read) -- (dec_a);
+
+            % Cascada de decisiones de caracteres
+            \foreach \x/\y in {a/t, t/d, d/i, i/s} {
+                \draw [arrow] (dec_\x) -- node[anchor=south] {Sí} (exec_\x);
+                \draw [arrow] (dec_\x) -- node[anchor=east] {No} (dec_\y);
+            }
+            \draw [arrow] (dec_s) -- node[anchor=south] {Sí} (exec_s);
+
+            % --- 5. BUS DE RETORNO ---
+            \coordinate (bus) at ($(exec_a.east) + (1.2,0)$); 
+            
+            \foreach \x in {a, t, d, i, s} {
+                \draw [arrow] (exec_\x.east) -- (bus |- exec_\x.east);
+            }
+            
+            % Retorno del bus al punto de unión
+            \draw [arrow] (bus |- exec_s.east) -- (bus) |- (loop_entry);
+
+            % Caso "No" final (si no es ninguna de las letras anteriores)
+            \draw [arrow] (dec_s.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec_s.east);
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de flujo para la Actividad 6.}
+    \end{figure}
 
     \subsection*{Desarrollo}
 
@@ -740,6 +926,37 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
 
     \subsection*{Análisis de resultados}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_5.jpg}
+        \caption{Presionando el botón: \texttt{A} - LED 0 encendido.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_1.jpg}
+        \caption{Presionando el botón: \texttt{T} - LED 1 encendido.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_2.jpg}
+        \caption{Presionando el botón: \texttt{D} - LED 2 encendido.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_3.jpg}
+        \caption{Presionando el botón: \texttt{I} - LED 3 encendido.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_4.jpg}
+        \caption{Presionando el botón: \texttt{S} - Todos los LED apagados.}
+    \end{figure}
+
+    Cargando el programa anteriormente descrito así como vinculando el módulo Bluetooth a la Raspberry Pi Pico, se logró controlar el encendido y apagado de los LEDs conectados a los pines GPIO0 a GPIO3, de acuerdo a los comandos enviados desde la aplicación de control Bluetooth. Cada comando activó el LED correspondiente o apagó todos los LEDs según lo especificado en la tabla de control,donde la comunicación que se realiza través de la aplicación que se conecta al modulo bluetooth fue estable, de forma que la comunicación por medio del protocolo UART se realizó sin pérdida de datos, permitiendo que cada comando se ejecute de manera inmediata al ser enviado desde la aplicación.
 
     \newpage
     \section*{Actividad 7}
@@ -764,11 +981,99 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
 
 \noindent \textit{\textcolor[HTML]{4A72B8}{Nota: Descargar la aplicación de control bluetooth de la página del Laboratorio de Microcomputadoras.}}
 
-
-
     \section*{Propuesta de solución}
 
+    Para implementar el control de los motores de corriente directa de acuerdo a los comandos recibidos por Bluetooth, es necesario en el programa importar la librería \texttt{machine} donde se usaran los módulos de salida \texttt{Pin} para controlar los pines GPIO y el módulo \texttt{UART} para el protocolo de comunicación serial.
 
+    Una vez importadas las librerías, es necesario configurar la comunicación \texttt{UART} a través del módulo Bluetooth, para esto por medio de la función \texttt{UART} se establece la velocidad de comunicación \textit{baudrate} a 9600 baudios, se asignan los pines de transmisión y recepción (TX = \texttt{PIN 16} y RX = \texttt{PIN 17}).
+
+    Posteriormente, se configuran los pines de los motores, dado que el control de los motores se realiza por medio de un puente H, se necesitan 3 pines para controlar el motor, 2 pines para la dirección del giro y un pin para apagar o encender el motor. Para el primer motor se usan los pines \texttt{GPIO0}, \texttt{GPIO1} y \texttt{GPIO20}, mientras que para el segundo motor se usan los pines \texttt{GPIO2}, \texttt{GPIO3} y \texttt{GPIO19}. Es importante destacar que todos los pines se configuran como salidas digitales (\texttt{Pin.OUT}).
+
+    Para una mejor organización del código, se define una función auxiliar llamada \texttt{control\_motor} la cuál realiza dos acciones principales, la primeara es elegir que pines usar según el número que recibe como argumento y la segunda es ejecutar la acción correspondiente al comando recibido, para esto se hace uso de una estructura condicional \texttt{if-elif} que compara el comando recibido con los caracteres definidos en la tabla de control, dependiendo del comando se asignan los valores necesarios a los pines para lograr el giro deseado o detener el motor.
+
+    Antes de entrar al bucle principal, se inicializa en estado de apago ambos motores, para esto se asigna un valor de 0 a los pines de control de ambos motores, esto con la finalidad de evitar que los motores se activen de manera inesperada al iniciar el programa.
+
+    Se implementa un bucle infinito el cual constantemente monitorea el buffer de recepción del puerto serie, utilizando la función \texttt{uart.any()} para verificar si hay datos disponibles. Si se recibe un comando, se lee el primmer carácter del buffer con \texttt{uart.read(1)}, se convierte los bytes recibidos a una cadena de texto usando \texttt{decode('utf-8')} además por medio del método \texttt{upper()} se asegura que el comando se interprete correctamente sin importar si el usuario lo ingresa en mayúscula o minúscula. 
+    De acuerdo al valor del comando recibido  por medio de una estructura condicional \texttt{if-elif} se identifica que acción se debe ejecutar, para esto se llama a la función \texttt{control\_motor} pasando como argumentos el número del motor a controlar y el comando recibido. 
+
+    \newpage
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=0.5cm,
+            every node/.style={scale=0.75, font=\small},
+            % Estilos de los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3.8cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below=of start] {Importar \texttt{machine}, \texttt{time}};
+            \node (uart_cfg) [process, below=of import] {Configurar UART0\\(9600 bps, Pins 16, 17)};
+            \node (m1_cfg) [process, below=of uart_cfg] {Configurar Pins Motor 1\\(Dir: 0,1 | En: 20)};
+            \node (m2_cfg) [process, below=of m1_cfg] {Configurar Pins Motor 2\\(Dir: 2,3 | En: 19)};
+            \node (init_p) [process, below=of m2_cfg] {Llamar \texttt{control\_motor}\\M1 y M2 en PARO};
+
+            \node (uart_check) [decision, below=1.5cm of init_p] {¿\texttt{uart.any() > 0}?};
+            
+            \coordinate (loop_entry) at ($(init_p.south)!0.8!(uart_check.north)$);
+
+            \node (read) [io, below=of uart_check] {Leer \texttt{cmd}\\(Decode + Upper)};
+
+            \node (dec_s) [decision, below=0.8cm of read] {¿Es 'S'?};
+            \node (exec_s) [process, right=2cm of dec_s] {M1: PARO / M2: PARO};
+
+            \node (dec_a) [decision, below=0.8cm of dec_s] {¿Es 'A'?};
+            \node (exec_a) [process, right=2cm of dec_a] {M1: HOR / M2: HOR};
+
+            \node (dec_r) [decision, below=0.8cm of dec_a] {¿Es 'R' o 'T'?};
+            \node (exec_r) [process, right=2cm of dec_r] {M1: A-HOR / M2: A-HOR};
+
+            \node (dec_d) [decision, below=0.8cm of dec_r] {¿Es 'D'?};
+            \node (exec_d) [process, right=2cm of dec_d] {M1: HOR / M2: A-HOR};
+
+            \node (dec_i) [decision, below=0.8cm of dec_d] {¿Es 'I'?};
+            \node (exec_i) [process, right=2cm of dec_i] {M1: A-HOR / M2: HOR};
+
+            
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (uart_cfg);
+            \draw [arrow] (uart_cfg) -- (m1_cfg);
+            \draw [arrow] (m1_cfg) -- (m2_cfg);
+            \draw [arrow] (m2_cfg) -- (init_p);
+            
+            \draw [thick] (init_p) -- (loop_entry);
+            \draw [arrow] (loop_entry) -- (uart_check);
+
+            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
+            \draw [arrow] (uart_check.west) -- ++(-1,0) |- (loop_entry);
+            \node at ($(uart_check.west) + (-0.5,0.3)$) {No};
+
+            \draw [arrow] (read) -- (dec_s);
+
+            \foreach \x/\y in {s/a, a/r, r/d, d/i} {
+                \draw [arrow] (dec_\x) -- node[anchor=south] {Sí} (exec_\x);
+                \draw [arrow] (dec_\x) -- node[anchor=east] {No} (dec_\y);
+            }
+            \draw [arrow] (dec_i) -- node[anchor=south] {Sí} (exec_i);
+
+            \coordinate (bus) at ($(exec_s.east) + (1.2,0)$); 
+            
+            \foreach \x in {s, a, r, d, i} {
+                \draw [arrow] (exec_\x.east) -- (bus |- exec_\x.east);
+            }
+            
+            \draw [arrow] (bus |- exec_i.east) -- (bus) |- (loop_entry);
+
+            \draw [arrow] (dec_i.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec_i.east);
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de flujo Actividad 7: Programa de control de motores por Bluetooth.}
+    \end{figure}
+    
 
     \section*{Desarrollo}
 
@@ -776,12 +1081,47 @@ Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o
 
     \subsection*{Análisis de resultados}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_1.jpg}
+        \caption{Presionando el botón: \texttt{A} - Motor 1 (Horario) y  Motor 2 (Horario).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_2.jpg}
+        \caption{Presionando el botón: \texttt{T} - Motor 1 (Antihorario) y  Motor 2 (Antihorario).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_3.jpg}
+        \caption{Presionando el botón: \texttt{D} - Motor 1 (Horario) y  Motor 2 (Antihorario).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_5.jpg}
+        \caption{Presionando el botón: \texttt{I} - Motor 1 (Antihorario) y  Motor 2 (Horario).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_4.jpg}
+        \caption{Presionando el botón: \texttt{S} - Motor 1 (Paro) y  Motor 2 (Paro).}
+    \end{figure}
+
+    A partir de las imagenes obtenidas, al cargar el programa en la Raspberry Pi Pico y conectar el módulo Bluetooth por medio de la aplicación de control, se verificó que al presionar cada botón correspondiente a los comandos definidos en la tabla de control, los motores respondían de manera correcta según lo programado. Dicho comportamiento corresponde a las acciones esperadas: los motores giraban en la dirección indicada (horario o antihorario) o se detenían completamente al recibir el comando de paro. El proceso de comunicación se realizó de manera fluida y sin retrasos perceptibles, de forma que la implementación del protocolo UART a través del módulo Bluetooth fue exitosa y eficiente para el control remoto de los motores.
 
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A través de la resolución e implementación de las acticidades de esta práctica, logré comprender a fondo el funcionamiento de la comunicación serie asíncrona por medio del protocolo UART, así como la importancia de configurar correctamente los parámetros de comunicación (baud rate, bits de datos, bits de paro) para establecer una conexión exitosa entre la Raspberry Pi Pico y otros dispositivos.
+        
+        Al hacer uso de terminales externas como PuTTY, pude comprender cómo la comunicación se establece de manera transparente, permitiendo interactuar directamente con el REPL de MicroPython sin intermediarios, lo que resulta más estable y predecible que la consola integrada de Thonny para aplicaciones de comunicación serie pura.  De forma que esta práctica me permitió diferenciar claramente entre las herramientas de desarrollo (Thonny) y las herramientas de comunicación serie (terminales externas), entendiendo que cada una tiene aplicaciones específicas, así como la importancia de la comunicación UART ya sea por medio de cable serial o por medio de un módulo Bluetooth para el control remoto de dispositivos, sinedo una aplicación de gran relevancia en el mundo de las aplicaciones de los microntroladores y la ingeniería en general.
+        
+   
 
         \item \textbf{Flores Colin Victor Jaziel:} En esta septima práctica, comprendí la importancia y el funcionamiento de la comunicación serie asíncrona UART, enfocándome en la identificación y configuración de puertos COM para establecer comunicación entre la Raspberry Pi Pico y una laptop o computadora. Al utilizar terminales externas como PuTTY o el Monitor Serie de Arduino, noté cómo la conexión se establece de manera transparente a una velocidad específica (9600 baudios), permitiendo interactuar directamente con el REPL de MicroPython sin intermediarios, lo que resulta más estable y predecible que la consola integrada de Thonny para aplicaciones de comunicación serie pura.
 
