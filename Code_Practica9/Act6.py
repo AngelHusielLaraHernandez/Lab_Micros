@@ -6,18 +6,14 @@ roms = ds_sensor.scan()
 
 while True:
     ds_sensor.convert_temp()
-    time.sleep_ms(750)
+    time.sleep_ms(750) 
     
     for rom in roms:
-        # Lectura de la temperatura en Celsius
         tempC = ds_sensor.read_temp(rom)
+        tempF = (tempC * 9/5) + 32 # Conversión a Fahrenheit
         
-        # Ecuación de conversión a Fahrenheit
-        tempF = (tempC * 9/5) + 32
-        
-        print(rom)
-        print('temperature (°C):', "{:.2f}".format(tempC))
-        print('temperature (°F):', "{:.2f}".format(tempF))
-        print()
+        print(f"ROM: {rom}")
+        print(f"Temperatura (°C): {tempC:.2f}")
+        print(f"Temperatura (°F): {tempF:.2f}\n")
         
     time.sleep(2)

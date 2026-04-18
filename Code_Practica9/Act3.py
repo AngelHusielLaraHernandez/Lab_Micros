@@ -5,6 +5,9 @@ from utime import sleep
 # Inicializa el display TM1637 con Reloj (CLK) en GPIO 0 y Datos (DIO) en GPIO 1
 tm = tm1637.TM1637(clk=Pin(0), dio=Pin(1))
 
+# Configura el brillo a un nivel intermedio (0 a 7)
+tm.brightness(3)
+
 # Variables iniciales para segundos y minutos
 Sec = 0
 Min = 0

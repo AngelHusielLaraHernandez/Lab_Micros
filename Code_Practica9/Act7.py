@@ -2,19 +2,21 @@ import dht
 from machine import Pin
 import time
 
-# Configura el sensor DHT11 en el GPIO 21
+# Configura el DHT11 en el GPIO 21
 Sensor = dht.DHT11(Pin(21))
 
 while True:
-    # Instruye al sensor para que recolecte los datos del ambiente
-    Sensor.measure()
-    
-    # Extrae la temperatura y la humedad ya procesadas de la memoria interna
-    temp = Sensor.temperature()
-    hum = Sensor.humidity()
-    
-    # Imprime los resultados
-    print(f"Temperatura: {temp}°C Humedad: {hum}%")
-    
-    # Retardo indispensable de 2 segundos. El DHT11 no soporta lecturas muy rápidas continuas.
+    try:
+        # Pide la trama de datos de 40 bits
+        Sensor.measure()
+        temp = Sensor.temperature()
+        hum = Sensor.humidity()
+        
+        print(f"Temperatura: {temp}°C Humedad: {hum}%")
+        
+    except OSError:
+        # Evita que el programa colapse si hay un error de lectura por ruido
+        print("Fallo de sincronización, reintentando...")
+        
+    # Retardo mínimo de 2 segundos recomendado por el fabricante
     time.sleep(2)

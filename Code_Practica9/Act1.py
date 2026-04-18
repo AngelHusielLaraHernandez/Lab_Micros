@@ -1,20 +1,19 @@
 import time
 from neopixel import Neopixel
 
-# Inicializa la tira Neopixel.
-# Parámetros: 8 LEDs, estado de la máquina (0), pin físico (GPIO 4), formato "GRB"
+# Configuración: 8 LEDs, estado 0, pin físico GPIO 4, formato de color GRB
 pixels = Neopixel(8, 0, 4, "GRB")
-brightness = 0.1 # Establece el brillo al 10% para no saturar la vista
+brightness = 0.1 # Limita el brillo al 10% para proteger el puerto USB
 
-# Definición de colores usando tuplas RGB (Rojo, Verde, Azul) de 0 a 255
+# Tuplas de color (Rojo, Verde, Azul)
 red = (255, 0, 0)
-black = (0, 0, 0) # El negro equivale a LED apagado
+black = (0, 0, 0)
 
 while True:
-    pixels.set_pixel(0, red)   # Carga el color rojo al LED en la posición 0
-    pixels.show()              # Ejecuta la instrucción y muestra el color físicamente
-    time.sleep(1)              # Espera 1 segundo
+    pixels.set_pixel(0, red)   # Enciende el primer LED en rojo
+    pixels.show()              # Ejecuta la actualización física
+    time.sleep(1)              
     
-    pixels.set_pixel(0, black) # Carga el color negro al LED en la posición 0
-    pixels.show()              # Actualiza la tira
-    time.sleep(1)              # Espera 1 segundo
+    pixels.set_pixel(0, black) # Apaga el primer LED
+    pixels.show()              
+    time.sleep(1)
