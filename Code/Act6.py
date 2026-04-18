@@ -1,29 +1,22 @@
-from machine import Pin, UART
+from ST7735 import TFT
+from sysfont import sysfont
+from machine import SPI, Pin
 
-# La conexión física RX/TX cruzada es la misma, la magia la hace el módulo BT  
-uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+spi = SPI(0, baudrate=20000000, polarity=0, phase=0, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
 
-led0 = Pin(0, Pin.OUT)
-led1 = Pin(1, Pin.OUT)
-led2 = Pin(2, Pin.OUT)
-led3 = Pin(3, Pin.OUT)
-
-while True:
-    if uart.any() > 0:
-        # Pasa el carácter a mayúscula por seguridad  
-        data = uart.read(1).decode('utf-8').upper() 
+# Nota: Cambiamos CS al pin 7 según el diagrama de integración de la siguiente actividad
+tft = TFT(spi, 15, 14, 7) 
+tft.initg()
+tft.rgb(True)
+tft.rotation(1) # Rotación en modo apaisado (Landscape)
         
-        if data == 'A':
-            led0.value(1) 
-        elif data == 'T':
-            led1.value(1) 
-        elif data == 'D':
-            led2.value(1)  
-        elif data == 'I':
-            led3.value(1)  
-        elif data == 'S':
-            # Apaga todo  
-            led0.value(0) 
-            led1.value(0)
-            led2.value(0)
-            led3.value(0)
+tft.fill(TFT.BLACK) # Fondo Negro para resaltar colores
+        
+# Escribimos los nombres en diferentes líneas (eje Y va aumentando) y con distintos colores
+tft.text((5, 10), "1. Juan Perez", TFT.CYAN, sysfont, 1, nowrap=True)
+tft.text((5, 30), "2. Maria Gomez", TFT.YELLOW, sysfont, 1, nowrap=True)
+tft.text((5, 50), "3. Luis Lopez", TFT.MAGENTA, sysfont, 1, nowrap=True)
+tft.text((5, 70), "4. Ana Diaz", TFT.WHITE, sysfont, 1, nowrap=True)
+
+# Título más grande (escala 2) en la parte inferior
+tft.text((5, 100), "Equipo", TFT.RED, sysfont, 2, nowrap=True)
