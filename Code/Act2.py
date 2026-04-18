@@ -9,7 +9,7 @@ display = max7219_8digit.Display(spi, ss)
 
 # --- Entradas de Control ---
 # Configura GPIO12 para conteo ascendente y GPIO13 para conteo descendente
-btn_asc = Pin(12, Pin.IN, Pin.PULL_UP)
+btn_asc = Pin(12, Pin.IN, Pin.PULL_DOWN)
 btn_desc = Pin(13, Pin.IN, Pin.PULL_UP)
 
 # Variables globales para el contador

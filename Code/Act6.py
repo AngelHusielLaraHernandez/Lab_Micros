@@ -13,10 +13,10 @@ tft.rotation(1) # Rotación en modo apaisado (Landscape)
 tft.fill(TFT.BLACK) # Fondo Negro para resaltar colores
         
 # Escribimos los nombres en diferentes líneas (eje Y va aumentando) y con distintos colores
-tft.text((5, 10), "1. Juan Perez", TFT.CYAN, sysfont, 1, nowrap=True)
-tft.text((5, 30), "2. Maria Gomez", TFT.YELLOW, sysfont, 1, nowrap=True)
-tft.text((5, 50), "3. Luis Lopez", TFT.MAGENTA, sysfont, 1, nowrap=True)
-tft.text((5, 70), "4. Ana Diaz", TFT.WHITE, sysfont, 1, nowrap=True)
+tft.text((5, 10), "1. Perci", TFT.CYAN, sysfont, 1, nowrap=True)
+tft.text((5, 30), "2. Tenshi", TFT.YELLOW, sysfont, 1, nowrap=True)
+tft.text((5, 50), "3. Victor", TFT.RED, sysfont, 1, nowrap=True)
+tft.text((5, 70), "4. Fofo", TFT.WHITE, sysfont, 1, nowrap=True)
 
 # Título más grande (escala 2) en la parte inferior
-tft.text((5, 100), "Equipo", TFT.RED, sysfont, 2, nowrap=True)
+tft.text((5, 100), "Equipo 6", TFT.RED, sysfont, 2, nowrap=True)

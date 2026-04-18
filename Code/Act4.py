@@ -8,7 +8,7 @@ cs_pin = Pin(6, Pin.OUT)
 display = max7219.Matrix8x8(spi, cs_pin, num_display)
 
 # Lista con los mensajes requeridos por el manual
-mensajes = ["UNAM", "FI", "*", "*", "2025", "25 - 2", "*", "*", "*", "*", "Texto libre"]
+mensajes = ["UNAM", "FI", "*", "*", "2026", "26 - 2", "*", "*", "*", "*", "PEPE"]
 
 while True:
     for msg in mensajes:

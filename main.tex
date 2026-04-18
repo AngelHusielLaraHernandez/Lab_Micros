@@ -203,7 +203,7 @@
 \renewcommand{\footrulewidth}{0pt}  
 
 % --- BIBLIOGRAFÍA ---
-\usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
+\usepackage[backend=biber, style=numeric, sorting=none, url=true]{biblatex}
 \addbibresource{referencias.bib}
 
 % --- HIPERVÍNCULOS ---
@@ -430,16 +430,88 @@
     \end{center}
 
     \subsection*{Propuesta de solución}
+    Para mostrar los textos en las matrices de LEDs, se configura el bus SPI del microcontrolador RP2040 para comunicarse con el controlador MAX7219. Este circuito integrado maneja las cuatro matrices de 8x8 conectadas en cascada. Se definen los pines de reloj (SCK), salida de datos maestros (MOSI) y selección de chip (CS). 
+    
+    En el código, se crea una lista que almacena exactamente las cadenas de texto solicitadas por el manual ("UNAM", "FI", "*", "2026", "26 - 2", "PEPE"). La solución implementa un bucle \texttt{for} infinito que recorre esta lista elemento por elemento. En cada paso, el programa limpia la memoria de la pantalla para evitar que los textos se encimen, dibuja los caracteres arrancando desde la coordenada inicial de la matriz y aplica un retardo de 2 segundos mediante \texttt{sleep(2)} para que cada mensaje permanezca visible el tiempo requerido antes de pasar al siguiente.
+
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=8mm and 14mm,
+            every node/.style={font=\small\sffamily}
+        ]
+            % --- Nodos ---
+            \node (inicio) [startstop] {Inicio};
+            \node (spi) [process, below=of inicio, text width=6.0cm, align=center] {Configurar \texttt{SPI(0)}\\ y crear la matriz \texttt{MAX7219}};
+            \node (lista) [process, below=of spi, text width=6.0cm, align=center] {Definir la lista de mensajes\\ \texttt{"UNAM", "FI", "*", "*", "2026", "26 - 2", "*", "*", "*", "*", "PEPE"}};
+            \node (bucle) [process, below=of lista, text width=5.6cm, align=center] {Entrar al ciclo infinito\\ \texttt{while True}};
+            \node (mensaje) [decision, below=of bucle, text width=4.2cm, align=center] {¿Queda un mensaje\\ por mostrar?};
+            \node (limpia) [process, right=18mm of mensaje, text width=4.6cm, align=center] {Limpiar la pantalla\\ con \texttt{fill(0)}};
+            \node (escribe) [process, below=of limpia, text width=4.6cm, align=center] {Escribir el mensaje\\ en \texttt{(0,0)}};
+            \node (muestra) [process, below=of escribe, text width=4.6cm, align=center] {Actualizar el display\\ con \texttt{show()}};
+            \node (espera) [process, below=of muestra, text width=4.6cm, align=center] {Esperar 2 segundos\\ con \texttt{sleep(2)}};
+
+            % --- Conexiones Lineales ---
+            \draw [arrow] (inicio) -- (spi);
+            \draw [arrow] (spi) -- (lista);
+            \draw [arrow] (lista) -- (bucle);
+            \draw [arrow] (bucle) -- (mensaje);
+
+
+            \draw [arrow] (mensaje.east) -- node[above, font=\scriptsize]{Sí} (limpia.west);
+            
+            \draw [arrow] (limpia) -- (escribe);
+            \draw [arrow] (escribe) -- (muestra);
+            \draw [arrow] (muestra) -- (espera);
+
+
+            \draw [arrow] (espera.south) -- ++(0,-0.8) -| (mensaje.south);
+
+
+            \draw [arrow] (mensaje.west) -- node[above, pos=0.2, font=\scriptsize]{No} ++(-1.5,0) |- (bucle.west);
+
+        \end{tikzpicture}
+    \end{center}
+
+    \noindent El flujo de datos recorre la lista \texttt{mensajes} de forma secuencial: cada cadena se limpia, se convierte en puntos encendidos dentro del framebuffer del MAX7219 y se envía al módulo por SPI antes de pausar dos segundos. Al terminar la lista, el ciclo \texttt{while True} vuelve a comenzar y vuelve a recorrer los mensajes sin detener la ejecución.
 
     \subsection*{Desarrollo}
 
-
     \lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 4 - Comunicación UART}, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_8.png}
+        \caption{Texto UNAM.}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_1.png}
+        \caption{El microcontrolador transfiere la cadena "FI" mediante la línea MOSI del bus SPI.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_3.png}
+        \caption{Despliegue de datos numéricos. El bucle alcanza la cadena "2026". El microcontrolador actualiza la pantalla evidenciando la correcta renderización de la fuente tipográfica asignada para números enteros.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad4/Act4_5.png}
+        \caption{Despliegue de la cadena final. El bucle \texttt{for} carga el último elemento ("PEPE"). Los datos viajan por el bus y se enclavan en los registros del display, logrando iluminar el texto libre solicitado en el manual.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad4/Act4_6.png}
+        \caption{Reinicio del ciclo de visualización. El programa mantiene la cadena "PEPE" durante su temporización estipulada de 2 segundos antes de que el bucle infinito reinicie y vuelva a mandar la cadena inicial "UNAM", cerrando el lazo de ejecución.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
-
+    El código demuestra el manejo de un bus síncrono para controlar arreglos de LEDs. Al definir el parámetro \texttt{num\_display = 4} en la inicialización de la clase, la librería ajusta automáticamente la memoria de video (\textit{framebuffer}) para abarcar un ancho total de 32 columnas. 
+    
+    Durante la ejecución del ciclo, el microcontrolador envía las tramas de datos por la línea MOSI. La función \texttt{display.text()} se encarga de convertir cada letra de la cadena de texto en un mapa de bits que enciende los LEDs correspondientes. La instrucción \texttt{display.fill(0)} resulta fundamental, ya que apaga todos los puntos luminosos en la transición, garantizando un salto limpio entre un mensaje y otro. 
+    El uso de la función de retardo pausa la actualización gráfica, cumpliendo de manera exacta con el ritmo de visualización establecido en la actividad.
 
     \newpage
 
@@ -454,11 +526,7 @@
         % Llamada a la Raspberry Pi Pico
         \picoboard
 
-        % ==========================================
-        % DISPLAY TFT ST 7735 Y CONEXIONES
-        % ==========================================
 
-        % Título del Display
         \node[text=blue!40!black, font=\large\sffamily\bfseries, align=center] at (-3.2, -0.5) {DISPLAY TFT\\[0.1cm]ST 7735};
 
         % Contorno del Módulo TFT
@@ -510,17 +578,56 @@
 
 
     \subsection*{Propuesta de solución}
+    El objetivo es desplegar texto a color en un panel LCD TFT. A diferencia de las matrices simples, esta pantalla requiere una comunicación SPI de alta velocidad (20 MHz) y el uso de terminales adicionales de control. Se define el pin A0 (o DC) para que el controlador ST7735 pueda distinguir si los datos entrantes son comandos de configuración o píxeles de imagen, además de un pin físico para el RESET.
+    
+    La solución emplea la librería \texttt{ST7735} para manejar la secuencia de encendido del hardware. Posteriormente, se ajusta la orientación de la pantalla al modo apaisado (\textit{landscape}), se corrige la paleta de colores si es necesario, y se pinta un fondo blanco sólido para asegurar el contraste. Finalmente, se envían dos cadenas de texto estáticas ("MICROS" y "FI") asignándoles coordenadas, colores específicos y una escala de tamaño definida para que resalten en el panel.
 
-    \newpage
+    \begin{center}
+    \begin{tikzpicture}[
+        node distance=5mm and 12mm, % <-- Distancia vertical reducida
+        every node/.style={font=\footnotesize\sffamily} % <-- Fuente un poco más pequeña
+    ]
+        \node (inicio) [startstop] {Inicio};
+        \node (spi) [process, below=of inicio, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ a 20 MHz con pines SCK, MOSI y MISO};
+        \node (objeto) [process, below=of spi, text width=5.5cm, align=center] {Crear el objeto \texttt{TFT}\\ con A0=15, RESET=14 y CS=5};
+        \node (init) [process, below=of objeto, text width=5.5cm, align=center] {Inicializar el controlador\\ con \texttt{tft.initg()}};
+        \node (rgb) [process, below=of init, text width=5.5cm, align=center] {Corregir el orden de color\\ con \texttt{tft.rgb(True)}};
+        \node (rot) [process, below=of rgb, text width=5.5cm, align=center] {Fijar orientación\\ con \texttt{tft.rotation(2)}};
+        \node (fondo) [process, below=of rot, text width=5.5cm, align=center] {Pintar fondo blanco\\ con \texttt{tft.fill(TFT.WHITE)}};
+        \node (txt1) [process, below=of fondo, text width=5.5cm, align=center] {Escribir \texttt{"MICROS"}\\ en rojo, escala 2, posición (10,10)};
+        \node (txt2) [process, below=of txt1, text width=5.5cm, align=center] {Escribir \texttt{"FI"}\\ en verde, escala 2, posición (25,30)};
+        \node (fin) [startstop, below=of txt2] {Fin};
 
+        \draw [arrow] (inicio) -- (spi);
+        \draw [arrow] (spi) -- (objeto);
+        \draw [arrow] (objeto) -- (init);
+        \draw [arrow] (init) -- (rgb);
+        \draw [arrow] (rgb) -- (rot);
+        \draw [arrow] (rot) -- (fondo);
+        \draw [arrow] (fondo) -- (txt1);
+        \draw [arrow] (txt1) -- (txt2);
+        \draw [arrow] (txt2) -- (fin);
+    \end{tikzpicture}
+    \end{center}
 
+    \noindent El flujo de datos es estrictamente secuencial: el RP2040 crea primero la interfaz SPI y después envía comandos de configuración al ST7735 para inicializarlo, corregir el orden de color y fijar la rotación. Una vez establecida la pantalla, se transmite un bloque de color sólido para el fondo y, al final, dos tramas de texto con coordenadas, escala y color distintos. Como no hay bucles ni condiciones en este script, la secuencia se ejecuta una sola vez y la imagen queda estática en el display.
 
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Despliegue gráfico en el panel TFT ST7735. El microcontrolador inicializa la comunicación SPI a 20 MHz y reconfigura la orientación geométrica de la pantalla a modo apaisado (\texttt{rotation(2)}). Se comprueba el control directo, el fondo de color blanco (\texttt{fill}) y renderizar las cadenas estáticas "MICROS" (en color rojo) y "FI" (en color verde).}
+    \end{figure}
+
     \subsection*{Análisis de resultados}
+    Al cargar el script, el microcontrolador inicializa la pantalla TFT de forma exitosa mediante \texttt{tft.initg()}. Esta instrucción manda la secuencia de voltajes y comandos necesarios para despertar el panel. La línea \texttt{tft.rgb(True)} resulta clave para el correcto despliegue visual, ya que en algunos de estos módulos los canales de color rojo y azul vienen invertidos de fábrica (formato BGR en lugar de RGB); este parámetro corrige esa desviación por software.
+
+    La instrucción \texttt{tft.rotation(2)} reordena las direcciones de la memoria gráfica, lo que voltea la imagen para que coincida con la disposición horizontal en la que suele montarse la pantalla físicamente. A continuación, \texttt{tft.fill(TFT.WHITE)} inunda todos los píxeles de blanco. Por último, la función \texttt{tft.text()} traduce las letras a puntos de color rojo y verde en las posiciones (10, 10) y (25, 30), 
+    escalando la fuente a tamaño 2. Esto comprueba que el RP2040 puede gestionar gráficos y colores de manera directa utilizando librerías dedicadas.
 
     \newpage
 
@@ -553,6 +660,8 @@
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6,basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
+
+    \subsection*{Análisis de resultados}
 
     \newpage
     \section*{Actividad 7}
@@ -609,10 +718,7 @@
         \node[below, pin_label] at (-3.7, -3.2) {$\overline{SS}$};
 
 
-        % ==========================================
-        % MATRIZ 8x8x4 (ABAJO IZQUIERDA)
-        % ==========================================
-        % Título
+
         \node[title_label, anchor=south west] at (-11.5, -6.2) {Matriz 8x8 x 4};
         
         % Caja principal
@@ -650,10 +756,7 @@
         \node[below, pin_label] at (-3.7, -9.2) {$\overline{CS}$};
 
 
-        % ==========================================
-        % DISPLAY TFT ST 7735 (DERECHA)
-        % ==========================================
-        % Título
+
         \node[title_label, align=center] at (9.0, 0.2) {DISPLAY TFT\\[0.1cm]ST 7735};
         
         % Caja principal
@@ -715,16 +818,135 @@
     \vspace{10pt}
     Tabla 8-3. Acciones de control; actividad 7
     \end{center}
- 
+    
+    \newpage
+
     \section*{Propuesta de solución}
+    Para controlar tres periféricos gráficos diferentes de forma simultánea, se implementa una topología de bus SPI compartido. El microcontrolador actúa como maestro y conecta sus únicas líneas de reloj (SCK) y datos (MOSI) a las tres pantallas en paralelo. La regla crítica de esta solución es asignar un pin de Selección de Chip (CS) exclusivo para cada módulo: GP5 para el display de 7 segmentos, GP6 para la matriz 8x8 y GP7 para la pantalla TFT. 
+    
+    El flujo del programa depende de botones físicos configurados con resistencias \textit{pull-up} internas. Al presionar el botón de inicio, se activa una bandera lógica que permite a un ciclo continuo aumentar un contador numérico. En cada iteración, el microcontrolador formatea el número como texto y lo envía secuencialmente a cada pantalla activando solo su pin CS correspondiente por breves fracciones de segundo. En la pantalla TFT, se dibuja el texto antiguo en color negro como método de "borrado rápido" antes de pintar el nuevo número, optimizando la velocidad del sistema.
 
+    \noindent En el script actual, las decisiones de inicio y paro están modeladas como banderas lógicas fijas, por lo que la ruta activa entra a \texttt{corriendo} desde el primer ciclo. A partir de ahí, el contador se convierte en texto y se distribuye por SPI a los tres dispositivos usando su CS independiente; la TFT recibe un refresco doble, primero en \texttt{CYAN} y luego en \texttt{BLACK}, para borrar la cifra anterior sin limpiar toda la pantalla.
 
+    \begin{center}
+    \begin{tikzpicture}[
+        scale=0.75, transform shape, % Reduce el tamaño de todo el diagrama al 75%
+        node distance=5mm and 10mm,
+        every node/.style={font=\footnotesize\sffamily}
+    ]
+        % --- Tronco Central Superior ---
+        \node (inicio) [startstop] {Inicio};
+        \node (spi) [process, below=of inicio, text width=6.2cm, align=center] {Importar librerías\\ y configurar el bus \texttt{SPI(0)}};
+        \node (dispositivos) [process, below=of spi, text width=6.2cm, align=center] {Inicializar display de 8 dígitos,\\ matriz 8x8 y pantalla TFT};
+        \node (tft) [process, below=of dispositivos, text width=6.2cm, align=center] {Configurar la TFT\\ y mostrar el título inicial};
+        \node (variables) [process, below=of tft, text width=6.2cm, align=center] {Definir \texttt{contador}, \texttt{corriendo}\\ y las banderas de control};
+        \node (bucle) [process, below=of variables, text width=5cm, align=center] {Entrar al ciclo\\ \texttt{while True}};
 
+        % --- Rombos de Decisión y Fin del Tronco ---
+        \node (inicia) [decision, below=of bucle, yshift=-3mm, text width=3.8cm, align=center] {¿\texttt{btn\_inicia == 0}?};
+        \node (detiene) [decision, below=of inicia, yshift=-6mm, text width=3.8cm, align=center] {¿\texttt{btn\_detiene == 1}?};
+        \node (corriendo) [decision, below=of detiene, yshift=-6mm, text width=3.8cm, align=center] {¿\texttt{corriendo}?};
+        \node (reposo) [process, below=of corriendo, yshift=-4mm, text width=4.5cm, align=center] {Esperar 0.1 s\\ y volver al ciclo};
+
+        % --- Bloques de la Derecha (Acciones Sí) ---
+        \node (arranca) [process, right=14mm of inicia, text width=4.5cm, align=center] {Activar \texttt{corriendo = True}\\ y esperar antirrebote};
+        \node (para) [process, right=14mm of detiene, text width=4.5cm, align=center] {Desactivar \texttt{corriendo}\\ y esperar antirrebote};
+
+        % Pila de bloques a la derecha de "corriendo"
+        \node (muestra) [process, right=14mm of corriendo, text width=4.8cm, align=center] {Convertir \texttt{contador} a texto\\ y enviarlo a los 3 módulos};
+        \node (sale) [process, below=of muestra, text width=4.8cm, align=center] {Mostrar en el display de 8 dígitos,\\ en la matriz y en la TFT};
+        \node (borra) [process, below=of sale, text width=4.8cm, align=center] {Pintar el número en CYAN,\\ esperar 0.5 s y reescribirlo en BLACK};
+        \node (inc) [process, below=of borra, text width=4.8cm, align=center] {Incrementar \texttt{contador}\\ y esperar 0.5 s};
+
+        % --- Conexiones Tronco Superior ---
+        \draw [arrow] (inicio) -- (spi);
+        \draw [arrow] (spi) -- (dispositivos);
+        \draw [arrow] (dispositivos) -- (tft);
+        \draw [arrow] (tft) -- (variables);
+        \draw [arrow] (variables) -- (bucle);
+        \draw [arrow] (bucle) -- (inicia);
+
+        % --- Conexiones de las flechas "No" (Rectas hacia abajo) ---
+        % Se define el punto medio entre nodos para que los retornos se enganchen ahí
+        \draw [arrow] (inicia.south) -- node[right, pos=0.3, font=\scriptsize]{No} (detiene.north) coordinate[midway] (mid1);
+        \draw [arrow] (detiene.south) -- node[right, pos=0.3, font=\scriptsize]{No} (corriendo.north) coordinate[midway] (mid2);
+        \draw [arrow] (corriendo.south) -- node[right, pos=0.3, font=\scriptsize]{No} (reposo.north);
+
+        % --- Conexiones de las flechas "Sí" ---
+        \draw [arrow] (inicia.east) -- node[above, font=\scriptsize]{Sí} (arranca.west);
+        \draw [arrow] (detiene.east) -- node[above, font=\scriptsize]{Sí} (para.west);
+        \draw [arrow] (corriendo.east) -- node[above, font=\scriptsize]{Sí} (muestra.west);
+
+        % --- Retornos al Tronco Central desde "arranca" y "para" ---
+        % Bajan de la caja y se unen al punto medio de la línea central
+        \draw [arrow] (arranca.south) |- (mid1);
+        \draw [arrow] (para.south) |- (mid2);
+
+        % --- Conexiones de la pila de actualización visual ---
+        \draw [arrow] (muestra) -- (sale);
+        \draw [arrow] (sale) -- (borra);
+        \draw [arrow] (borra) -- (inc);
+
+        % --- Bucles de retorno al 'while True' ---
+        % 1. El reposo (cuando no corre) retorna por la IZQUIERDA
+        \draw [arrow] (reposo.west) -- ++(-1.8,0) |- (bucle.west);
+        % 2. El incremento (cuando sí corre) retorna por la DERECHA para evitar cruces
+        \draw [arrow] (inc.east) -- ++(0.8,0) |- (bucle.east);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7, basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7]{Code/Act7.py}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_7.png}
+        \caption{Estado de inicialización ("0"). Esta captura representa la lectura del estado base del sistema (o la detención/reseteo por botón). Los tres periféricos se actualizan para reflejar la variable en cero, validando que el arbitraje de datos del RP2040 funciona desde el primer ciclo de reloj.}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_1.png}
+        \caption{Avance del contador al valor "1". El microcontrolador envía la información a través del bus SPI compartido, conmutando rápidamente los pines de selección de chip (CS) para actualizar el display de 8 dígitos, la matriz de LEDs y la pantalla TFT casi al mismo instante.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_2.png}
+        \caption{Conteo en el valor "2". Se aprecia el efecto de la técnica de borrado selectivo en la pantalla TFT. El número anterior fue sobrescrito en color negro justo antes de renderizar el nuevo valor en cian, logrando una transición limpia y sin parpadeos lentos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_3.png}
+        \caption{Conteo en el valor "3". Los controladores MAX7219 dedicados a la matriz y al display de 7 segmentos procesan las tramas de datos de forma paralela al panel gráfico a color, demostrando la ausencia de latencia visual entre las tres arquitecturas físicas.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_4.png}
+        \caption{Conteo en el valor "4". El formato de cadena configurado en el código (\texttt{"\{:8d\}"}) se hace evidente en el display superior, empujando numéricamente el dígito hacia el extremo derecho, mientras que en la matriz y el TFT se respeta la impresión por coordenadas absolutas.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_5.png}
+        \caption{Conteo en el valor "5". La ejecución continua confirma la estabilidad del bus SPI operando a 10 MHz. A pesar de comunicarse secuencialmente con tres esclavos distintos en cada ciclo, el procesador mantiene un flujo constante sin cuellos de botella.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_6.png}
+        \caption{Conteo en el valor "6". El avance numérico fluye de manera natural respetando el retardo programado de 0.5 segundos en el código principal, lo que comprueba que la bandera lógica \texttt{corriendo} opera de forma correcta al liberar la pausa del sistema.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+    El código demuestra en la práctica cómo funciona el arbitraje en el protocolo SPI con múltiples esclavos. A nivel de hardware, los tres módulos reciben continuamente la misma señal de reloj y los mismos trenes de datos. Sin embargo, las librerías bajan el voltaje a 0V únicamente en el pin CS del periférico al que va dirigida la instrucción en ese momento exacto. Esto hace que el módulo seleccionado lea la información mientras los otros dos la ignoran por completo, permitiendo actualizar las tres pantallas casi al instante y sin mezclar los datos.
+
+    Al entrar en el bloque \texttt{if corriendo:}, el contador aumenta su valor. La matriz recibe el dato convertido a texto directo, el display de 8 dígitos lo recibe con formato de espaciado (\texttt{"\{:8d\}"}), y el TFT lo posiciona gráficamente. Un punto técnico destacable es la optimización gráfica en la pantalla a color: en lugar de usar \texttt{tft.fill()} para limpiar toda la pantalla en cada número —lo cual causaría un parpadeo constante y lento—, el programa imprime el número actual en color \texttt{CYAN}, espera un momento y luego reescribe exactamente el mismo número pero en color \texttt{BLACK}. 
+    Esto actúa como una goma de borrar localizada, dejando el espacio listo para el siguiente dígito y asegurando que la cuenta avance de manera rápida y fluida en los tres dispositivos a la vez.
 
 
     \newpage
@@ -735,12 +957,15 @@
 
         \item \textbf{Flores Colin Victor Jaziel:} 
         
-        \item \textbf{Lara Hernandez Angel Husiel:} 
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré integrar de forma más clara el uso del bus SPI como medio de comunicación síncrona para controlar distintos dispositivos con un mismo microcontrolador. Al trabajar con el display de 8 dígitos, la matriz MAX7219 y la pantalla TFT ST7735 entendí mejor cómo se comparten las líneas de reloj y datos, pero se mantiene el control independiente de cada periférico mediante su pin de selección de chip, lo cual hace posible que varios módulos funcionen sin interferirse entre sí.
+
+        También me quedó más claro que las librerías dedicadas simplifican mucho la programación, porque permiten inicializar la pantalla, corregir el orden de color, orientar la imagen y escribir texto con solo unas cuantas instrucciones. 
+    
     \end{itemize}
 
     \newpage
 
-    % Impresión Referencias
-    \nocite{*}
+
+    \nocite{*} 
     \printbibliography[heading=bibintoc, title={Referencias}]
 \end{document}
