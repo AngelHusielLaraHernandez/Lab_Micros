@@ -325,14 +325,209 @@
 
     \subsection*{Propuesta de solución}
 
+    Para implementar el comportamiento que se encuentra descrito en la tabla, es necesario realizar la importación de las librerías que se van a usar durante la ejecución del programa, para este caso se importan las librerías \texttt{Pin} y \texttt{SPI} de la biblioteca \texttt{machine}, \texttt{SPI} es el protocolo de comunicación que se va a usar para controlar el display, y \texttt{Pin} es la clase que se va a usar para configurar los pines de control. Una librería importante es la librería \texttt{max7219\_8digit}, esta es la librería que se va a usar para controlar el display, esta librería se encarga de manejar la comunicación SPI con el display y de renderizar los números en los dígitos. Por último, se importa la función \texttt{sleep} de la biblioteca \texttt{time}, esta función se va a usar para crear los retardos necesarios entre cada actualización del display.
+
+    Una vez que se importaron las bibliotecas necesarias es importante configurar el protocolo de comunicación SPI, para esto se crea una instancia de la clase \texttt{SPI} asignandole el baurate, los pines de control y el modo de comunicación. En este caso se configura el SPI0 con un baurate de 1 MHz, los pines de control son GP2 para SCK, GP3 para MOSI. Posteriormente es necesario obtener el \texttt{SS} (Slave Select) del display, para esto se crea una instancia de la clase \texttt{Pin} asignandole el número del pin que se va a usar como \texttt{SS}, en este caso se usa el pin GP5. Con el SPI configurado y el pin de \texttt{SS} asignado, es posible crear una instancia de la clase \texttt{max7219\_8digit.Display} pasándole como parámetros el objeto SPI, el pin de \texttt{SS} a partir de este objeto se puede controlar el display de una manera sencilla usando los métodos que proporciona la librería.
+    
+    Como se tiene la entrada de dos datos, se configuran 2 botones, uno para cada tipo de conteo, para esto se crean dos instancias de la clase \texttt{Pin} asignandole el número del pin que se va a usar como entrada, en este caso se usan los pines \texttt{GP12} y \texttt{GP13}. Asi mismo se crean dos variables auxiliares, una para llevar el conteo y otro a manea de bandera para saber si es un incremento ascendente, descendente o si el conteo se encuentra detenido. 
+
+    El programa principal se encuentra dentro de un bucle \texttt{while True}, dentro de este bucle se evalúan las entradas de los botones, si el botón de incremento ascendente se encuentra presionado, se asigna el valor de la bandera a \texttt{1}, si el botón de incremento descendente se encuentra presionado, se asigna el valor de la bandera a \texttt{-1}, si ninguno de los botones se encuentra presionado, se asigna el valor de la bandera a \texttt{0}. Posteriormente se evalúa el valor de la bandera, si es igual a \texttt{1}, se incrementa el conteo en \texttt{1}, si es igual a \texttt{-1}, se decrementa el conteo en \texttt{1}. Ya con el valor de la variable \texttt{contador} se procede a realizar el formateo del número para su correcta visualización, donde por medio de \texttt{"{:8d}".format(contador)} se formatea el número para que ocupe 8 dígitos, y se rellene con espacios en caso de que el número tenga menos de 8 dígitos, esta cadena formateada se le pasa al display por medio del método \texttt{write\_to\_buffer} y finalmente se muestra en el display con el método \texttt{.display()}
+
+    Por último, se crea un retardo de 0.5 segundos con la función \texttt{sleep(0.5)} para que el conteo se actualice cada medio segundo, y así cumplir con el requisito de la tabla.
+
+    \newpage
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+        scale=0.8, transform shape,
+        node distance=8mm and 12mm,
+        every node/.style={font=\small\sffamily},
+        % Definición de estilos
+        startstop/.style={rectangle, rounded corners, draw=black, fill=red!20, minimum width=3cm, minimum height=1cm, text centered},
+        process/.style={rectangle, draw=black, fill=blue!10, minimum width=3cm, minimum height=1cm, text centered, align=center},
+        decision/.style={diamond, aspect=2, draw=black, fill=green!20, minimum width=3.5cm, minimum height=1cm, text centered, align=center, inner sep=0pt},
+        arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % --- Nodos Principales ---
+            \node (inicio) [startstop] {Inicio};
+            \node (setup) [process, below=of inicio, text width=5.5cm] {Configurar \texttt{SPI(0)} y \texttt{MAX7219}\\ Pines 12 y 13 como entradas};
+            \node (vars) [process, below=of setup, text width=5cm] {Inicializar variables:\\ \texttt{contador = 0}\\ \texttt{direccion = 0}};
+
+            % Coordenada de retorno para el bucle While True
+            \path (vars) -- ++(0,-1.5) coordinate (loop_start);
+
+            % Bloque: Lectura de Botones
+            \node (asc) [decision, below=12mm of vars, text width=3.2cm] {¿\texttt{btn\_asc}\\ \texttt{== 0}?};
+            \node (set1) [process, right=of asc, text width=3cm] {\texttt{direccion = 1}};
+
+            \node (desc) [decision, below=of asc, text width=3.2cm] {¿\texttt{btn\_desc}\\ \texttt{== 0}?};
+            \node (setm1) [process, right=of desc, text width=3cm] {\texttt{direccion = -1}};
+
+            % Bloque: Incremento/Decremento
+            \node (dir1) [decision, below=of desc, text width=3.2cm] {¿\texttt{direccion}\\ \texttt{== 1}?};
+            \node (inc) [process, right=of dir1, text width=3cm] {\texttt{contador += 1}};
+
+            \node (dirm1) [decision, below=of dir1, text width=3.2cm] {¿\texttt{direccion}\\ \texttt{== -1}?};
+            \node (dec) [process, right=of dirm1, text width=3cm] {\texttt{contador -= 1}};
+
+            % Bloque: Display
+            \node (disp) [process, below=of dirm1, text width=5.5cm] {Formatear a 8 caracteres:\\ \texttt{"\{:8d\}".format(contador)}\\ Actualizar display};
+
+            % Bloque: Retardos
+            \node (sleep) [decision, below=of disp, text width=3.5cm] {¿\texttt{direccion}\\ \texttt{!= 0}?};
+            \node (s05) [process, right=of sleep, text width=3cm] {\texttt{sleep(0.5)}};
+            \node (s01) [process, below=of sleep, text width=3cm] {\texttt{sleep(0.1)}};
+
+            % --- Conexiones Principales (Columna Central) ---
+            \draw [arrow] (inicio) -- (setup);
+            \draw [arrow] (setup) -- (vars);
+            \draw (vars) -- (loop_start);
+            \draw [arrow] (loop_start) -- (asc);
+
+            % --- Cableado Lógico: Botones ---
+            \draw [arrow] (asc.east) -- node[above, font=\scriptsize]{Sí} (set1.west);
+            \draw [arrow] (asc.south) -- node[right, font=\scriptsize]{No} (desc.north);
+            \draw [arrow] (desc.east) -- node[above, font=\scriptsize]{Sí} (setm1.west);
+
+            % Bus de retorno derecho para botones (salta el elif si el if se cumple)
+            \coordinate[above=4mm of dir1] (pre_dir1);
+            \draw (desc.south) -- (pre_dir1);
+            \draw [arrow] (pre_dir1) -- (dir1.north);
+            \draw [arrow] (set1.east) -- ++(0.5,0) |- (pre_dir1);
+            \draw [arrow] (setm1.east) -- ++(0.5,0) |- (pre_dir1);
+
+            % --- Cableado Lógico: Dirección (Contador) ---
+            \draw [arrow] (dir1.east) -- node[above, font=\scriptsize]{Sí} (inc.west);
+            \draw [arrow] (dir1.south) -- node[right, font=\scriptsize]{No} (dirm1.north);
+            \draw [arrow] (dirm1.east) -- node[above, font=\scriptsize]{Sí} (dec.west);
+
+            % Bus de retorno derecho para el contador
+            \coordinate[above=4mm of disp] (pre_disp);
+            \draw (dirm1.south) -- (pre_disp);
+            \draw [arrow] (pre_disp) -- (disp.north);
+            \draw [arrow] (inc.east) -- ++(0.5,0) |- (pre_disp);
+            \draw [arrow] (dec.east) -- ++(0.5,0) |- (pre_disp);
+
+            % --- Cableado Lógico: Actualización y Retardos ---
+            \draw [arrow] (disp.south) -- (sleep.north);
+            \draw [arrow] (sleep.east) -- node[above, font=\scriptsize]{Sí} (s05.west);
+            \draw [arrow] (sleep.south) -- node[right, font=\scriptsize]{No} (s01.north);
+
+            % --- Ciclo Infinito (While True) ---
+            % Punto de unión inferior
+            \coordinate[below=6mm of s01] (bot);
+            \draw (s01.south) -- (bot);
+            \draw (s05.south) |- (bot);
+            
+            % Retorno hacia arriba (usando la librería calc para offset a la izquierda)
+            \coordinate (ret_left) at ($(bot) + (-4.5, 0)$);
+            \draw [arrow] (bot) -- (ret_left) |- (loop_start);
+        \end{tikzpicture}
+        \centering
+    \end{figure}
 
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
+    \begin{figure}[htbp]
+        \centering
+        % --- FILA 1 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.6\linewidth, angle=90]{img/Actividad2/Act2_1.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{138}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_3.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{139}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 2 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_4.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{140}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_5.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{141}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 3 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_6.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{142}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_7.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{143}}
+        \end{subfigure}
+        \caption{Actividad 2 - Contador Ascendente.}
+    \end{figure}
+
+
+    \begin{figure}[htbp]
+        \centering
+        % --- FILA 1 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.6\linewidth, angle=90]{img/Actividad2/Act2_8.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-26}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_9.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-27}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 2 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_10.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-28}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_11.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-29}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 3 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_12.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-30}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_13.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-31}}
+        \end{subfigure}
+        \caption{Actividad 2 - Contador Descendente.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
+    A partir de las imágenes obtenidas durante la ejecución del programa, se puede observar que el contador ascendente inicia en \texttt{138} y va incrementando de uno en uno cada medio segundo, hasta llegar a \texttt{143} de forma que el incremento se realiza de manera correcta y su visualización en el display es la esperada. De igual forma, el contador descendente inicia en \texttt{-26} y va decrementando de uno en uno cada medio segundo, hasta llegar a \texttt{-31} de forma que el decremento se realiza de manera correcta y su visualización en el display es la esperada. Por lo que la comunicación SPI con el display se encuentra funcionando correctamente, y el programa cumple con los requisitos establecidos en la tabla de la actividad. 
 
     \newpage
     \section*{Actividad 3}
@@ -657,11 +852,65 @@
 
     \subsection*{Propuesta de solución}
 
+    Dado que se va a trabajar con una pantalla TFT, es necesario importar la biblioteca \texttt{ST7735} para controlar el display. De igual modo se hace uso de la biblioteca \texttt{machine} especificamente para los módulos \texttt{SPI} y \texttt{Pin} para configurar la comunicación SPI y los pines de control. Se define el bus SPI con una frecuencia de 20 MHz, asignando los pines correspondientes para SCK, MOSI y MISO.
+
+    El paso siguiente es realizar la configuración del display donde se debe crear un objeto de la clase \texttt{TFT} con los parámetros de pin de Datos/Comando, reset, y el CS. Luego se inicializa el display con \texttt{tft.initg()}, se corrige el orden de color con \texttt{tft.rgb(True)}, se fija la orientación con \texttt{tft.rotation(1)} para usar la pantalla en modo horizontal, ya con la pantalla configurada se pinta un fondo negro con \texttt{tft.fill(TFT.BLACK)} para asegurar un buen contraste.
+
+    Ya con la pantalla y el fondo de color de la misma se procede a realizar la escritura del nombre de los integrantes del equipo, debido a la longitud del tamaño de los nombres, se opto por usar abreviaturas o pseudónimos. Para colocar texto en pantalla se hace uso del método \texttt{tft.text(Coord, Nombre, Color, TipoLetra, Tamaño, AjusteLinea)}. De forma que usando este comando se colocaron los nombres del equipo, donde para que el texto no se amontonara o se viera de un mismo color los argumentos que se cambiaron por cada nombre es \texttt{Coord} donde la coordenada en Y se incremento de 20 en 20, el nombre con el texto correspondiente, el color, y el tamaño de fuente solo se modifico cuando se coloco el texto correspondiente al número de equipo para que destacara.
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            scale=1.0, transform shape,
+            node distance=8mm and 12mm,
+            every node/.style={font=\small\sffamily},
+            % Definición de estilos de nodos
+            startstop/.style={rectangle, rounded corners, draw=black, fill=red!20, minimum width=3cm, minimum height=1cm, text centered},
+            process/.style={rectangle, draw=black, fill=orange!20, minimum width=3cm, minimum height=1cm, text centered, align=center},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % --- Declaración de Nodos ---
+            \node (inicio) [startstop] {Inicio};
+            
+            \node (spi) [process, below=of inicio, text width=5.5cm] {Configurar bus \texttt{SPI(0)}\\ Pines SCK=2, MOSI=3, MISO=4};
+            
+            \node (tft) [process, below=of spi, text width=6cm] {Inicializar display \texttt{TFT} (CS = Pin 7)\\ Activar RGB y modo apaisado};
+            
+            \node (fondo) [process, below=of tft, text width=4.5cm] {Limpiar la pantalla:\\ \texttt{tft.fill(TFT.BLACK)}};
+            
+            \node (nombres) [process, below=of fondo, text width=6cm] {Escribir lista de nombres:\\ \texttt{"Perci", "Tenshi", "Victor", "Fofo"}\\ (Con diferentes colores y eje Y)};
+            
+            \node (titulo) [process, below=of nombres, text width=5.5cm] {Escribir título:\\ \texttt{"Equipo 6"} en (5, 100)\\ Tamaño de fuente: Escala 2};
+            
+            \node (fin) [startstop, below=of titulo] {Fin};
+
+            % --- Conexiones Lineales ---
+            \draw [arrow] (inicio) -- (spi);
+            \draw [arrow] (spi) -- (tft);
+            \draw [arrow] (tft) -- (fondo);
+            \draw [arrow] (fondo) -- (nombres);
+            \draw [arrow] (nombres) -- (titulo);
+            \draw [arrow] (titulo) -- (fin);
+
+        \end{tikzpicture}
+        \centering
+    \end{figure}
+
+
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6,basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=-90]{img/Actividad6/Act6_1.png}
+        \caption{Actividad 6:Despliegue gráfico en el panel TFT ST7735, mostrando los nombres de cada integrante del equipo}
+    \end{figure}
+
     \subsection*{Análisis de resultados}
+
+    A partir de la imagen obtendida se puede observar que el programa logra desplegar los nombres de cada integrante del equipo, usando diferentes colores para cada nombre y un título con un tamaño de fuente más grande para destacar el número de equipo. A demás los textos se encuentran bien distribuidos en la pantalla, evitando que se amontonen y asegurando una buena legibilidad. Por lo que para mostrar texto en el display TFT se hizo uso del método \texttt{tft.text()} que permite colocar texto en coordenadas específicas, con un color y tamaño de fuente determinado, lo que facilita la personalización del despliegue gráfico así como personalizar el formato de presentación de la información. Ya que se podrían importar fuentes tipográficas adicionales para usar en el display, o incluso crear gráficos personalizados para acompañar el texto, aprovechando la capacidad de color y resolución del panel TFT.
 
     \newpage
     \section*{Actividad 7}
@@ -953,7 +1202,10 @@
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:}
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la resolución de las actividades propuestas en esta práctica, logré tener una mejor comprensión del funcionamiento y aplicación del protocolo de comunicación SPI, ya que a partir de este protocolo se pueden controlar múltiples dispositivos, especificamente en está practica el control de diferentes displays, como el display de 8 dígitos, la matriz de LEDs y la pantalla TFT. Al implementar el código para controlar estos dispositivos, pude compredner los valores de configuración necesarios para establecer la comunicación, como la frecuencia de reloj y la asignación de pines para SCK, MOSI y MISO. Además, al trabajar con el bus SPI compartido, entendí cómo se pueden gestionar múltiples periféricos utilizando líneas de control independientes (CS) para cada dispositivo, lo que permite una comunicación eficiente sin interferencias entre ellos.
+        
+        Por otro lado también logré comprender la importancia de las librerías específicas para cada dispositivo, ya que estas simplifican significativamente el proceso de programación al proporcionar funciones predefinidas para inicializar los displays, configurar sus parámetros y mostrar información de manera sencilla, de forma que el usar MicroPython y las librerías adecuadas proporcionan un buen flujo de trabajo a la hora de implementar soluciones con la Raspberry Pi Pico y hardware adicional.
+        
 
         \item \textbf{Flores Colin Victor Jaziel:} 
         
