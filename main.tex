@@ -229,79 +229,147 @@
     componentes por medio de la comunicación serie síncrona en la modalidad SPI, estudiar librerías para
     controlar pantallas SPI.
 
-    \section*{Actividad 1}
+\section*{Actividad 1}
 
-    \begin{tikzpicture}
+\begin{tikzpicture}
 
-       
-        \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
-            Escribir el siguiente programa, cerciorarse que el módulo Display de MAX7219 de 8 dígitos, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería utilizada; comentar el código.
-        };
+    % Texto de la Actividad 1
+    \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
+        Escribir el siguiente programa, cerciorarse que el módulo Display de MAX7219 de 8 dígitos, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería utilizada; comentar el código.
+    };
 
-        % Llamada a la Raspberry Pi Pico
-        \picoboard
+    % Llamada a la Raspberry Pi Pico
+    \picoboard
 
-        % ==========================================
-        % DISPLAY MAX7219 Y CONEXIONES (CORREGIDO)
-        % ==========================================
+    % ==========================================
+    % DISPLAY MAX7219 Y CONEXIONES
+    % ==========================================
 
-        % Título del Display
-        \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.8, -0.9) {Display 8 dígitos};
+    % Título del Display
+    \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.8, -0.9) {Display 8 dígitos};
 
-        % Contorno del Display (Más ancho para que los textos no toquen los cuadros)
-        \draw[thick] (-10, -1.0) rectangle (-2.0, -3.5);
+    % Contorno del Display
+    \draw[thick] (-10, -1.0) rectangle (-2.0, -3.5);
 
-        % Los 8 dígitos (rectángulos interiores)
-        \foreach \i in {0,...,7} {
-            \draw[thick] (-9.8 + \i*0.85, -1.3) rectangle ++(0.65, -1.9);
-        }
+    % Los 8 dígitos (rectángulos interiores)
+    \foreach \i in {0,...,7} {
+        \draw[thick] (-9.8 + \i*0.85, -1.3) rectangle ++(0.65, -1.9);
+    }
 
-        % Etiquetas de los pines (Ubicadas limpiamente en el margen derecho)
-        \node[below, font=\small\sffamily\bfseries] at (-2.6, -1.0) {VCC};
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {SCK};
-        \node[left, font=\small\sffamily\bfseries] at (-2.0, -2.25) {MOSI};
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {$\overline{SS}$};
+    % Etiquetas de los pines
+    \node[below, font=\small\sffamily\bfseries] at (-2.6, -1.0) {VCC};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {SCK};
+    \node[left, font=\small\sffamily\bfseries] at (-2.0, -2.25) {MOSI};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {$\overline{SS}$};
 
-        % --- CONEXIONES A LA PICO ---
-        % Los cables inician exactamente en el borde derecho del rectángulo (x = -2.0)
-        
-        % Conexión SCK (Azul) a GP2 (P4)
-        \draw[blue, thick] (-2.0, -1.8) -- (P4);
-        
-        % Conexión MOSI (Verde) a GP3 (P5)
-        \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
-        
-        % Conexión SS (Roja) a GP5 (P7)
-        \draw[red, thick] (-2.0, -3.15) -- (P7);
+    % --- CONEXIONES A LA PICO ---
+    
+    % Conexión SCK (Azul) a GP2
+    \draw[blue, thick] (-2.0, -1.8) -- (P4);
+    
+    % Conexión MOSI (Verde) a GP3
+    \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
+    
+    % Conexión SS (Roja) a GP5
+    \draw[red, thick] (-2.0, -3.15) -- (P7);
 
-        % --- CONEXIONES DE ENERGÍA ---
+    % --- CONEXIONES DE ENERGÍA ---
 
-        % Conexión VCC (5V y VBUS flotante)
-        % El cable inicia sobre el pin VCC y sube, sin tachar la letra
-        \draw[red, thick] (-2.6, -1.0) -- (-2.6, -0.3) -- (-2.0, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
-        \node[above, font=\small\sffamily\bfseries] at (-2.6, -0.3) {5V};
+    % Conexión VCC (5V y VBUS)
+    \draw[red, thick] (-2.6, -1.0) -- (-2.6, -0.3) -- (-2.0, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
+    \node[above, font=\small\sffamily\bfseries] at (-2.6, -0.3) {5V};
 
-        % Conexión GND (Tierra flotante hacia abajo)
-        \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
-        
-        % Símbolo de Tierra (GND)
-        \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
-        \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
-        \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
-        \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
+    % Conexión GND
+    \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
+    
+    % Símbolo de Tierra (GND)
+    \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
+    \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
+    \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
+    \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
 
-    \end{tikzpicture}
-    \subsection*{Propuesta de solución}
+\end{tikzpicture}
 
-    \subsection*{Desarrollo}
+\newpage
+\textbf{Código}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 1 - Display MAX7219 de 8 dígitos}, basicstyle=\ttfamily\scriptsize]{Code/Act1b.py}
 
+\subsection*{Propuesta de solución}
 
+ El siguiente código que nos fue proporcionado configura un display de 7 segmentos controlado por un chip MAX7219 usando comunicación SPI en un microcontrolador (como Raspberry Pi Pico). Inicializa el bus SPI0 con los pines GPIO2 (reloj) y GPIO3 (datos), y usa el pin GPIO5 como selección de chip (CS). Finalmente, escribe y muestra el texto "01234567" en el display durante 1 segundo.
 
-    \subsection*{Análisis de resultados}
+\begin{center}
+\begin{tikzpicture}[
+    node distance=6mm and 12mm,
+    every node/.style={font=\footnotesize\sffamily}
+]
+    \node (inicio) [startstop] {Inicio};
+    \node (import) [process, below=of inicio, text width=5.5cm, align=center] {Importar librerías:\\ \texttt{Pin, SPI, max7219\_8digit, time}};
+    \node (spi) [process, below=of import, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ con SCK=GP2, MOSI=GP3\\ frecuencia=10 MHz, polarity=1, phase=0};
+    \node (cs) [process, below=of spi, text width=5.5cm, align=center] {Configurar \texttt{SS=GP5}\\ como salida digital};
+    \node (display) [process, below=of cs, text width=5.5cm, align=center] {Crear objeto \texttt{display}\\ de la clase \texttt{Display}};
+    \node (buffer) [process, below=of display, text width=5.5cm, align=center] {Escribir \texttt{"01234567"}\\ en el buffer con \texttt{write\_to\_buffer}};
+    \node (show) [process, below=of buffer, text width=5.5cm, align=center] {Mostrar en hardware\\ con \texttt{display.display()}};
+    \node (sleep) [process, below=of show, text width=5.5cm, align=center] {Esperar 1 segundo\\ con \texttt{time.sleep(1)}};
+    \node (fin) [startstop, below=of sleep] {Fin};
 
-    \newpage
+    \draw [arrow] (inicio) -- (import);
+    \draw [arrow] (import) -- (spi);
+    \draw [arrow] (spi) -- (cs);
+    \draw [arrow] (cs) -- (display);
+    \draw [arrow] (display) -- (buffer);
+    \draw [arrow] (buffer) -- (show);
+    \draw [arrow] (show) -- (sleep);
+    \draw [arrow] (sleep) -- (fin);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Investigación: Librería \texttt{max7219\_8digit}}
+
+La librería \texttt{max7219\_8digit} es un controlador escrito en MicroPython diseñado específicamente para manejar módulos de display de 7 segmentos de 8 dígitos que utilizan el chip MAX7219. Su propósito es simplificar la comunicación, ocultando la complejidad del envío de tramas de datos de 16 bits que el chip requiere para funcionar.
+
+\textbf{Principales características y funciones:}
+
+\begin{itemize}
+    \item \textbf{Inicialización sencilla:} Para crear un objeto display, solo se necesita pasarle el objeto de la conexión SPI y el pin \texttt{CS} (Chip Select). Opcionalmente, se puede ajustar el brillo (\texttt{intensity}) y el número de dígitos (\texttt{scan\_limit}).
+    
+    \item \textbf{Método \texttt{write\_to\_buffer}:} Esta función es clave. No envía los datos directamente al display, sino que los escribe en un buffer o memoria intermedia interna de la librería. Esto permite preparar la cadena de texto sin actualizar la pantalla constantemente.
+    
+    \item \textbf{Método \texttt{display}:} Una vez que el buffer está listo con la información deseada, se llama a esta función para volcar todo el contenido del buffer al hardware del display, haciendo que los números se enciendan físicamente.
+    
+    \item \textbf{Otras funciones útiles:} La librería incluye métodos como \texttt{write\_digits} para enviar números directamente, \texttt{write\_digits\_from\_list} para mayor velocidad y \texttt{set\_intensity} para cambiar el brillo dinámicamente.
+\end{itemize}
+
+En resumen, esta librería actúa como un puente entre las instrucciones de alto nivel en MicroPython y el protocolo de bajo nivel que entiende el MAX7219, permitiendo un control eficiente y limpio del display.
+
+\subsection*{Desarrollo}
+
+\textbf{Código comentado}
+
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 1 - Display MAX7219 de 8 dígitos}, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, angle=0]{img/Actividad1/Act1_1.jpg}
+        \caption{Prueba de correcto funcionamiento de codigo de Actividad1.}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, angle=0]{img/Actividad1/Act1_2.jpg}
+        \caption{Visualización de la cadena "01234567" en el display.}
+    \end{minipage}
+\end{figure}
+
+\subsection*{Análisis de resultados}
+
+La ejecución del código logró su objetivo principal: mostrar la cadena "01234567" en el display de 8 dígitos. La configuración del bus SPI con una frecuencia de 10 MHz y los parámetros de polaridad y fase correctos (\texttt{polarity=1, phase=0}) fue adecuada para la comunicación con el MAX7219, ya que este protocolo exige que los datos se muestreen en el flanco de subida del reloj y el uso de la librería \texttt{max7219\_8digit} nos facilitó la programación, permitiendo controlar el hardware con solo dos instrucciones (\texttt{write\_to\_buffer} y \texttt{display}). 
+
+\newpage
+
 
     \section*{Actividad 2}
 
@@ -532,76 +600,142 @@
     \newpage
     \section*{Actividad 3}
 
-    \begin{tikzpicture}
+\begin{tikzpicture}
 
-        % Texto de la Actividad 3
-        \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
-            Escribir el siguiente programa, cerciorarse que el módulo Matriz MAX7219 de 4 elementos matriciales de 8x8, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería max7219.py; comentar el código.
-        };
+    % Texto de la Actividad 3
+    \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
+        Escribir el siguiente programa, cerciorarse que el módulo Matriz MAX7219 de 4 elementos matriciales de 8x8, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería max7219.py; comentar el código.
+    };
 
-        % Llamada a la Raspberry Pi Pico
-        \picoboard
+    % Llamada a la Raspberry Pi Pico
+    \picoboard
 
-        % ==========================================
-        % MÓDULO MATRIZ 8x8x4 Y CONEXIONES (CORREGIDO)
-        % ==========================================
+    % ==========================================
+    % MÓDULO MATRIZ 8x8x4 Y CONEXIONES
+    % ==========================================
 
-        % Título de la Matriz
-        \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.3, -0.9) {Matriz 8x8 x 4};
+    % Título de la Matriz
+    \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.3, -0.9) {Matriz 8x8 x 4};
 
-        % Contorno del Módulo (Abarca de -9.5 a -2.0)
-        \draw[thick] (-9.5, -1.0) rectangle (-2.0, -3.5);
+    % Contorno del Módulo
+    \draw[thick] (-9.5, -1.0) rectangle (-2.0, -3.5);
 
-        % Las 4 matrices de 8x8 (Recorridas hacia la izquierda para dejar espacio al texto)
-        \foreach \i in {0,...,3} {
-            \draw[thick] (-9.2 + \i*1.4, -1.3) rectangle ++(1.2, -1.9);
-        }
+    % Las 4 matrices de 8x8
+    \foreach \i in {0,...,3} {
+        \draw[thick] (-9.2 + \i*1.4, -1.3) rectangle ++(1.2, -1.9);
+    }
 
-        % Etiquetas de los pines (Alineadas a la izquierda para que no toquen el borde ni los cables)
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.35) {VCC};
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {CLK};
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -2.25) {MOSI};
-        \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {CS};
+    % Etiquetas de los pines
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.35) {VCC};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {CLK};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -2.25) {MOSI};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {CS};
 
-        % --- CONEXIONES A LA PICO ---
-        
-        % Conexión CLK (Azul) a GP2 (Inicia justo en el borde en x=-2.0)
-        \draw[blue, thick] (-2.0, -1.8) -- (P4);
-        
-        % Conexión MOSI (Verde) a GP3
-        \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
-        
-        % Conexión CS (Roja) a GP5
-        \draw[red, thick] (-2.0, -3.15) -- (P7);
+    % --- CONEXIONES A LA PICO ---
+    
+    % Conexión CLK (Azul) a GP2
+    \draw[blue, thick] (-2.0, -1.8) -- (P4);
+    
+    % Conexión MOSI (Verde) a GP3
+    \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
+    
+    % Conexión CS (Roja) a GP6
+    \draw[red, thick] (-2.0, -3.15) -- (P9);
 
-        % --- CONEXIONES DE ENERGÍA ---
+    % --- CONEXIONES DE ENERGÍA ---
 
-        % Conexión VCC y VBUS (El cable sube limpiamente desde arriba de la letra VCC)
-        \draw[red, thick] (-2.5, -1.0) -- (-2.5, -0.3) -- (-1.8, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
-        \node[above, font=\small\sffamily\bfseries] at (-2.5, -0.3) {5V};
+    % Conexión VCC y VBUS
+    \draw[red, thick] (-2.5, -1.0) -- (-2.5, -0.3) -- (-1.8, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
+    \node[above, font=\small\sffamily\bfseries] at (-2.5, -0.3) {5V};
 
-        % Conexión GND
-        \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
-        
-        % Símbolo de Tierra (GND)
-        \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
-        \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
-        \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
-        \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
+    % Conexión GND
+    \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
+    
+    % Símbolo de Tierra (GND)
+    \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
+    \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
+    \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
+    \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
 
-    \end{tikzpicture}
+\end{tikzpicture}
 
-    \subsection*{Propuesta de solución}
+\newpage
+\textbf{Código}
 
-    \subsection*{Desarrollo}
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 3 - Matriz MAX7219 de 4x8x8}, basicstyle=\ttfamily\scriptsize]{Code/Act3b.py}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+\subsection*{Propuesta de solución}
 
+El siguiente código configura una matriz de LEDs de 4 módulos de 8x8 píxeles controlada por el chip MAX7219 mediante comunicación SPI. Se inicializa el bus SPI0 con los pines GPIO2 (reloj) y GPIO3 (datos), y se utiliza el pin GPIO6 como selección de chip (CS). Se define la variable \texttt{num\_display = 4} para indicar la cantidad de módulos conectados en cascada. El programa limpia la pantalla, dibuja el carácter "0" en la coordenada (0,1) y lo muestra durante 3 segundos.
 
+\begin{center}
+\begin{tikzpicture}[
+    node distance=6mm and 12mm,
+    every node/.style={font=\footnotesize\sffamily}
+]
+    \node (inicio) [startstop] {Inicio};
+    \node (import) [process, below=of inicio, text width=5.5cm, align=center] {Importar librerías:\\ \texttt{max7219, Pin, SPI, sleep}};
+    \node (num) [process, below=of import, text width=5.5cm, align=center] {Definir \texttt{num\_display = 4}\\ (módulos en cascada)};
+    \node (spi) [process, below=of num, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ con SCK=GP2, MOSI=GP3\\ frecuencia=10 MHz};
+    \node (cs) [process, below=of spi, text width=5.5cm, align=center] {Configurar \texttt{CS=GP6}\\ como salida digital};
+    \node (matrix) [process, below=of cs, text width=5.5cm, align=center] {Crear objeto \texttt{display}\\ de la clase \texttt{Matrix8x8}};
+    \node (fill) [process, below=of matrix, text width=5.5cm, align=center] {Limpiar pantalla\\ con \texttt{display.fill(0)}};
+    \node (text) [process, below=of fill, text width=5.5cm, align=center] {Dibujar \texttt{'0'} en (0,1)\\ con \texttt{display.text()}};
+    \node (show) [process, below=of text, text width=5.5cm, align=center] {Actualizar pantalla\\ con \texttt{display.show()}};
+    \node (sleep) [process, below=of show, text width=5.5cm, align=center] {Esperar 3 segundos\\ con \texttt{sleep(3)}};
+    \node (fin) [startstop, below=of sleep] {Fin};
 
-    \subsection*{Análisis de resultados}
-  
-    \newpage
+    \draw [arrow] (inicio) -- (import);
+    \draw [arrow] (import) -- (num);
+    \draw [arrow] (num) -- (spi);
+    \draw [arrow] (spi) -- (cs);
+    \draw [arrow] (cs) -- (matrix);
+    \draw [arrow] (matrix) -- (fill);
+    \draw [arrow] (fill) -- (text);
+    \draw [arrow] (text) -- (show);
+    \draw [arrow] (show) -- (sleep);
+    \draw [arrow] (sleep) -- (fin);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Investigación: Librería \texttt{max7219.py}}
+
+La librería \texttt{max7219.py} es un controlador escrito en MicroPython diseñado específicamente para manejar módulos de matrices de LEDs de 8x8 píxeles basados en el chip MAX7219. Esta librería es fundamental cuando se trabaja con displays gráficos matriciales, a diferencia de la librería \texttt{max7219\_8digit} que se usa para displays de 7 segmentos.
+
+\textbf{Principales características y funciones:}
+
+\begin{itemize}
+    \item \textbf{Soporte para múltiples módulos en cascada:} El parámetro \texttt{num\_display} permite indicar cuántos módulos de 8x8 están conectados en serie, extendiendo el ancho total de la pantalla (por ejemplo, 4 módulos generan una resolución de 32x8 píxeles).
+    
+    \item \textbf{Método \texttt{fill(value)}:} Permite limpiar o llenar completamente la pantalla. Con \texttt{fill(0)} se apagan todos los LEDs, mientras que \texttt{fill(1)} los enciende todos.
+    
+    \item \textbf{Método \texttt{text(string, x, y, color)}:} Dibuja un carácter o cadena de texto en las coordenadas especificadas. El parámetro \texttt{color} puede ser 1 (LED encendido) o 0 (LED apagado). La librería incluye una matriz de píxeles para cada carácter de la fuente predeterminada.
+    
+    \item \textbf{Método \texttt{show()}:} Una vez que se han realizado todas las modificaciones en el buffer interno (con \texttt{fill}, \texttt{text}, \texttt{pixel}, etc.), esta función envía los datos al hardware para actualizar la pantalla físicamente.
+    
+    \item \textbf{Método \texttt{pixel(x, y, color)}:} Permite controlar un LED individual en la posición (x, y) de la matriz.
+\end{itemize}
+
+En resumen, esta librería abstrae la complejidad del protocolo de comunicación con el MAX7219 y proporciona una interfaz sencilla tipo framebuffer para dibujar texto y gráficos en matrices de LEDs.
+
+\subsection*{Desarrollo}
+
+\textbf{Código comentado}
+
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 3 - Matriz MAX7219 de 4x8x8}, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_1.png}
+        \caption{Visualización del carácter "0" en la posición (0,1).}
+\end{figure}
+
+\subsection*{Análisis de resultados}
+
+La ejecución del código logró mostrar correctamente el carácter "0" en la matriz de LEDs de 4 módulos 8x8. La configuración del bus SPI con una frecuencia de 10 MHz fue adecuada para la comunicación con el MAX7219, y el uso del pin GPIO6 como Chip Select permitió seleccionar correctamente el dispositivo. La librería \texttt{max7219.py} facilitó el control de la matriz, permitiendo limpiar la pantalla con \texttt{fill(0)} y dibujar texto con coordenadas específicas mediante \texttt{text()} y se verificó que la función \texttt{show()} es esencial para transferir los datos del buffer interno al hardware.
+
+\newpage 
+
     \section*{Actividad 4}
 
     Usando la matriz de leds SPI, desplegar los siguientes mensajes, usar intervalos de
@@ -1207,8 +1341,8 @@
         Por otro lado también logré comprender la importancia de las librerías específicas para cada dispositivo, ya que estas simplifican significativamente el proceso de programación al proporcionar funciones predefinidas para inicializar los displays, configurar sus parámetros y mostrar información de manera sencilla, de forma que el usar MicroPython y las librerías adecuadas proporcionan un buen flujo de trabajo a la hora de implementar soluciones con la Raspberry Pi Pico y hardware adicional.
         
 
-        \item \textbf{Flores Colin Victor Jaziel:} 
-        
+        \item \textbf{Flores Colin Victor Jaziel:} A lo largo de esta práctica número ocho he comprendido el funcionamiento del protocolo SPI como medio de comunicación síncrona para controlar múltiples dispositivos desde un solo microcontrolador y esto fue evidenciado al trabajar con diferentes módulos que fueron controlados a partir de la Raspberry. Al trabajar con el display de 8 dígitos, la matriz de LEDs MAX7219 y la pantalla TFT ST7735, pude observar cómo se comparten las líneas de reloj (SCK) y datos (MOSI), mientras que cada periférico se selecciona de manera independiente mediante su propio pin CS, evitando interferencias. También entendí la importancia de configurar correctamente parámetros como la frecuencia de reloj y la asignación de pines y finalmente, comprobé que el uso de librerías específicas como max7219\_8digit, max7219.py y ST7735 simplifica enormemente la programación, permitiendo inicializar, configurar y mostrar información en cada dispositivo con pocas instrucciones.
+
         \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré integrar de forma más clara el uso del bus SPI como medio de comunicación síncrona para controlar distintos dispositivos con un mismo microcontrolador. Al trabajar con el display de 8 dígitos, la matriz MAX7219 y la pantalla TFT ST7735 entendí mejor cómo se comparten las líneas de reloj y datos, pero se mantiene el control independiente de cada periférico mediante su pin de selección de chip, lo cual hace posible que varios módulos funcionen sin interferirse entre sí.
 
         También me quedó más claro que las librerías dedicadas simplifican mucho la programación, porque permiten inicializar la pantalla, corregir el orden de color, orientar la imagen y escribir texto con solo unas cuantas instrucciones. 
