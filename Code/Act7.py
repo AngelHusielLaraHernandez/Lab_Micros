@@ -1,51 +1,71 @@
-from machine import Pin, UART
+from machine import Pin, SPI
 import time
+import max7219_8digit
+import max7219
+from ST7735 import TFT
+from sysfont import sysfont
 
-uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+# --- 1. Entradas (Botones) ---
+#btn_inicia = Pin(12, Pin.IN, Pin.PULL_DOWN)  # Inicia / Reinicia
+#btn_detiene = Pin(13, Pin.IN, Pin.PULL_UP) # Detiene
 
-# --- Configuración Motores (Práctica 5) ---
-# Motor 1
-dir1_m1 = Pin(0, Pin.OUT)
-dir2_m1 = Pin(1, Pin.OUT)
-en_m1 = Pin(20, Pin.OUT)
+# --- 2. Bus SPI Compartido ---
+# Usamos una configuración equilibrada que toleren todos los módulos
+spi = SPI(0, baudrate=10000000, polarity=0, phase=0, sck=Pin(2), mosi=Pin(3))
 
-# Motor 2
-dir1_m2 = Pin(2, Pin.OUT)
-dir2_m2 = Pin(3, Pin.OUT)
-en_m2 = Pin(19, Pin.OUT)
+# --- 3. Inicialización Dispositivos (cada uno con su propio CS) ---
+# A) Display 8 Dígitos (CS = GP5)
+cs_8dig = Pin(5, Pin.OUT)
+disp_8dig = max7219_8digit.Display(spi, cs_8dig)
 
-def control_motor(motor, estado):
-    if motor == 1:
-        dir1, dir2, en = dir1_m1, dir2_m1, en_m1
-    else:
-        dir1, dir2, en = dir1_m2, dir2_m2, en_m2
-        
-    if estado == "PARO":
-        en.value(0); dir1.value(0); dir2.value(0)
-    elif estado == "HORARIO":
-        en.value(1); dir1.value(1); dir2.value(0)
-    elif estado == "ANTIHORARIO":
-        en.value(1); dir1.value(0); dir2.value(1)
+# B) Matriz 8x8 (CS = GP6)
+cs_matriz = Pin(6, Pin.OUT)
+matriz = max7219.Matrix8x8(spi, cs_matriz, 4)
 
-control_motor(1, "PARO")
-control_motor(2, "PARO")
+# C) Pantalla TFT (CS = GP7, A0 = GP15, RST = GP14)
+tft = TFT(spi, 15, 14, 7)
+tft.initg()
+tft.rgb(True)
+tft.rotation(1)
+tft.fill(TFT.BLACK)
+tft.text((10, 10), "CONTADOR:", TFT.YELLOW, sysfont, 2, nowrap=True)
 
+# Variables de control
+contador = 0
+corriendo = False
+
+btn_inicia=0
+btn_detiene=0
+# --- 4. Bucle Principal ---
 while True:
-    if uart.any() > 0:
-        cmd = uart.read(1).decode('utf-8').upper()
+    # Lógica de inicio / reinicio
+    if btn_inicia == 0:
+        corriendo = True
+        time.sleep(0.2) # Pequeño retardo antirrebote
         
-        if cmd == 'S': # PARO 
-            control_motor(1, "PARO")
-            control_motor(2, "PARO")
-        elif cmd == 'A': # ADELANTE (Ambos horario) 
-            control_motor(1, "HORARIO")
-            control_motor(2, "HORARIO")
-        elif cmd == 'R' or cmd == 'T': # REVERSA/ATRÁS (Ambos antihorario) 
-            control_motor(1, "ANTIHORARIO")
-            control_motor(2, "ANTIHORARIO")
-        elif cmd == 'D': # DERECHA 
-            control_motor(1, "HORARIO")
-            control_motor(2, "ANTIHORARIO")
-        elif cmd == 'I': # IZQUIERDA 
-            control_motor(1, "ANTIHORARIO")
-            control_motor(2, "HORARIO")
+    # Lógica de paro
+    if btn_detiene == 1:
+        corriendo = False
+        time.sleep(0.2) # Pequeño retardo antirrebote
+
+    # Si está en modo "corriendo", actualiza los 3 displays
+    if corriendo:
+        print(contador)
+        # 1. Manda al Display de 8 dígitos
+        disp_8dig.write_to_buffer("{:8d}".format(contador))
+        disp_8dig.display()
+        
+        # 2. Manda a la Matriz LED
+        matriz.fill(0)
+        matriz.text(str(contador), 0, 0, 1)
+        matriz.show()
+        
+        # 3. Manda al TFT a Color (imprime espacios en negro para "borrar" el número anterior)
+        tft.text((10, 40), str(contador), TFT.CYAN, sysfont, 3, nowrap=True)
+        time.sleep(0.5)
+        tft.text((10, 40), str(contador), TFT.BLACK, sysfont, 3, nowrap=True)
+        
+        contador += 1
+        time.sleep(0.5) # Velocidad del contador indicada en el manual
+    else:
+        time.sleep(0.1) # Reposo sin bloqueo

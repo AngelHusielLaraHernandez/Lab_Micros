@@ -1,22 +1,22 @@
-import select   # Importa la librería para monitorear eventos en flujos de datos  
-import sys      # Importa la librería para acceder a la entrada/salida estándar (consola)  
+from machine import Pin, SPI
+import max7219_8digit
 import time
-import machine
 
-# Crea un objeto 'poll' para verificar si hay datos listos para leerse  
-poll_obj = select.poll() 
-# Registra la entrada estándar (teclado/consola) para ser monitoreada  
-poll_obj.register(sys.stdin, 1)
+# Configura el bus SPI0. Frecuencia de 10MHz, polaridad 1 y fase 0 requeridas por el MAX7219.
+# SCK (Reloj) en GPIO2, MOSI (Datos de salida) en GPIO3.
+spi = SPI(0, baudrate=10000000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3))
 
-# Imprime un mensaje directo al flujo de salida (sin agregar salto de línea automático)  
-sys.stdout.write("Esperando recepción de datos \n")
-# Imprime usando la función estándar de Python  
-print("Teclea un carácter y luego <enter>")
+# Configura el pin GPIO5 como salida para el Chip Select (SS/CS)
+ss = Pin(5, Pin.OUT)
 
-while True:
-    # poll(0) verifica instantáneamente si se tecleó algo sin bloquear el código  
-    if poll_obj.poll(0): 
-        ch = sys.stdin.read(1) # Lee exactamente 1 carácter tecleado  
-        sys.stdout.write("Dato recibido \n")  
-        print("Hola UNAM")  
-    time.sleep(0.1) # Breve pausa para no saturar el procesador  
+# Crea el objeto del display vinculando el bus SPI y el pin de selección
+display = max7219_8digit.Display(spi, ss)
+
+# Escribe la cadena de texto en la memoria intermedia (buffer) del controlador
+display.write_to_buffer("01234567")
+
+# Ejecuta el comando para que lo que está en el buffer se muestre físicamente en los LEDs
+display.display()
+
+# Pequeña pausa al finalizar
+time.sleep(1)

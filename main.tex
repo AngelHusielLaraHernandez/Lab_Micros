@@ -22,6 +22,7 @@
 \usepackage{array}
 \usepackage{caption}
 \usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
 \usetikzlibrary{decorations.pathmorphing}
 \usepackage{circuitikz}
 \usetikzlibrary{shapes.geometric, shapes.multipart, shapes.symbols, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
@@ -40,6 +41,17 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+
+% Colores para la Tabla 8-3 (Azul)
+\definecolor{hdrblue}{RGB}{68, 114, 196}
+\definecolor{row1blue}{RGB}{180, 198, 231}
+\definecolor{row2blue}{RGB}{217, 225, 242}
+
+% Colores para la Tabla 8-2 (Amarillo/Oro)
+\definecolor{hdryellow}{RGB}{255, 192, 0}
+\definecolor{row1yellow}{RGB}{255, 242, 204}
+\definecolor{row2yellow}{RGB}{255, 249, 227}
 
 % Definición de los colores utilizados en las tablas
 \definecolor{headerbg}{HTML}{5B84C4} % Azul oscuro para el encabezado principal
@@ -191,7 +203,7 @@
 \renewcommand{\footrulewidth}{0pt}  
 
 % --- BIBLIOGRAFÍA ---
-\usepackage[backend=biber, style=apa, sortcites, url=true]{biblatex}
+\usepackage[backend=biber, style=numeric, sorting=none, url=true]{biblatex}
 \addbibresource{referencias.bib}
 
 % --- HIPERVÍNCULOS ---
@@ -213,929 +225,1133 @@
 
     \section{Objetivo:}
     
-    Aprender el funcionamiento de la comunicación serial en la modalidad asíncrona para la
-    transferencia de información entre diferentes dispositivos por medios alámbricos e inalámbricos.
+    Aprender el funcionamiento de la comunicación SPI; realizar comunicación entre diferentes
+    componentes por medio de la comunicación serie síncrona en la modalidad SPI, estudiar librerías para
+    controlar pantallas SPI.
 
-    \section*{Actividad 1}
-    Escribir el siguiente programa:
-    \lstinputlisting[language={[LAB]Python}, caption=Código de ejemplo; actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1Normal.py}
-    \begin{enumerate}
-        \item Comentar el código.
-        \item Indicar que hace: 
-        El programa implementa un sistema de lectura de datos a través del puerto serie de manera asíncrona o no bloqueante. Inicialmente, configura un objeto de sondeo (\textit{polling}) para monitorear el flujo de entrada estándar (\texttt{sys.stdin}). Durante su ciclo de ejecución infinito, el microcontrolador verifica continuamente si el usuario ha tecleado un dato en la consola sin detener el hilo principal de procesamiento. En el momento en que detecta información en el búfer de entrada, extrae exactamente un carácter y responde enviando cadenas de texto predefinidas ("Dato recibido" y "Hola UNAM") hacia el monitor serial, finalizando la iteración con un retardo de 100 milisegundos para no saturar los recursos de la CPU.
-        
-        \item Ejecutar
-        \item Ingresar datos desde la consola de Thonny.
-        \item Explicar la diferencia entre:
-        \begin{itemize}
-            \item \textbf{\texttt{sys.stdout.write()}:} Es una función de bajo nivel que interactúa directamente con el flujo de salida estándar del sistema  . Escribe la cadena de texto de forma estricta, sin agregar ningún formato adicional. Por esta razón, el programador debe incluir explícitamente el salto de línea (\texttt{$\backslash$n}) al final de la cadena si desea pasar al siguiente renglón.
-            \item \textbf{\texttt{print()}:} Es una función de alto nivel en Python que internamente utiliza \texttt{sys.stdout.write()}, pero funciona como una envoltura (\textit{wrapper}) que procesa los datos  . Automáticamente inserta espacios entre múltiples argumentos y, por defecto, agrega un salto de línea al final de la impresión, facilitando la lectura humana en la consola.
-        \end{itemize}
-    \end{enumerate}
+\section*{Actividad 1}
 
-    \subsection*{Propuesta de solución}
-    El objetivo del código es implementar un sistema de lectura de datos a través del puerto serie (USB) de manera no bloqueante. Tradicionalmente, funciones como \texttt{input()} detienen por completo la ejecución del procesador hasta que el usuario ingresa un dato. Para evitar esto, se propone el uso del módulo \texttt{select}, el cual permite sondear (\textit{polling}) el búfer de entrada estándar (\texttt{sys.stdin})  . El programa registra este flujo de entrada y, mediante un ciclo infinito, verifica si hay algún byte esperando ser leído en el búfer sin detener el procesador  . Si se detecta información, se extrae exactamente un carácter y se imprime un mensaje de confirmación  .
+\begin{tikzpicture}
 
-     El flujo de datos de este código inicia con la importación de las bibliotecas necesarias para monitorear el flujo de entrada en la consola. Se registra la entrada estándar y se manda a imprimir un mensaje indicando que se está esperando un carácter. Posteriormente, el programa entra en un bucle infinito que constantemente comprueba la función \texttt{poll(0)}. Si llega alguna información desde Thonny al microcontrolador a través del USB, el condicional se activa, lee exactamente un dato e imprime inmediatamente un respectivo "Hola UNAM". Independientemente de si detecta datos o no, se realiza una pausa de 100 milisegundos al final de cada iteración para que el procesador no se sature.
+    % Texto de la Actividad 1
+    \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
+        Escribir el siguiente programa, cerciorarse que el módulo Display de MAX7219 de 8 dígitos, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería utilizada; comentar el código.
+    };
 
-    \begin{figure}[H]
-            \centering
-            \begin{tikzpicture}[node distance=1.5cm, every node/.style={scale=0.8}]
-                \node (start) [startstop] {Inicio};
-                \node (import) [process, below of=start] {Importar módulos};
-                \node (init) [process, below of=import] {Inicializar \texttt{poll\_obj}};
-                \node (reg) [process, below of=init] {Registrar \texttt{sys.stdin}};
-                \node (print) [io, below of=reg, align=center] {Mostrar mensajes\\iniciales};
-                \node (loop) [decision, below of=print, yshift=-0.8cm] {¿\texttt{poll(0)} es True?};
-                
-                % 1. Aumentamos el xshift a 4cm para separar la caja del rombo
-                \node (read) [process, right of=loop, xshift=4cm] {Leer carácter (\texttt{ch})};
-                
-                \node (print2) [io, below of=read, yshift=-0.5cm, align=center] {Imprimir \texttt{'Dato recibido'}\\y \texttt{'Hola UNAM'}};
-                
-                % 2. Bajamos un poco más la pausa (yshift=-2.5cm) para que la flecha de print2 no quede apretada
-                \node (delay) [process, below of=loop, yshift=-2.5cm] {Pausa (\texttt{time.sleep(0.1)})};
-                
-                \draw [arrow] (start) -- (import);
-                \draw [arrow] (import) -- (init);
-                \draw [arrow] (init) -- (reg);
-                \draw [arrow] (reg) -- (print);
-                \draw [arrow] (print) -- (loop);
-                
-                % 3. Ajustamos la posición del texto "Sí" (pos=0.4) y lo levantamos un poquito (yshift=0.05cm)
-                \draw [arrow] (loop) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (read);
-                
-                \draw [arrow] (read) -- (print2);
-                \draw [arrow] (print2) |- (delay);
-                \draw [arrow] (loop) -- node[anchor=east] {No} (delay);
-                \draw [arrow] (delay.south) -- ++(0,-0.5) -| +(-3,0) |- (loop.west);
-            \end{tikzpicture}
-            \caption{Diagrama de flujo representativo de la Actividad 1}
-            \label{fig:flujo_act1}
-    \end{figure}
+    % Llamada a la Raspberry Pi Pico
+    \picoboard
 
-    \subsection*{Desarrollo}
+    % ==========================================
+    % DISPLAY MAX7219 Y CONEXIONES
+    % ==========================================
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+    % Título del Display
+    \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.8, -0.9) {Display 8 dígitos};
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.85\textwidth]{ img/Actividad1/Act1_1.png}
-        \caption{Interacción asíncrona a través de la terminal serial. La consola muestra los mensajes de inicialización solicitando la entrada del usuario. Al teclear un carácter, el objeto \texttt{poll} detecta de forma instantánea la actividad en el búfer de entrada (\texttt{sys.stdin}). El microcontrolador extrae el dato y ejecuta las instrucciones de impresión ("Dato recibido" y "Hola UNAM"), demostrando la lectura exitosa sin detener el flujo continuo del procesador.}
-    \end{figure}
+    % Contorno del Display
+    \draw[thick] (-10, -1.0) rectangle (-2.0, -3.5);
 
-    \subsection*{Análisis de resultados}
-    Al ejecutar el programa en Thonny, pudimos comprobar que la recepción de datos de manera asíncrona funciona correctamente. Mientras el usuario no presione ninguna tecla o envíe parámetros, la instrucción \texttt{poll\_obj.poll(0)} le dice al procesador principal que, al no haber datos en el puerto, puede realizar su pausa de 0.1 s y seguir dando vueltas en lugar de quedarse trabado esperando. En el momento en que enviamos desde la consola un carácter y presionamos Enter, el carácter viaja a la memoria desde la computadora usando el puerto serie y en el siguiente ciclo será detectado; en ese momento el sistema lee y vacía un byte del \textit{buffer} para finalmente dar la señal de mostrar los mensajes confirmatorios. Gracias a esto comprobamos el beneficio del ``no-bloqueo".
+    % Los 8 dígitos (rectángulos interiores)
+    \foreach \i in {0,...,7} {
+        \draw[thick] (-9.8 + \i*0.85, -1.3) rectangle ++(0.65, -1.9);
+    }
 
-    \newpage
+    % Etiquetas de los pines
+    \node[below, font=\small\sffamily\bfseries] at (-2.6, -1.0) {VCC};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {SCK};
+    \node[left, font=\small\sffamily\bfseries] at (-2.0, -2.25) {MOSI};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {$\overline{SS}$};
 
-    \newpage
+    % --- CONEXIONES A LA PICO ---
+    
+    % Conexión SCK (Azul) a GP2
+    \draw[blue, thick] (-2.0, -1.8) -- (P4);
+    
+    % Conexión MOSI (Verde) a GP3
+    \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
+    
+    % Conexión SS (Roja) a GP5
+    \draw[red, thick] (-2.0, -3.15) -- (P7);
 
-\section*{Actividad 2}
-Para este ejercicio, realizar los pasos siguientes:
-\begin{enumerate}
-    \item Ubicar el COM de conexión de la Raspberry Pi.
-    \item Abrir la terminal de su preferencia.
-    \item Explicar si existe alguna diferencia en la ejecución y cuál sería el motivo.
-\end{enumerate}
+    % --- CONEXIONES DE ENERGÍA ---
+
+    % Conexión VCC (5V y VBUS)
+    \draw[red, thick] (-2.6, -1.0) -- (-2.6, -0.3) -- (-2.0, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
+    \node[above, font=\small\sffamily\bfseries] at (-2.6, -0.3) {5V};
+
+    % Conexión GND
+    \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
+    
+    % Símbolo de Tierra (GND)
+    \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
+    \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
+    \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
+    \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
+
+\end{tikzpicture}
+
+\newpage
+\textbf{Código}
+
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 1 - Display MAX7219 de 8 dígitos}, basicstyle=\ttfamily\scriptsize]{Code/Act1b.py}
 
 \subsection*{Propuesta de solución}
 
-Para esta actividad, se requiere identificar el puerto COM asignado a la Raspberry Pi Pico en el sistema operativo, y posteriormente establecer una conexión serie utilizando un programa terminal externo (como PuTTY o el Monitor Serie de Arduino) para verificar que la comunicación funciona correctamente, para actividades posteriores.
+ El siguiente código que nos fue proporcionado configura un display de 7 segmentos controlado por un chip MAX7219 usando comunicación SPI en un microcontrolador (como Raspberry Pi Pico). Inicializa el bus SPI0 con los pines GPIO2 (reloj) y GPIO3 (datos), y usa el pin GPIO5 como selección de chip (CS). Finalmente, escribe y muestra el texto "01234567" en el display durante 1 segundo.
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=6mm and 12mm,
+    every node/.style={font=\footnotesize\sffamily}
+]
+    \node (inicio) [startstop] {Inicio};
+    \node (import) [process, below=of inicio, text width=5.5cm, align=center] {Importar librerías:\\ \texttt{Pin, SPI, max7219\_8digit, time}};
+    \node (spi) [process, below=of import, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ con SCK=GP2, MOSI=GP3\\ frecuencia=10 MHz, polarity=1, phase=0};
+    \node (cs) [process, below=of spi, text width=5.5cm, align=center] {Configurar \texttt{SS=GP5}\\ como salida digital};
+    \node (display) [process, below=of cs, text width=5.5cm, align=center] {Crear objeto \texttt{display}\\ de la clase \texttt{Display}};
+    \node (buffer) [process, below=of display, text width=5.5cm, align=center] {Escribir \texttt{"01234567"}\\ en el buffer con \texttt{write\_to\_buffer}};
+    \node (show) [process, below=of buffer, text width=5.5cm, align=center] {Mostrar en hardware\\ con \texttt{display.display()}};
+    \node (sleep) [process, below=of show, text width=5.5cm, align=center] {Esperar 1 segundo\\ con \texttt{time.sleep(1)}};
+    \node (fin) [startstop, below=of sleep] {Fin};
+
+    \draw [arrow] (inicio) -- (import);
+    \draw [arrow] (import) -- (spi);
+    \draw [arrow] (spi) -- (cs);
+    \draw [arrow] (cs) -- (display);
+    \draw [arrow] (display) -- (buffer);
+    \draw [arrow] (buffer) -- (show);
+    \draw [arrow] (show) -- (sleep);
+    \draw [arrow] (sleep) -- (fin);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Investigación: Librería \texttt{max7219\_8digit}}
+
+La librería \texttt{max7219\_8digit} es un controlador escrito en MicroPython diseñado específicamente para manejar módulos de display de 7 segmentos de 8 dígitos que utilizan el chip MAX7219. Su propósito es simplificar la comunicación, ocultando la complejidad del envío de tramas de datos de 16 bits que el chip requiere para funcionar.
+
+\textbf{Principales características y funciones:}
+
+\begin{itemize}
+    \item \textbf{Inicialización sencilla:} Para crear un objeto display, solo se necesita pasarle el objeto de la conexión SPI y el pin \texttt{CS} (Chip Select). Opcionalmente, se puede ajustar el brillo (\texttt{intensity}) y el número de dígitos (\texttt{scan\_limit}).
+    
+    \item \textbf{Método \texttt{write\_to\_buffer}:} Esta función es clave. No envía los datos directamente al display, sino que los escribe en un buffer o memoria intermedia interna de la librería. Esto permite preparar la cadena de texto sin actualizar la pantalla constantemente.
+    
+    \item \textbf{Método \texttt{display}:} Una vez que el buffer está listo con la información deseada, se llama a esta función para volcar todo el contenido del buffer al hardware del display, haciendo que los números se enciendan físicamente.
+    
+    \item \textbf{Otras funciones útiles:} La librería incluye métodos como \texttt{write\_digits} para enviar números directamente, \texttt{write\_digits\_from\_list} para mayor velocidad y \texttt{set\_intensity} para cambiar el brillo dinámicamente.
+\end{itemize}
+
+En resumen, esta librería actúa como un puente entre las instrucciones de alto nivel en MicroPython y el protocolo de bajo nivel que entiende el MAX7219, permitiendo un control eficiente y limpio del display.
 
 \subsection*{Desarrollo}
 
-\textbf{Paso 1: Identificación del puerto COM}
+\textbf{Código comentado}
 
-Primero, se conectó la Raspberry Pi Pico a la computadora mediante el cable USB. Luego, se abrió el Administrador de Dispositivos de Windows y se localizó la sección \textbf{Puertos (COM y LPT)} tal y como se muestra en la siguiente figura y en este caso el dispositivo apareció identificado como \textbf{Dispositivo serie USB (COM7)}:
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{img/Actividad2/Captura de pantalla 2026-04-08 121057.png}
-    \caption{Administrador de dispositivos mostrando el puerto COM7 asignado a la Raspberry Pi Pico}
-    \label{fig:admin-dispositivos}
-\end{figure}
-
-\textbf{Paso 2: Conexión a través de una terminal externa}
-
-Una vez identificado el puerto, se procedió a abrir una terminal externa de PuTTY. En esta práctica se utilizó el Monitor Serie del IDE de Arduino, configurándolo con los siguientes parámetros:
-
-\begin{itemize}
-    \item \textbf{Puerto:} COM7
-    \item \textbf{Baud rate:} 9600
-\end{itemize}
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 1 - Display MAX7219 de 8 dígitos}, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{img/Actividad2/Captura de pantalla 2026-04-08 120651.png}
-    \caption{Conexión establecida en el Monitor Serie de Arduino}
-    \label{fig:monitor-serie}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, angle=0]{img/Actividad1/Act1_1.jpg}
+        \caption{Prueba de correcto funcionamiento de codigo de Actividad1.}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, angle=0]{img/Actividad1/Act1_2.jpg}
+        \caption{Visualización de la cadena "01234567" en el display.}
+    \end{minipage}
 \end{figure}
-
-Como se observa en la imagen de arriba, al establecer la conexión apareció el prompt \texttt{>>>} de MicroPython, confirmando que la comunicación serie funciona correctamente y que se puede interactuar con la Raspberry Pi Pico desde esta terminal externa.
 
 \subsection*{Análisis de resultados}
 
-Al comparar la consola integrada de Thonny con una terminal externa como PuTTY o el Monitor Serie de Arduino, se observan diferencias significativas. Thonny ofrece una interfaz gráfica completa con editor, depurador, resaltado de sintaxis, gestión de archivos y botones de control, pero añade una capa de abstracción que puede causar problemas de sincronización o latencia. Las terminales externas ofrecen únicamente una ventana de texto pero con mayor estabilidad y control directo sobre el REPL de MicroPython. En esta actividad se logró identificar correctamente el puerto COM7 asignado a la Raspberry Pi Pico y se estableció comunicación exitosa a través de una terminal externa, comprobando que ambas formas de conexión son funcionales: las terminales externas son más adecuadas para pruebas de comunicación serie puras y Thonny resulta más práctico para el desarrollo y depuración de código.
+La ejecución del código logró su objetivo principal: mostrar la cadena "01234567" en el display de 8 dígitos. La configuración del bus SPI con una frecuencia de 10 MHz y los parámetros de polaridad y fase correctos (\texttt{polarity=1, phase=0}) fue adecuada para la comunicación con el MAX7219, ya que este protocolo exige que los datos se muestreen en el flanco de subida del reloj y el uso de la librería \texttt{max7219\_8digit} nos facilitó la programación, permitiendo controlar el hardware con solo dos instrucciones (\texttt{write\_to\_buffer} y \texttt{display}). 
+
+\newpage
+
+
+    \section*{Actividad 2}
+
+    Realizar el control indicado en la tabla.
+
+    \begin{center}
+        \setlength{\tabcolsep}{8pt}
+        \renewcommand{\arraystretch}{1.3}
+        \arrayrulecolor{white} % Líneas separadoras en blanco
+        
+        \begin{tabular}{>{\columncolor{hdryellow}\color{white}\bfseries\raggedright\arraybackslash}p{2.6cm} | >{\raggedright\arraybackslash}p{2.6cm} | >{\raggedright\arraybackslash}p{8.2cm}}
+        \rowcolor{hdryellow}
+        Señal de control & \textcolor{white}{\textbf{Estado}} & \textcolor{white}{\textbf{Display de 8 dígitos}} \\ \hline
+        GPIO12 & \cellcolor{row1yellow}Activado & \cellcolor{row1yellow}Inicia cuenta decimal ascendente (incremento cada 0.5 seg.) \\ \hline
+        GPIO13 & \cellcolor{row2yellow}Activado & \cellcolor{row2yellow}Inicia cuenta decimal descendente (decremento cada 0.5 seg.) \\ 
+        \end{tabular}
+
+    \vspace{10pt}
+    Tabla 8-2. Señales de control; actividad 2
+    \end{center}
+
+    \subsection*{Propuesta de solución}
+
+    Para implementar el comportamiento que se encuentra descrito en la tabla, es necesario realizar la importación de las librerías que se van a usar durante la ejecución del programa, para este caso se importan las librerías \texttt{Pin} y \texttt{SPI} de la biblioteca \texttt{machine}, \texttt{SPI} es el protocolo de comunicación que se va a usar para controlar el display, y \texttt{Pin} es la clase que se va a usar para configurar los pines de control. Una librería importante es la librería \texttt{max7219\_8digit}, esta es la librería que se va a usar para controlar el display, esta librería se encarga de manejar la comunicación SPI con el display y de renderizar los números en los dígitos. Por último, se importa la función \texttt{sleep} de la biblioteca \texttt{time}, esta función se va a usar para crear los retardos necesarios entre cada actualización del display.
+
+    Una vez que se importaron las bibliotecas necesarias es importante configurar el protocolo de comunicación SPI, para esto se crea una instancia de la clase \texttt{SPI} asignandole el baurate, los pines de control y el modo de comunicación. En este caso se configura el SPI0 con un baurate de 1 MHz, los pines de control son GP2 para SCK, GP3 para MOSI. Posteriormente es necesario obtener el \texttt{SS} (Slave Select) del display, para esto se crea una instancia de la clase \texttt{Pin} asignandole el número del pin que se va a usar como \texttt{SS}, en este caso se usa el pin GP5. Con el SPI configurado y el pin de \texttt{SS} asignado, es posible crear una instancia de la clase \texttt{max7219\_8digit.Display} pasándole como parámetros el objeto SPI, el pin de \texttt{SS} a partir de este objeto se puede controlar el display de una manera sencilla usando los métodos que proporciona la librería.
+    
+    Como se tiene la entrada de dos datos, se configuran 2 botones, uno para cada tipo de conteo, para esto se crean dos instancias de la clase \texttt{Pin} asignandole el número del pin que se va a usar como entrada, en este caso se usan los pines \texttt{GP12} y \texttt{GP13}. Asi mismo se crean dos variables auxiliares, una para llevar el conteo y otro a manea de bandera para saber si es un incremento ascendente, descendente o si el conteo se encuentra detenido. 
+
+    El programa principal se encuentra dentro de un bucle \texttt{while True}, dentro de este bucle se evalúan las entradas de los botones, si el botón de incremento ascendente se encuentra presionado, se asigna el valor de la bandera a \texttt{1}, si el botón de incremento descendente se encuentra presionado, se asigna el valor de la bandera a \texttt{-1}, si ninguno de los botones se encuentra presionado, se asigna el valor de la bandera a \texttt{0}. Posteriormente se evalúa el valor de la bandera, si es igual a \texttt{1}, se incrementa el conteo en \texttt{1}, si es igual a \texttt{-1}, se decrementa el conteo en \texttt{1}. Ya con el valor de la variable \texttt{contador} se procede a realizar el formateo del número para su correcta visualización, donde por medio de \texttt{"{:8d}".format(contador)} se formatea el número para que ocupe 8 dígitos, y se rellene con espacios en caso de que el número tenga menos de 8 dígitos, esta cadena formateada se le pasa al display por medio del método \texttt{write\_to\_buffer} y finalmente se muestra en el display con el método \texttt{.display()}
+
+    Por último, se crea un retardo de 0.5 segundos con la función \texttt{sleep(0.5)} para que el conteo se actualice cada medio segundo, y así cumplir con el requisito de la tabla.
+
+    \newpage
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+        scale=0.8, transform shape,
+        node distance=8mm and 12mm,
+        every node/.style={font=\small\sffamily},
+        % Definición de estilos
+        startstop/.style={rectangle, rounded corners, draw=black, fill=red!20, minimum width=3cm, minimum height=1cm, text centered},
+        process/.style={rectangle, draw=black, fill=blue!10, minimum width=3cm, minimum height=1cm, text centered, align=center},
+        decision/.style={diamond, aspect=2, draw=black, fill=green!20, minimum width=3.5cm, minimum height=1cm, text centered, align=center, inner sep=0pt},
+        arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % --- Nodos Principales ---
+            \node (inicio) [startstop] {Inicio};
+            \node (setup) [process, below=of inicio, text width=5.5cm] {Configurar \texttt{SPI(0)} y \texttt{MAX7219}\\ Pines 12 y 13 como entradas};
+            \node (vars) [process, below=of setup, text width=5cm] {Inicializar variables:\\ \texttt{contador = 0}\\ \texttt{direccion = 0}};
+
+            % Coordenada de retorno para el bucle While True
+            \path (vars) -- ++(0,-1.5) coordinate (loop_start);
+
+            % Bloque: Lectura de Botones
+            \node (asc) [decision, below=12mm of vars, text width=3.2cm] {¿\texttt{btn\_asc}\\ \texttt{== 0}?};
+            \node (set1) [process, right=of asc, text width=3cm] {\texttt{direccion = 1}};
+
+            \node (desc) [decision, below=of asc, text width=3.2cm] {¿\texttt{btn\_desc}\\ \texttt{== 0}?};
+            \node (setm1) [process, right=of desc, text width=3cm] {\texttt{direccion = -1}};
+
+            % Bloque: Incremento/Decremento
+            \node (dir1) [decision, below=of desc, text width=3.2cm] {¿\texttt{direccion}\\ \texttt{== 1}?};
+            \node (inc) [process, right=of dir1, text width=3cm] {\texttt{contador += 1}};
+
+            \node (dirm1) [decision, below=of dir1, text width=3.2cm] {¿\texttt{direccion}\\ \texttt{== -1}?};
+            \node (dec) [process, right=of dirm1, text width=3cm] {\texttt{contador -= 1}};
+
+            % Bloque: Display
+            \node (disp) [process, below=of dirm1, text width=5.5cm] {Formatear a 8 caracteres:\\ \texttt{"\{:8d\}".format(contador)}\\ Actualizar display};
+
+            % Bloque: Retardos
+            \node (sleep) [decision, below=of disp, text width=3.5cm] {¿\texttt{direccion}\\ \texttt{!= 0}?};
+            \node (s05) [process, right=of sleep, text width=3cm] {\texttt{sleep(0.5)}};
+            \node (s01) [process, below=of sleep, text width=3cm] {\texttt{sleep(0.1)}};
+
+            % --- Conexiones Principales (Columna Central) ---
+            \draw [arrow] (inicio) -- (setup);
+            \draw [arrow] (setup) -- (vars);
+            \draw (vars) -- (loop_start);
+            \draw [arrow] (loop_start) -- (asc);
+
+            % --- Cableado Lógico: Botones ---
+            \draw [arrow] (asc.east) -- node[above, font=\scriptsize]{Sí} (set1.west);
+            \draw [arrow] (asc.south) -- node[right, font=\scriptsize]{No} (desc.north);
+            \draw [arrow] (desc.east) -- node[above, font=\scriptsize]{Sí} (setm1.west);
+
+            % Bus de retorno derecho para botones (salta el elif si el if se cumple)
+            \coordinate[above=4mm of dir1] (pre_dir1);
+            \draw (desc.south) -- (pre_dir1);
+            \draw [arrow] (pre_dir1) -- (dir1.north);
+            \draw [arrow] (set1.east) -- ++(0.5,0) |- (pre_dir1);
+            \draw [arrow] (setm1.east) -- ++(0.5,0) |- (pre_dir1);
+
+            % --- Cableado Lógico: Dirección (Contador) ---
+            \draw [arrow] (dir1.east) -- node[above, font=\scriptsize]{Sí} (inc.west);
+            \draw [arrow] (dir1.south) -- node[right, font=\scriptsize]{No} (dirm1.north);
+            \draw [arrow] (dirm1.east) -- node[above, font=\scriptsize]{Sí} (dec.west);
+
+            % Bus de retorno derecho para el contador
+            \coordinate[above=4mm of disp] (pre_disp);
+            \draw (dirm1.south) -- (pre_disp);
+            \draw [arrow] (pre_disp) -- (disp.north);
+            \draw [arrow] (inc.east) -- ++(0.5,0) |- (pre_disp);
+            \draw [arrow] (dec.east) -- ++(0.5,0) |- (pre_disp);
+
+            % --- Cableado Lógico: Actualización y Retardos ---
+            \draw [arrow] (disp.south) -- (sleep.north);
+            \draw [arrow] (sleep.east) -- node[above, font=\scriptsize]{Sí} (s05.west);
+            \draw [arrow] (sleep.south) -- node[right, font=\scriptsize]{No} (s01.north);
+
+            % --- Ciclo Infinito (While True) ---
+            % Punto de unión inferior
+            \coordinate[below=6mm of s01] (bot);
+            \draw (s01.south) -- (bot);
+            \draw (s05.south) |- (bot);
+            
+            % Retorno hacia arriba (usando la librería calc para offset a la izquierda)
+            \coordinate (ret_left) at ($(bot) + (-4.5, 0)$);
+            \draw [arrow] (bot) -- (ret_left) |- (loop_start);
+        \end{tikzpicture}
+        \centering
+    \end{figure}
+
+    \subsection*{Desarrollo}
+
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
+
+    \begin{figure}[htbp]
+        \centering
+        % --- FILA 1 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.6\linewidth, angle=90]{img/Actividad2/Act2_1.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{138}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_3.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{139}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 2 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_4.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{140}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_5.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{141}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 3 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_6.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{142}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_7.png}
+            \caption{Actividad 2 - Contador Ascendente: \texttt{143}}
+        \end{subfigure}
+        \caption{Actividad 2 - Contador Ascendente.}
+    \end{figure}
+
+
+    \begin{figure}[htbp]
+        \centering
+        % --- FILA 1 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.6\linewidth, angle=90]{img/Actividad2/Act2_8.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-26}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_9.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-27}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 2 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_10.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-28}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_11.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-29}}
+        \end{subfigure}
+
+        \vspace{0.5cm}
+
+        % --- FILA 3 ---
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_12.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-30}}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=0.55\linewidth, angle=90]{img/Actividad2/Act2_13.png}
+            \caption{Actividad 2 - Contador Descendente: \texttt{-31}}
+        \end{subfigure}
+        \caption{Actividad 2 - Contador Descendente.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    A partir de las imágenes obtenidas durante la ejecución del programa, se puede observar que el contador ascendente inicia en \texttt{138} y va incrementando de uno en uno cada medio segundo, hasta llegar a \texttt{143} de forma que el incremento se realiza de manera correcta y su visualización en el display es la esperada. De igual forma, el contador descendente inicia en \texttt{-26} y va decrementando de uno en uno cada medio segundo, hasta llegar a \texttt{-31} de forma que el decremento se realiza de manera correcta y su visualización en el display es la esperada. Por lo que la comunicación SPI con el display se encuentra funcionando correctamente, y el programa cumple con los requisitos establecidos en la tabla de la actividad. 
 
     \newpage
     \section*{Actividad 3}
-    Utilizando el formato de la actividad 1, realizar un programa que reciba comandos a través del puerto serie y ejecute las acciones indicadas.
 
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|}
-        \hline
-        \rowcolor[HTML]{5B9BD5} 
-        \textcolor{white}{\textbf{Dato recibido}} & \textcolor{white}{\textbf{Acción}} \\ \hline
-        `0' & GPIO25 = OFF \\ \hline
-        `1' & GPIO25 = ON \\ \hline
-        \end{tabular}
-        \caption*{Tabla 7-2. Control; actividad 3}
-    \end{table}
+\begin{tikzpicture}
 
-    \vspace{0.5cm}
+    % Texto de la Actividad 3
+    \node[text width=15.5cm, align=justify, font=\sffamily] at (-2.5, 3) {
+        Escribir el siguiente programa, cerciorarse que el módulo Matriz MAX7219 de 4 elementos matriciales de 8x8, se encuentre conectado en la posición correcta; investigar el funcionamiento de la librería max7219.py; comentar el código.
+    };
 
-    \subsection*{Propuesta de solución}
-    Esta actividad combina la lectura no bloqueante del puerto serie con el control directo de las salidas digitales del microcontrolador . Se configura el pin físico \texttt{GPIO25} (conectado al LED integrado de la Raspberry Pi Pico) como una salida digital (\texttt{Pin.OUT}) . Replicando la estructura de sondeo con el módulo \texttt{select}, el programa extrae los caracteres entrantes desde la consola de Thonny .
+    % Llamada a la Raspberry Pi Pico
+    \picoboard
 
-    El control se realiza mediante una estructura condicional \texttt{if-elif} . El carácter recuperado por \texttt{sys.stdin.read(1)} se compara contra los caracteres ASCII de control definidos en la tabla . Si el programa recibe el carácter \texttt{'1'}, saturará el pin a nivel alto ; si recibe \texttt{'0'}, drenará el voltaje a nivel bajo . Cualquier otro carácter (como letras o el retorno de carro enviado al presionar Enter) será simplemente ignorado por el flujo condicional, evitando falsas activaciones.
+    % ==========================================
+    % MÓDULO MATRIZ 8x8x4 Y CONEXIONES
+    % ==========================================
 
-    \begin{figure}[H]
-            \centering
-            \begin{tikzpicture}[node distance=1.5cm, every node/.style={scale=0.75}]
-                \node (start) [startstop] {Inicio};
-                \node (init) [process, below of=start] {Configurar LED y \texttt{poll\_obj}};
-                \node (reg) [process, below of=init] {Registrar \texttt{sys.stdin}};
-                \node (print) [io, below of=reg, align=center] {Mostrar instrucciones};
-                \node (loop) [decision, below of=print, yshift=-0.5cm] {¿\texttt{poll(0)} es True?};
-                \node (read) [process, right of=loop, xshift=4cm] {Leer (\texttt{ch = read(1)})};
-                \node (cond1) [decision, below of=read, yshift=-1.5cm] {¿\texttt{ch} == '1'?};
-                
-                % 1. Aumentamos el xshift a 3.8cm para alargar más la flecha
-                \node (ledOn) [process, right of=cond1, xshift=3.8cm, align=center] {Encender LED y print};
-                
-                \node (cond2) [decision, below of=cond1, yshift=-1.5cm] {¿\texttt{ch} == '0'?};
-                
-                % 1. Aumentamos el xshift a 3.8cm también aquí
-                \node (ledOff) [process, right of=cond2, xshift=3.8cm, align=center] {Apagar LED y print};
-                
-                \node (delay) [process, below of=loop, yshift=-7.5cm] {Pausa (\texttt{time.sleep(0.1)})};
-                
-                \draw [arrow] (start) -- (init);
-                \draw [arrow] (init) -- (reg);
-                \draw [arrow] (reg) -- (print);
-                \draw [arrow] (print) -- (loop);
-                \draw [arrow] (loop) -- node[anchor=south] {Sí} (read);
-                \draw [arrow] (read) -- (cond1);
-                
-                % 2. Añadimos pos=0.4 para acercar el "Sí" al rombo y yshift=0.05cm para despegarlo de la línea
-                \draw [arrow] (cond1) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (ledOn);
-                \draw [arrow] (cond1) -- node[anchor=east] {No} (cond2);
-                
-                % 2. Mismo ajuste para esta flecha
-                \draw [arrow] (cond2) -- node[anchor=south, pos=0.4, yshift=0.05cm] {Sí} (ledOff);
-                
-                \draw [arrow] (loop) -- node[anchor=east] {No} (delay);
-                \draw [arrow] (ledOn) |- (delay);
-                \draw [arrow] (ledOff) |- (delay);
-                \draw [arrow] (cond2) |- node[anchor=east, pos=0.15] {No} (delay);
-                \draw [arrow] (delay.south) -- ++(0,-0.5) -| +(-3.8,0) |- (loop.west);
-            \end{tikzpicture}
-            \caption{Diagrama de flujo de la Acción 3}
-            \label{fig:flujo_act3}
-    \end{figure}
+    % Título de la Matriz
+    \node[above right, text=blue!60!black, font=\itshape\sffamily] at (-9.3, -0.9) {Matriz 8x8 x 4};
 
-    Este flujo inicializa estableciendo el pin del LED (25) como salida, configurando al igual el objeto para leer el teclado con \texttt{select.poll()}, y luego, notifica al usuario qué presionar dentro del panel interactivo de Thonny. Para evitar bloqueos, un ciclo eterno va sondeando si se recibe algún byte mediante  el condicional del objeto \texttt{poll}. De ser afirmativo, almacena la cadena; entra al subproceso de comprobación anidados por medio de \texttt{if} y compara, si tecleó '1' pasará voltaje positivo, y si la coincidencia fue '0' apaga dicho Pin. Tras efectuar las comprobaciones de los posibles escenarios o de no haberse escrito absolutamente nada en consola, detiene por 0.1 segundos el procedimiento de barrido principal y todo vuelve a empezar.
+    % Contorno del Módulo
+    \draw[thick] (-9.5, -1.0) rectangle (-2.0, -3.5);
 
-    \subsection*{Desarrollo}
+    % Las 4 matrices de 8x8
+    \foreach \i in {0,...,3} {
+        \draw[thick] (-9.2 + \i*1.4, -1.3) rectangle ++(1.2, -1.9);
+    }
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+    % Etiquetas de los pines
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.35) {VCC};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -1.8) {CLK};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -2.25) {MOSI};
+    \node[left, font=\small\sffamily\bfseries] at (-2.1, -3.15) {CS};
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{ img/Actividad3/Act3_1.jpg}
-        \caption{Activación del actuador interno. El usuario ingresa el carácter '1' a través de la terminal USB. El microcontrolador RP2040 intercepta el dato mediante el sondeo del búfer, evaluando la primera condicional como verdadera. Inmediatamente, satura el pin físico GPIO 25, encendiendo el LED verde integrado en la tarjeta y confirmando la acción en consola.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.7\textwidth]{ img/Actividad3/Act3_2.jpg}
-        \caption{Desactivación mediante consola. Al teclear el carácter '0', el sistema captura el nuevo evento de entrada. La rutina de control procesa el carácter ASCII, el flujo salta a la segunda rama condicional y el hardware drena el voltaje del GPIO 25 (0V). Esto apaga el LED físico y envía la confirmación de la acción completada al monitor serial.}
-    \end{figure}
+    % --- CONEXIONES A LA PICO ---
     
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.6\textwidth]{ img/Actividad3/Act3_3.png}
-        \caption{Monitor serial Thonny. Captura de pantalla evidenciando la bitácora bidireccional (\textit{log}) de la comunicación asíncrona entre el entorno de desarrollo y el hardware embebido.}
-    \end{figure}
-
-    \subsection*{Análisis de resultados}
-    Este ejercicio ilustra de manera muy visual cómo lograr una interacción en tiempo real de control mediante un bucle cerrado; entre la computadora principal desde la que mandamos instrucciones y el \textit{hardware} esclavo que las recibe. Cuando corremos este código, observamos que luego de un simple mensaje se mantiene monitoreando pacientemente el monitor y dejando libre el micro. Si le escribimos un '1', la tarjeta responde físicamente alimentando el encendido del LED conectado al GPIO 25, con su debida contestación en la interfaz de "GPIO25 = ON". Algo análogo sucede si enviamos un '0', se drenaría hacia masa apagándose visiblemente al instante. Demostrando cómo el manejo de comandos básicos sobre comunicación UART y lectura asíncrona construyen programas más estables en cualquier sistema electrónico empotrado contemporáneo de bajo coste sin importar las pausas del usuario.
+    % Conexión CLK (Azul) a GP2
+    \draw[blue, thick] (-2.0, -1.8) -- (P4);
     
-    \newpage
+    % Conexión MOSI (Verde) a GP3
+    \draw[green!60!black, thick] (-2.0, -2.25) -- (P5);
+    
+    % Conexión CS (Roja) a GP6
+    \draw[red, thick] (-2.0, -3.15) -- (P9);
+
+    % --- CONEXIONES DE ENERGÍA ---
+
+    % Conexión VCC y VBUS
+    \draw[red, thick] (-2.5, -1.0) -- (-2.5, -0.3) -- (-1.8, -0.3) node[right, font=\small\sffamily\bfseries, text=black] {\textbf{VBUS}};
+    \node[above, font=\small\sffamily\bfseries] at (-2.5, -0.3) {5V};
+
+    % Conexión GND
+    \draw[thick] (-3.0, -3.5) -- (-3.0, -4.5);
+    
+    % Símbolo de Tierra (GND)
+    \draw[thick] (-3.4, -4.5) -- (-2.6, -4.5);
+    \draw[thick] (-3.2, -4.65) -- (-2.8, -4.65);
+    \draw[thick] (-3.05, -4.8) -- (-2.95, -4.8);
+    \node[right, font=\small\sffamily\bfseries] at (-2.6, -4.65) {GND};
+
+\end{tikzpicture}
+
+\newpage
+\textbf{Código}
+
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 3 - Matriz MAX7219 de 4x8x8}, basicstyle=\ttfamily\scriptsize]{Code/Act3b.py}
+
+\subsection*{Propuesta de solución}
+
+El siguiente código configura una matriz de LEDs de 4 módulos de 8x8 píxeles controlada por el chip MAX7219 mediante comunicación SPI. Se inicializa el bus SPI0 con los pines GPIO2 (reloj) y GPIO3 (datos), y se utiliza el pin GPIO6 como selección de chip (CS). Se define la variable \texttt{num\_display = 4} para indicar la cantidad de módulos conectados en cascada. El programa limpia la pantalla, dibuja el carácter "0" en la coordenada (0,1) y lo muestra durante 3 segundos.
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=6mm and 12mm,
+    every node/.style={font=\footnotesize\sffamily}
+]
+    \node (inicio) [startstop] {Inicio};
+    \node (import) [process, below=of inicio, text width=5.5cm, align=center] {Importar librerías:\\ \texttt{max7219, Pin, SPI, sleep}};
+    \node (num) [process, below=of import, text width=5.5cm, align=center] {Definir \texttt{num\_display = 4}\\ (módulos en cascada)};
+    \node (spi) [process, below=of num, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ con SCK=GP2, MOSI=GP3\\ frecuencia=10 MHz};
+    \node (cs) [process, below=of spi, text width=5.5cm, align=center] {Configurar \texttt{CS=GP6}\\ como salida digital};
+    \node (matrix) [process, below=of cs, text width=5.5cm, align=center] {Crear objeto \texttt{display}\\ de la clase \texttt{Matrix8x8}};
+    \node (fill) [process, below=of matrix, text width=5.5cm, align=center] {Limpiar pantalla\\ con \texttt{display.fill(0)}};
+    \node (text) [process, below=of fill, text width=5.5cm, align=center] {Dibujar \texttt{'0'} en (0,1)\\ con \texttt{display.text()}};
+    \node (show) [process, below=of text, text width=5.5cm, align=center] {Actualizar pantalla\\ con \texttt{display.show()}};
+    \node (sleep) [process, below=of show, text width=5.5cm, align=center] {Esperar 3 segundos\\ con \texttt{sleep(3)}};
+    \node (fin) [startstop, below=of sleep] {Fin};
+
+    \draw [arrow] (inicio) -- (import);
+    \draw [arrow] (import) -- (num);
+    \draw [arrow] (num) -- (spi);
+    \draw [arrow] (spi) -- (cs);
+    \draw [arrow] (cs) -- (matrix);
+    \draw [arrow] (matrix) -- (fill);
+    \draw [arrow] (fill) -- (text);
+    \draw [arrow] (text) -- (show);
+    \draw [arrow] (show) -- (sleep);
+    \draw [arrow] (sleep) -- (fin);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Investigación: Librería \texttt{max7219.py}}
+
+La librería \texttt{max7219.py} es un controlador escrito en MicroPython diseñado específicamente para manejar módulos de matrices de LEDs de 8x8 píxeles basados en el chip MAX7219. Esta librería es fundamental cuando se trabaja con displays gráficos matriciales, a diferencia de la librería \texttt{max7219\_8digit} que se usa para displays de 7 segmentos.
+
+\textbf{Principales características y funciones:}
+
+\begin{itemize}
+    \item \textbf{Soporte para múltiples módulos en cascada:} El parámetro \texttt{num\_display} permite indicar cuántos módulos de 8x8 están conectados en serie, extendiendo el ancho total de la pantalla (por ejemplo, 4 módulos generan una resolución de 32x8 píxeles).
+    
+    \item \textbf{Método \texttt{fill(value)}:} Permite limpiar o llenar completamente la pantalla. Con \texttt{fill(0)} se apagan todos los LEDs, mientras que \texttt{fill(1)} los enciende todos.
+    
+    \item \textbf{Método \texttt{text(string, x, y, color)}:} Dibuja un carácter o cadena de texto en las coordenadas especificadas. El parámetro \texttt{color} puede ser 1 (LED encendido) o 0 (LED apagado). La librería incluye una matriz de píxeles para cada carácter de la fuente predeterminada.
+    
+    \item \textbf{Método \texttt{show()}:} Una vez que se han realizado todas las modificaciones en el buffer interno (con \texttt{fill}, \texttt{text}, \texttt{pixel}, etc.), esta función envía los datos al hardware para actualizar la pantalla físicamente.
+    
+    \item \textbf{Método \texttt{pixel(x, y, color)}:} Permite controlar un LED individual en la posición (x, y) de la matriz.
+\end{itemize}
+
+En resumen, esta librería abstrae la complejidad del protocolo de comunicación con el MAX7219 y proporciona una interfaz sencilla tipo framebuffer para dibujar texto y gráficos en matrices de LEDs.
+
+\subsection*{Desarrollo}
+
+\textbf{Código comentado}
+
+\lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 3 - Matriz MAX7219 de 4x8x8}, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_1.png}
+        \caption{Visualización del carácter "0" en la posición (0,1).}
+\end{figure}
+
+\subsection*{Análisis de resultados}
+
+La ejecución del código logró mostrar correctamente el carácter "0" en la matriz de LEDs de 4 módulos 8x8. La configuración del bus SPI con una frecuencia de 10 MHz fue adecuada para la comunicación con el MAX7219, y el uso del pin GPIO6 como Chip Select permitió seleccionar correctamente el dispositivo. La librería \texttt{max7219.py} facilitó el control de la matriz, permitiendo limpiar la pantalla con \texttt{fill(0)} y dibujar texto con coordenadas específicas mediante \texttt{text()} y se verificó que la función \texttt{show()} es esencial para transferir los datos del buffer interno al hardware.
+
+\newpage 
+
     \section*{Actividad 4}
-    Realizar el siguiente procedimiento:
 
-    \begin{enumerate}
-        \item Escribir el siguiente programa.
-        \item Comentar el código e indicar qué hace.
-        \item Conectar el módulo CP2102.
-        \item Ubicar el puerto asignado.
-        \item Comprobar el funcionamiento.
-    \end{enumerate}
+    Usando la matriz de leds SPI, desplegar los siguientes mensajes, usar intervalos de
+    tiempo de 2 segundos entre cada uno de ellos (puede ser texto fijo o con desplazamiento).
 
-    \lstinputlisting[language={[LAB]Python}, caption={Código de ejemplo - Actividad 4}, basicstyle=\ttfamily\scriptsize]{Code/Act4Normal.py}
+    \begin{center}
+        \sffamily\Large\bfseries
+        \setlength{\tabcolsep}{8pt} % Espaciado entre columnas
+        \renewcommand{\arraystretch}{1.3} % Espaciado entre filas
+        
+        \begin{tabular}{cccc l}
+        \textcolor{blue!60!black}{U} & \textcolor{blue!60!black}{N} & \textcolor{blue!60!black}{A} & \textcolor{blue!60!black}{M} & \\
+        \textcolor{cyan!80!blue}{*} & \textcolor{cyan!80!blue}{F} & \textcolor{cyan!80!blue}{I} & \textcolor{cyan!80!blue}{*} & \\
+        \textcolor{blue!60!black}{2} & \textcolor{blue!60!black}{0} & \textcolor{blue!60!black}{2} & \textcolor{blue!60!black}{5} & \\
+        \textcolor{cyan!80!blue}{2} & \textcolor{cyan!80!blue}{5} & \textcolor{cyan!80!blue}{-} & \textcolor{cyan!80!blue}{2} & \\
+        \textcolor{blue!60!black}{*} & \textcolor{blue!60!black}{*} & \textcolor{blue!60!black}{*} & \textcolor{blue!60!black}{*} & \hspace{0.5cm} {\mdseries\upshape\textit{- Texto libre}} \\
+        \end{tabular}
+        
+        \vspace{15pt}
+        \normalsize\normalfont\sffamily Figura 8-6. Actividad 4
+    \end{center}
 
     \subsection*{Propuesta de solución}
+    Para mostrar los textos en las matrices de LEDs, se configura el bus SPI del microcontrolador RP2040 para comunicarse con el controlador MAX7219. Este circuito integrado maneja las cuatro matrices de 8x8 conectadas en cascada. Se definen los pines de reloj (SCK), salida de datos maestros (MOSI) y selección de chip (CS). 
+    
+    En el código, se crea una lista que almacena exactamente las cadenas de texto solicitadas por el manual ("UNAM", "FI", "*", "2026", "26 - 2", "PEPE"). La solución implementa un bucle \texttt{for} infinito que recorre esta lista elemento por elemento. En cada paso, el programa limpia la memoria de la pantalla para evitar que los textos se encimen, dibuja los caracteres arrancando desde la coordenada inicial de la matriz y aplica un retardo de 2 segundos mediante \texttt{sleep(2)} para que cada mensaje permanezca visible el tiempo requerido antes de pasar al siguiente.
 
-    El objetivo de esta actividad es establecer una comunicación bidireccional entre la Raspberry Pi Pico y una computadora usando el protocolo UART. Para ello, se utiliza un módulo conversor USB-TTL basado en el chip CP2102, que permite conectar la Pico a un puerto USB de la computadora lo que emula un puerto serie.
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=8mm and 14mm,
+            every node/.style={font=\small\sffamily}
+        ]
+            % --- Nodos ---
+            \node (inicio) [startstop] {Inicio};
+            \node (spi) [process, below=of inicio, text width=6.0cm, align=center] {Configurar \texttt{SPI(0)}\\ y crear la matriz \texttt{MAX7219}};
+            \node (lista) [process, below=of spi, text width=6.0cm, align=center] {Definir la lista de mensajes\\ \texttt{"UNAM", "FI", "*", "*", "2026", "26 - 2", "*", "*", "*", "*", "PEPE"}};
+            \node (bucle) [process, below=of lista, text width=5.6cm, align=center] {Entrar al ciclo infinito\\ \texttt{while True}};
+            \node (mensaje) [decision, below=of bucle, text width=4.2cm, align=center] {¿Queda un mensaje\\ por mostrar?};
+            \node (limpia) [process, right=18mm of mensaje, text width=4.6cm, align=center] {Limpiar la pantalla\\ con \texttt{fill(0)}};
+            \node (escribe) [process, below=of limpia, text width=4.6cm, align=center] {Escribir el mensaje\\ en \texttt{(0,0)}};
+            \node (muestra) [process, below=of escribe, text width=4.6cm, align=center] {Actualizar el display\\ con \texttt{show()}};
+            \node (espera) [process, below=of muestra, text width=4.6cm, align=center] {Esperar 2 segundos\\ con \texttt{sleep(2)}};
 
-    El programa implementa un echo que significa que todo carácter enviado desde la computadora hacia la Pico es retransmitido de vuelta a la computadora y cada vez que se recibe un dato, el LED interno de la Pico cambia de estado (toggle) para que se más facil apreciar la comunicación.
+            % --- Conexiones Lineales ---
+            \draw [arrow] (inicio) -- (spi);
+            \draw [arrow] (spi) -- (lista);
+            \draw [arrow] (lista) -- (bucle);
+            \draw [arrow] (bucle) -- (mensaje);
+
+
+            \draw [arrow] (mensaje.east) -- node[above, font=\scriptsize]{Sí} (limpia.west);
+            
+            \draw [arrow] (limpia) -- (escribe);
+            \draw [arrow] (escribe) -- (muestra);
+            \draw [arrow] (muestra) -- (espera);
+
+
+            \draw [arrow] (espera.south) -- ++(0,-0.8) -| (mensaje.south);
+
+
+            \draw [arrow] (mensaje.west) -- node[above, pos=0.2, font=\scriptsize]{No} ++(-1.5,0) |- (bucle.west);
+
+        \end{tikzpicture}
+    \end{center}
+
+    \noindent El flujo de datos recorre la lista \texttt{mensajes} de forma secuencial: cada cadena se limpia, se convierte en puntos encendidos dentro del framebuffer del MAX7219 y se envía al módulo por SPI antes de pausar dos segundos. Al terminar la lista, el ciclo \texttt{while True} vuelve a comenzar y vuelve a recorrer los mensajes sin detener la ejecución.
 
     \subsection*{Desarrollo}
-
-    El código implementado se muestra a continuación:
 
     \lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 4 - Comunicación UART}, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
-    \textbf{Explicación del código:}
-
-    \begin{itemize}
-        \item \textbf{Líneas 1-2:} Importación de las librerías necesarias. \texttt{machine} proporciona el control de pines y UART, mientras que \texttt{time} permite gestionar retardos.
-        
-        \item \textbf{Líneas 5-6:} Configuración del UART0. Se establece una velocidad de 9600 baudios, y se asignan los pines GPIO16 (TX) y GPIO17 (RX) como canales de transmisión y recepción respectivamente.
-        
-        \item \textbf{Línea 8:} Inicialización del formato de trama estándar: 8 bits de datos, sin bit de paridad y 1 bit de paro.
-        
-        \item \textbf{Línea 9:} Configuración del LED interno (GPIO25) como salida para indicar visualmente la actividad.
-        
-        \item \textbf{Línea 12:} Envío de un mensaje inicial a través del puerto serie para confirmar que la comunicación se ha establecido correctamente.
-        
-        \item \textbf{Línea 15:} \texttt{uart.any()} verifica si hay datos disponibles en el buffer de recepción. Si es mayor que 0, significa que se ha recibido información.
-        
-        \item \textbf{Línea 16:} \texttt{uart.read()} lee todos los datos disponibles.
-        
-        \item \textbf{Línea 17:} \texttt{uart.write(data)} envía los mismos datos de vuelta (efecto eco).
-        
-        \item \textbf{Línea 18:} \texttt{led.toggle()} invierte el estado del LED interno, encendiéndolo o apagándolo cada vez que se recibe un dato.
-        
-        \item \textbf{Línea 21:} Pausa de 0.1 segundos para evitar saturar el procesador y permitir una respuesta fluida al tecleo.
-    \end{itemize}
-
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.9\textwidth]{img/Actividad4/Act4_1.png}
-        \caption{Código cargado en la Raspberry Pi Pico y ejecución en la consola de Thonny. Se observa el mensaje Inicia Comunicacion Serie enviado por la Pico.}
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_8.png}
+        \caption{Texto UNAM.}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_1.png}
+        \caption{El microcontrolador transfiere la cadena "FI" mediante la línea MOSI del bus SPI.}
     \end{figure}
 
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.9\textwidth]{img/Actividad4/Act4_2.png}
-        \caption{Identificación del puerto COM asignado al módulo CP2102. En el Administrador de dispositivos se localiza el "Silicon Labs CP210x USB to UART Bridge (COM8)", este driver fue instalado porque no venía por defecto.}
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad4/Act4_3.png}
+        \caption{Despliegue de datos numéricos. El bucle alcanza la cadena "2026". El microcontrolador actualiza la pantalla evidenciando la correcta renderización de la fuente tipográfica asignada para números enteros.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad4/Act4_5.png}
+        \caption{Despliegue de la cadena final. El bucle \texttt{for} carga el último elemento ("PEPE"). Los datos viajan por el bus y se enclavan en los registros del display, logrando iluminar el texto libre solicitado en el manual.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad4/Act4_6.png}
+        \caption{Reinicio del ciclo de visualización. El programa mantiene la cadena "PEPE" durante su temporización estipulada de 2 segundos antes de que el bucle infinito reinicie y vuelva a mandar la cadena inicial "UNAM", cerrando el lazo de ejecución.}
     \end{figure}
 
     \subsection*{Análisis de resultados}
-
-    Una vez cargado el programa en la Raspberry Pi Pico y conectado el módulo CP2102 a la computadora, se verificó que el dispositivo apareciera en el Administrador de dispositivos como COM8. Al abrir un monitor serie a 9600 baudios, se recibió el mensaje "Inicia Comunicacion Serie", confirmando la transmisión exitosa. Durante la ejecución, cada carácter escrito fue retransmitido de vuelta (efecto eco) mientras el LED interno de la Pico (GPIO25) cambiaba su estado con cada carácter recibido, proporcionando una clara indicación visual. Se observó una comunicación bidireccional correcta sin pérdida de datos, con una respuesta ágil gracias al uso de \texttt{time.sleep(0.1)}.
-
+    El código demuestra el manejo de un bus síncrono para controlar arreglos de LEDs. Al definir el parámetro \texttt{num\_display = 4} en la inicialización de la clase, la librería ajusta automáticamente la memoria de video (\textit{framebuffer}) para abarcar un ancho total de 32 columnas. 
+    
+    Durante la ejecución del ciclo, el microcontrolador envía las tramas de datos por la línea MOSI. La función \texttt{display.text()} se encarga de convertir cada letra de la cadena de texto en un mapa de bits que enciende los LEDs correspondientes. La instrucción \texttt{display.fill(0)} resulta fundamental, ya que apaga todos los puntos luminosos en la transición, garantizando un salto limpio entre un mensaje y otro. 
+    El uso de la función de retardo pausa la actualización gráfica, cumpliendo de manera exacta con el ritmo de visualización establecido en la actividad.
 
     \newpage
 
     \section*{Actividad 5}
 
-    Siguiendo el procedimiento de la actividad No. 4; realizar un programa que ejecute las acciones indicadas.
+    Escribir el siguiente programa, cerciorarse que el módulo Display TFT ST7735, se
+    encuentre conectado en la posición correcta; investigar el funcionamiento de las librerías usadas;
+    comentar el programa.
 
-    \begin{table}[H]
-        \centering
-        \begin{tabular}{|c|l|}
-            \hline
-            \rowcolor[HTML]{5B9BD5} 
-            \textcolor{white}{\textbf{\shortstack{Dato \\ UART}}} & \multicolumn{1}{c|}{\cellcolor[HTML]{5B9BD5}\textcolor{white}{\textbf{Acción}}} \\ \hline
-            `1' & Mostrar el voltaje del Potenciómetro \\ \hline
-            `2' & Mostrar el resultado de la conversión AD de la foto-resistencia en hexadecimal. \\ \hline
-            `3' & Mostrar la temperatura del sensor TMP36 en $^{\circ}$C, $^{\circ}$F y $^{\circ}$K. \\ \hline
-            `4' & Reproducir la nota DO en el zumbador \\ \hline
-            `5' & Prender y apagar 5 veces GPIO0 al GPIO7 \\ \hline
-            `6' & Corrimiento a la derecha de los 8 leds GPIO0 -- GPIO7 \\ \hline
-            `7' & Corrimiento a la izquierda de los 8 leds GPIO0 -- GPIO7 \\ \hline
-        \end{tabular}
-        \caption*{Tabla 7-3. Tabla de control; actividad 5}
-    \end{table}
+    \begin{tikzpicture}
 
-    \vspace{0.5cm}
+        % Llamada a la Raspberry Pi Pico
+        \picoboard
+
+
+        \node[text=blue!40!black, font=\large\sffamily\bfseries, align=center] at (-3.2, -0.5) {DISPLAY TFT\\[0.1cm]ST 7735};
+
+        % Contorno del Módulo TFT
+        \draw[thick] (-7.5, -1.3) rectangle (-4.0, -5.2);
+
+        % Etiquetas internas (Alineadas a la derecha, en cursiva y negrita como en la imagen)
+        \node[left, font=\normalsize\sffamily\bfseries] at (-4.0, -1.8) {SCK};
+        \node[left, font=\normalsize\sffamily\bfseries] at (-4.0, -2.25) {MOSI};
+        \node[left, font=\normalsize\sffamily\bfseries] at (-4.0, -2.9) {$\overline{CS}$};
+        \node[left, font=\normalsize\sffamily\bfseries] at (-4.0, -3.9) {RESET};
+        \node[left, font=\normalsize\sffamily\bfseries] at (-4.0, -4.7) {A0};
+
+        % Etiqueta VCC, LED (Alineada a la izquierda superior)
+        \node[right, font=\normalsize\sffamily\bfseries] at (-7.5, -1.8) {VCC, LED};
+
+        % --- CONEXIONES A LA PICO ---
+        
+        % Conexión SCK (Azul Oscuro) a GP2 (Pin 4)
+        \draw[blue!40!black, very thick] (-4.0, -1.8) -- (P4);
+        
+        % Conexión MOSI (Verde) a GP3 (Pin 5)
+        \draw[green!50!black, very thick] (-4.0, -2.25) -- (P5);
+        
+        % Conexión CS (Roja) en diagonal a GP7 (Pin 10)
+        \draw[red!80!black, very thick] (-4.0, -2.9) -- (P10);
+
+        % --- CONEXIONES DE ENERGÍA ---
+
+        % Conexión 3.3V (Cable rojo hacia arriba, barra verde horizontal)
+        \draw[red, thick] (-7.0, -1.3) -- (-7.0, -0.6);
+        \draw[green!60!black, thick] (-7.4, -0.6) -- (-6.6, -0.6);
+        \node[above, font=\small\sffamily\bfseries] at (-7.0, -0.6) {3.3V};
+
+        % Conexión GND inferior
+        % Línea negra vertical
+        \draw[very thick] (-4.6, -5.2) -- (-4.6, -6.1);
+        % Pequeño detalle verde justo antes de la tierra (como en la imagen original)
+        \draw[green!60!black, thick] (-4.6, -6.1) -- (-4.6, -6.3);
+        
+        % Símbolo de Tierra (GND)
+        \draw[thick] (-5.0, -6.3) -- (-4.2, -6.3);
+        \draw[thick] (-4.8, -6.45) -- (-4.4, -6.45);
+        \draw[thick] (-4.65, -6.6) -- (-4.55, -6.6);
+        
+        % Etiqueta GND externa
+        \node[right, font=\normalsize\sffamily\bfseries] at (-4.5, -5.6) {GND};
+
+    \end{tikzpicture}
+
 
     \subsection*{Propuesta de solución}
+    El objetivo es desplegar texto a color en un panel LCD TFT. A diferencia de las matrices simples, esta pantalla requiere una comunicación SPI de alta velocidad (20 MHz) y el uso de terminales adicionales de control. Se define el pin A0 (o DC) para que el controlador ST7735 pueda distinguir si los datos entrantes son comandos de configuración o píxeles de imagen, además de un pin físico para el RESET.
+    
+    La solución emplea la librería \texttt{ST7735} para manejar la secuencia de encendido del hardware. Posteriormente, se ajusta la orientación de la pantalla al modo apaisado (\textit{landscape}), se corrige la paleta de colores si es necesario, y se pinta un fondo blanco sólido para asegurar el contraste. Finalmente, se envían dos cadenas de texto estáticas ("MICROS" y "FI") asignándoles coordenadas, colores específicos y una escala de tamaño definida para que resalten en el panel.
 
-    En esta actividad se implementó un sistema de control basado en comandos enviados a través de comunicación UART, especificamente se nos pidió que la Raspberry Pi Pico pueda recibir caracteres del 1 al 7 que ejecuten diferentes acciones como las de la tabla 7.3 que involucran sensores y una matriz de 8 LEDs conectados a los pines GPIO0 a GPIO7.
+    \begin{center}
+    \begin{tikzpicture}[
+        node distance=5mm and 12mm, % <-- Distancia vertical reducida
+        every node/.style={font=\footnotesize\sffamily} % <-- Fuente un poco más pequeña
+    ]
+        \node (inicio) [startstop] {Inicio};
+        \node (spi) [process, below=of inicio, text width=5.5cm, align=center] {Configurar \texttt{SPI(0)}\\ a 20 MHz con pines SCK, MOSI y MISO};
+        \node (objeto) [process, below=of spi, text width=5.5cm, align=center] {Crear el objeto \texttt{TFT}\\ con A0=15, RESET=14 y CS=5};
+        \node (init) [process, below=of objeto, text width=5.5cm, align=center] {Inicializar el controlador\\ con \texttt{tft.initg()}};
+        \node (rgb) [process, below=of init, text width=5.5cm, align=center] {Corregir el orden de color\\ con \texttt{tft.rgb(True)}};
+        \node (rot) [process, below=of rgb, text width=5.5cm, align=center] {Fijar orientación\\ con \texttt{tft.rotation(2)}};
+        \node (fondo) [process, below=of rot, text width=5.5cm, align=center] {Pintar fondo blanco\\ con \texttt{tft.fill(TFT.WHITE)}};
+        \node (txt1) [process, below=of fondo, text width=5.5cm, align=center] {Escribir \texttt{"MICROS"}\\ en rojo, escala 2, posición (10,10)};
+        \node (txt2) [process, below=of txt1, text width=5.5cm, align=center] {Escribir \texttt{"FI"}\\ en verde, escala 2, posición (25,30)};
+        \node (fin) [startstop, below=of txt2] {Fin};
 
-    El programa utiliza un bucle principal que monitorea constantemente el buffer de recepción UART. Al recibir un comando, se decodifica y se ejecuta la acción correspondiente, enviando los resultados de vuelta a través del mismo puerto serie para su visualización en la terminal.
+        \draw [arrow] (inicio) -- (spi);
+        \draw [arrow] (spi) -- (objeto);
+        \draw [arrow] (objeto) -- (init);
+        \draw [arrow] (init) -- (rgb);
+        \draw [arrow] (rgb) -- (rot);
+        \draw [arrow] (rot) -- (fondo);
+        \draw [arrow] (fondo) -- (txt1);
+        \draw [arrow] (txt1) -- (txt2);
+        \draw [arrow] (txt2) -- (fin);
+    \end{tikzpicture}
+    \end{center}
 
-    \newpage
-
-    \begin{figure}[H]
-        \begin{tikzpicture}[
-            node distance=0.5cm,
-            every node/.style={scale=0.65, font=\small},
-            % Estilos de los bloques
-            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
-            process/.style={rectangle, minimum width=4.5cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
-            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
-            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
-            arrow/.style={thick, ->, >=stealth}
-        ]
-
-            % --- 1. BLOQUES DE INICIALIZACIÓN ---
-            \node (start) [startstop] {Inicio};
-            \node (import) [process, below=of start] {Importar \texttt{machine}, \texttt{time}};
-            \node (cfg_uart) [process, below=of import] {Configurar UART0 (9600 bps)};
-            \node (cfg_periph) [process, below=of cfg_uart] {Configurar ADC (Pot, LDR, TMP36)\\y PWM (Buzzer)};
-            \node (cfg_leds) [process, below=of cfg_periph] {Configurar Array de 8 LEDs\\y definir \texttt{apagar\_leds()}};
-            \node (menu_msg) [io, below=of cfg_leds] {Enviar Mensaje de Menú\\vía UART};
-
-            % --- 2. PUNTO DE RE-ENTRADA Y BUCLE ---
-            \node (uart_check) [decision, below=1.4cm of menu_msg] {¿\texttt{uart.any() > 0}?};
-            
-            % Coordenada de re-entrada (80% hacia abajo)
-            \coordinate (loop_entry) at ($(menu_msg.south)!0.8!(uart_check.north)$);
-
-            \node (read) [io, below=of uart_check] {Leer \texttt{cmd} (1 byte)};
-
-            % --- 3. ESTRUCTURA DE DECISIÓN (MENÚ 1-7) ---
-            \node (dec1) [decision, below=0.7cm of read] {¿Es '1'?};
-            \node (exec1) [process, right=1.5cm of dec1] {Leer Potenciómetro\\y enviar Voltaje};
-
-            \node (dec2) [decision, below=0.7cm of dec1] {¿Es '2'?};
-            \node (exec2) [process, right=1.5cm of dec2] {Leer LDR\\y enviar Hexadecimal};
-
-            \node (dec3) [decision, below=0.7cm of dec2] {¿Es '3'?};
-            \node (exec3) [process, right=1.5cm of dec3] {Calcular y enviar Temp\\(C, F y K)};
-
-            \node (dec4) [decision, below=0.7cm of dec3] {¿Es '4'?};
-            \node (exec4) [process, right=1.5cm of dec4] {Reproducir tono DO\\en Buzzer (0.5s)};
-
-            \node (dec5) [decision, below=0.7cm of dec4] {¿Es '5'?};
-            \node (exec5) [process, right=1.5cm of dec5] {Parpadeo general\\(5 veces)};
-
-            \node (dec6) [decision, below=0.7cm of dec5] {¿Es '6'?};
-            \node (exec6) [process, right=1.5cm of dec6] {Corrimiento LEDs\\Hacia Derecha};
-
-            \node (dec7) [decision, below=0.7cm of dec6] {¿Es '7'?};
-            \node (exec7) [process, right=1.5cm of dec7] {Corrimiento LEDs\\Hacia Izquierda};
-
-            % --- 4. CONEXIONES ---
-            \draw [arrow] (start) -- (import);
-            \draw [arrow] (import) -- (cfg_uart);
-            \draw [arrow] (cfg_uart) -- (cfg_periph);
-            \draw [arrow] (cfg_periph) -- (cfg_leds);
-            \draw [arrow] (cfg_leds) -- (menu_msg);
-            
-            % Conexión vertical hacia el rombo
-            \draw [thick] (menu_msg.south) -- (loop_entry);
-            \draw [arrow] (loop_entry) -- (uart_check);
-
-            % Flujo UART (Si/No)
-            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
-            \draw [arrow] (uart_check.west) -- ++(-0.8,0) node[anchor=south] {No} |- (loop_entry);
-
-            \draw [arrow] (read) -- (dec1);
-
-            % Cascada de decisiones
-            \foreach \current/\next in {1/2, 2/3, 3/4, 4/5, 5/6, 6/7} {
-                \draw [arrow] (dec\current) -- node[anchor=south] {Sí} (exec\current);
-                \draw [arrow] (dec\current) -- node[anchor=east] {No} (dec\next);
-            }
-            \draw [arrow] (dec7) -- node[anchor=south] {Sí} (exec7);
-
-            % --- 5. BUS DE RETORNO ---
-            \coordinate (bus) at ($(exec1.east) + (1.0,0)$); 
-            
-            \foreach \i in {1, 2, 3, 4, 5, 6, 7} {
-                \draw [arrow] (exec\i.east) -- (bus |- exec\i.east);
-            }
-            
-            % Retorno del bus al punto de unión
-            \draw [arrow] (bus |- exec7.east) -- (bus) |- (loop_entry);
-
-            % Caso "No" final (comando no reconocido o fin de menú)
-            \draw [arrow] (dec7.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec7.east);
-
-        \end{tikzpicture}
-        \centering
-        \caption{Diagrama de flujo para la Actividad 5.}
-    \end{figure}
+    \noindent El flujo de datos es estrictamente secuencial: el RP2040 crea primero la interfaz SPI y después envía comandos de configuración al ST7735 para inicializarlo, corregir el orden de color y fijar la rotación. Una vez establecida la pantalla, se transmite un bloque de color sólido para el fondo y, al final, dos tramas de texto con coordenadas, escala y color distintos. Como no hay bucles ni condiciones en este script, la secuencia se ejecuta una sola vez y la imagen queda estática en el display.
 
     \subsection*{Desarrollo}
 
-    El código implementado se muestra a continuación:
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
-    \lstinputlisting[language={[LAB]Python}, caption={Código de la Actividad 5 Comentado}, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
-
-    \subsection*{Análisis de resultados}
-
-    En la imagen siguiente se muestra la ejecución del programa y los resultados. Para la acción 1 se muestra el voltaje actual del potenciometro que es de 3.10. Para la acción 2 se muestra el resultado de la conversión AD de la foto-resistencia en hexadecimal. Para la acción 3 se muestra la temperatura del sensor TMP36 en grados C, F y K. Para la acción 4 se muestra un menseje indicando la activación del zumbador mostrando la nota Do y de igual forma se muestran mensajes indicando la acción que se esta ejecundo actualmente.
 
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.9\textwidth]{img/Actividad5/Act5_0.png}
-        \caption{Programa cargado y ejecutándose en la Raspberry Pi Pico.}
+        \includegraphics[width=0.5\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Despliegue gráfico en el panel TFT ST7735. El microcontrolador inicializa la comunicación SPI a 20 MHz y reconfigura la orientación geométrica de la pantalla a modo apaisado (\texttt{rotation(2)}). Se comprueba el control directo, el fondo de color blanco (\texttt{fill}) y renderizar las cadenas estáticas "MICROS" (en color rojo) y "FI" (en color verde).}
     \end{figure}
 
-    Las siguientes imegenes muestran el funcionamiento de las actividades 5, 6 y 7.
+    \subsection*{Análisis de resultados}
+    Al cargar el script, el microcontrolador inicializa la pantalla TFT de forma exitosa mediante \texttt{tft.initg()}. Esta instrucción manda la secuencia de voltajes y comandos necesarios para despertar el panel. La línea \texttt{tft.rgb(True)} resulta clave para el correcto despliegue visual, ya que en algunos de estos módulos los canales de color rojo y azul vienen invertidos de fábrica (formato BGR en lugar de RGB); este parámetro corrige esa desviación por software.
 
-    \textbf{Actividad 5} Prender y apagar 5 veces GPIO0 al GPIO7.
+    La instrucción \texttt{tft.rotation(2)} reordena las direcciones de la memoria gráfica, lo que voltea la imagen para que coincida con la disposición horizontal en la que suele montarse la pantalla físicamente. A continuación, \texttt{tft.fill(TFT.WHITE)} inunda todos los píxeles de blanco. Por último, la función \texttt{tft.text()} traduce las letras a puntos de color rojo y verde en las posiciones (10, 10) y (25, 30), 
+    escalando la fuente a tamaño 2. Esto comprueba que el RP2040 puede gestionar gráficos y colores de manera directa utilizando librerías dedicadas.
 
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/Actividad5/Act5_1.jpg}
-        \caption{Apagado del GPIO0 al GPIO7}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/Actividad5/Act5_1_2.jpg}
-        \caption{Encendido del GPIO0 al GPIO7}
-    \end{subfigure}
-    \caption{Ciclo de encendido y apagado.}
-\end{figure}
-
-\newpage
-\textbf{Actividad 6} Corrimiento a la derecha de los 8 leds GPIO0 - GPIO7
-
-\begin{figure}[H]
-    \centering
-    % Primera fila: 4 imagenes
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_3.jpg}
-        \caption{Posición 1}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_4.jpg}
-        \caption{Posición 2}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_5.jpg}
-        \caption{Posición 3}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_6.jpg}
-        \caption{Posición 4}
-    \end{subfigure}
-
-    \vspace{0.5cm} % Espacio entre filas
-
-    % Segunda fila: 4 imagenes
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_7.jpg}
-        \caption{Posición 5}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_8.jpg}
-        \caption{Posición 6}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_9.jpg}
-        \caption{Posición 7}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_2.jpg}
-        \caption{Posición 8}
-    \end{subfigure}
-    \caption{Secuencia de corrimiento a la derecha (Comando '6').}
-\end{figure}
-
-\textbf{Actividad 7} Corrimiento a la izquierda de los 8 leds GPIO0 - GPIO7
-
-\begin{figure}[H]
-    \centering
-    % Secuencia invertida para corrimiento a la izquierda
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_2.jpg}
-        \caption{Posición 1}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_9.jpg}
-        \caption{Posición 2}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_8.jpg}
-        \caption{Posición 3}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_7.jpg}
-        \caption{Posición 4}
-    \end{subfigure}
-
-    \vspace{0.5cm}
-
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_6.jpg}
-        \caption{Posición 5}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_5.jpg}
-        \caption{Posición 6}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_4.jpg}
-        \caption{Posición 7}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, height=3cm, keepaspectratio]{img/Actividad5/Act5_3.jpg}
-        \caption{Posición 8}
-    \end{subfigure}
-    \caption{Secuencia de corrimiento a la izquierda (Comado ´7').}
-\end{figure}
-
-
-    \textbf{Verificación de funcionamiento:}
-
-    \begin{itemize}
-        \item \textbf{Comando `1':} Se leyó correctamente el valor del potenciómetro conectado al pin ADC26, mostrando el voltaje en volts con dos decimales.
-        
-        \item \textbf{Comando `2':} La fotorresistencia (ADC27) entregó su valor de conversión analógico-digital en formato hexadecimal, variando según la luz incidente.
-        
-        \item \textbf{Comando `3':} El sensor TMP36 (ADC28) reportó la temperatura ambiente en las tres escalas: Celsius, Fahrenheit y Kelvin, con una precisión de un decimal.
-        
-        \item \textbf{Comando `4':} Se generó la nota musical DO (261 Hz) durante 0.5 segundos mediante el PWM conectado al pin 22, produciendo un tono audible.
-        
-        \item \textbf{Comando `5':} Los 8 LEDs (GPIO0 a GPIO7) parpadearon simultáneamente 5 veces, con una pausa de 0.2 segundos entre cada cambio de estado.
-        
-        \item \textbf{Comando `6':} Se realizó un corrimiento de luz hacia la derecha: cada LED se encendió y apagó secuencialmente desde GPIO0 hasta GPIO7.
-        
-        \item \textbf{Comando `7':} Se realizó un corrimiento de luz hacia la izquierda: cada LED se encendió y apagó secuencialmente desde GPIO7 hasta GPIO0.
-    \end{itemize}
-
-    \textbf{Observaciones generales:}
-
-    La comunicación UART a 9600 baudios funcionó de manera estable y sin pérdida de datos. El uso de \texttt{uart.read(1)} permitió leer un solo carácter a la vez, simplificando el parseo de comandos. La respuesta del sistema fue inmediata al enviar cada comando, gracias al tiempo de sleep de 50 ms en el bucle principal.
-
-    En conclusión, se logró implementar un sistema de control versátil que integra múltiples periféricos (ADC, PWM, GPIO) controlados remotamente a través de comunicación serie, demostrando el potencial de la Raspberry Pi Pico como plataforma para adquisición de datos y control de actuadores.
     \newpage
 
     \section*{Actividad 6}
-    Conectando el módulo bluetooth, realizar un programa que ejecute las acciones indicadas en la tabla 7-4.
 
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|}
-            \hline
-            \rowcolor[HTML]{5B9BD5} 
-            \textcolor{white}{\textbf{Dato recibido}} & \textcolor{white}{\textbf{Acción}} \\ \hline
-            `A' & GPIO0 = ON \\ \hline
-            `T' & GPIO1 = ON \\ \hline
-            `D' & GPIO2 =ON \\ \hline
-            `I' & GPIO3 =ON \\ \hline
-            S & GPIO0:GPIO3 = OFF \\ \hline
-        \end{tabular}
-        \caption*{Tabla 7-4. Control; actividad 6}
-    \end{table}
+    Realizar un programa que muestre los nombres de cada integrante de su equipo; elegir el formato que desee, así como el color para cada campo.
 
-    \noindent \textit{\textcolor[HTML]{4A72B8}{Nota: Descargar la aplicación de control bluetooth de la página del Laboratorio de Microcomputadoras.}}
+    \begin{center}
+    \begin{tikzpicture}
+        % Rectángulo exterior
+        \draw[ultra thick] (0,0) rectangle (4.5, 6);
+        
+        % Textos en posiciones específicas
+        \node[font=\sffamily\large\bfseries, text=black, anchor=west] at (0.2, 5.2) {Texto 1};
+        \node[font=\sffamily\large\bfseries, text=blue!70!black, anchor=west] at (1.4, 4.1) {Texto 2};
+        \node[font=\sffamily\large\bfseries, text=red, anchor=west] at (0.2, 3.0) {Texto 3};
+        \node[font=\sffamily\large\bfseries, text=green!70!black, anchor=west] at (1.6, 1.9) {Texto 4};
+        
+        % Texto 5 rotado -90 grados (escrito de arriba hacia abajo)
+        \node[font=\sffamily\large\bfseries, text=orange!90!yellow, rotate=-90, anchor=west] at (3.8, 3.2) {Texto 5};
+    \end{tikzpicture}
 
-    \vspace{0.5cm}
+    \vspace{10pt}
+    \sffamily Figura 8-8. Despliegue propuesto; actividad 6
+    \end{center}
+
 
     \subsection*{Propuesta de solución}
 
-    Para poder implementar la tabla de control de la actividad 6, es necesario configurar la comunicación UART a través del módulo Bluetooth. Debido a que se va requerir controlar los pines GPIO es necesario impotar los modulos \texttt{Pin} y \texttt{UART} de la librería \texttt{machine}. 
+    Dado que se va a trabajar con una pantalla TFT, es necesario importar la biblioteca \texttt{ST7735} para controlar el display. De igual modo se hace uso de la biblioteca \texttt{machine} especificamente para los módulos \texttt{SPI} y \texttt{Pin} para configurar la comunicación SPI y los pines de control. Se define el bus SPI con una frecuencia de 20 MHz, asignando los pines correspondientes para SCK, MOSI y MISO.
 
-    Una vez importados los módulos, se configura la comunicación UART a través del módulo Bluetooth, para esto por medio de la función \texttt{UART} se establece la velocidad de comunicación \textit{baudrate} a 9600 baudios, se asignan los pines de transmisión y recepción (TX = \texttt{PIN 16} y RX = \texttt{PIN 17}).
+    El paso siguiente es realizar la configuración del display donde se debe crear un objeto de la clase \texttt{TFT} con los parámetros de pin de Datos/Comando, reset, y el CS. Luego se inicializa el display con \texttt{tft.initg()}, se corrige el orden de color con \texttt{tft.rgb(True)}, se fija la orientación con \texttt{tft.rotation(1)} para usar la pantalla en modo horizontal, ya con la pantalla configurada se pinta un fondo negro con \texttt{tft.fill(TFT.BLACK)} para asegurar un buen contraste.
 
-    Posteriormente, se configuran los pines GPIO0 a GPIO3 como salidas digitales (\texttt{Pin.OUT}) para controlar los LEDs que se encuentran conectados a estos pines.
-
-    Posteriormente a declarar los pines, se procede a implementar un bucle infinito el cual constantemente monitorea el buffer de recepción del puerto serie, utilizando la función \texttt{uart.any()} para verificar si hay datos disponibles. Si se recibe un comando, se lee el primmer carácter del buffer con \texttt{uart.read(1)}, se convierte los bytes recibidos a una cadena de texto usando \texttt{decode('utf-8')} además por medio del método \texttt{upper()} se asegura que el comando se interprete correctamente sin importar si el usuario lo ingresa en mayúscula o minúscula.
-
-    Al obtener el comando recibido, por medio de una estructura condicional \texttt{if-elif} se identifica que acción se debe ejecutar, dependiendo del comando se asignan los valores necesarios a los pines para lograr el encendido o apagado deseado.
+    Ya con la pantalla y el fondo de color de la misma se procede a realizar la escritura del nombre de los integrantes del equipo, debido a la longitud del tamaño de los nombres, se opto por usar abreviaturas o pseudónimos. Para colocar texto en pantalla se hace uso del método \texttt{tft.text(Coord, Nombre, Color, TipoLetra, Tamaño, AjusteLinea)}. De forma que usando este comando se colocaron los nombres del equipo, donde para que el texto no se amontonara o se viera de un mismo color los argumentos que se cambiaron por cada nombre es \texttt{Coord} donde la coordenada en Y se incremento de 20 en 20, el nombre con el texto correspondiente, el color, y el tamaño de fuente solo se modifico cuando se coloco el texto correspondiente al número de equipo para que destacara.
 
     \begin{figure}[H]
         \begin{tikzpicture}[
-            node distance=0.5cm,
-            every node/.style={scale=0.75, font=\small},
-            % Estilos de los bloques
-            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
-            process/.style={rectangle, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
-            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
-            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3.8cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
+            scale=1.0, transform shape,
+            node distance=8mm and 12mm,
+            every node/.style={font=\small\sffamily},
+            % Definición de estilos de nodos
+            startstop/.style={rectangle, rounded corners, draw=black, fill=red!20, minimum width=3cm, minimum height=1cm, text centered},
+            process/.style={rectangle, draw=black, fill=orange!20, minimum width=3cm, minimum height=1cm, text centered, align=center},
             arrow/.style={thick, ->, >=stealth}
         ]
 
-            % --- 1. BLOQUES DE INICIALIZACIÓN ---
-            \node (start) [startstop] {Inicio};
-            \node (import) [process, below=of start] {Importar \texttt{Pin}, \texttt{UART}};
-            \node (uart_cfg) [process, below=of import] {Configurar UART0\\(9600 bps, Pins 16, 17)};
-            \node (led_cfg) [process, below=of uart_cfg] {Configurar Pins LED\\(0, 1, 2, 3) como OUT};
-
-            % --- 2. PUNTO DE RE-ENTRADA Y BUCLE ---
-            \node (uart_check) [decision, below=1.5cm of led_cfg] {¿\texttt{uart.any() > 0}?};
+            % --- Declaración de Nodos ---
+            \node (inicio) [startstop] {Inicio};
             
-            % Coordenada de re-entrada (80% hacia abajo)
-            \coordinate (loop_entry) at ($(led_cfg.south)!0.8!(uart_check.north)$);
-
-            \node (read) [io, below=of uart_check] {Leer \texttt{data}\\(Decode + Upper)};
-
-            % --- 3. ESTRUCTURA DE CONTROL (IF/ELIF) ---
-            \node (dec_a) [decision, below=0.8cm of read] {¿Es 'A'?};
-            \node (exec_a) [process, right=2cm of dec_a] {\texttt{led0.value(1)}};
-
-            \node (dec_t) [decision, below=0.8cm of dec_a] {¿Es 'T'?};
-            \node (exec_t) [process, right=2cm of dec_t] {\texttt{led1.value(1)}};
-
-            \node (dec_d) [decision, below=0.8cm of dec_t] {¿Es 'D'?};
-            \node (exec_d) [process, right=2cm of dec_d] {\texttt{led2.value(1)}};
-
-            \node (dec_i) [decision, below=0.8cm of dec_d] {¿Es 'I'?};
-            \node (exec_i) [process, right=2cm of dec_i] {\texttt{led3.value(1)}};
-
-            \node (dec_s) [decision, below=0.8cm of dec_i] {¿Es 'S'?};
-            \node (exec_s) [process, right=2cm of dec_s] {Apagar todos\\los LEDs};
-
-            % --- 4. CONEXIONES ---
+            \node (spi) [process, below=of inicio, text width=5.5cm] {Configurar bus \texttt{SPI(0)}\\ Pines SCK=2, MOSI=3, MISO=4};
             
-            % Inicialización
-            \draw [arrow] (start) -- (import);
-            \draw [arrow] (import) -- (uart_cfg);
-            \draw [arrow] (uart_cfg) -- (led_cfg);
+            \node (tft) [process, below=of spi, text width=6cm] {Inicializar display \texttt{TFT} (CS = Pin 7)\\ Activar RGB y modo apaisado};
             
-            % Bucle principal
-            \draw [thick] (led_cfg.south) -- (loop_entry);
-            \draw [arrow] (loop_entry) -- (uart_check);
-
-            % Flujo UART
-            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
-            \draw [arrow] (uart_check.west) -- ++(-1,0) node[anchor=south] {No} |- (loop_entry);
-
-            \draw [arrow] (read) -- (dec_a);
-
-            % Cascada de decisiones de caracteres
-            \foreach \x/\y in {a/t, t/d, d/i, i/s} {
-                \draw [arrow] (dec_\x) -- node[anchor=south] {Sí} (exec_\x);
-                \draw [arrow] (dec_\x) -- node[anchor=east] {No} (dec_\y);
-            }
-            \draw [arrow] (dec_s) -- node[anchor=south] {Sí} (exec_s);
-
-            % --- 5. BUS DE RETORNO ---
-            \coordinate (bus) at ($(exec_a.east) + (1.2,0)$); 
+            \node (fondo) [process, below=of tft, text width=4.5cm] {Limpiar la pantalla:\\ \texttt{tft.fill(TFT.BLACK)}};
             
-            \foreach \x in {a, t, d, i, s} {
-                \draw [arrow] (exec_\x.east) -- (bus |- exec_\x.east);
-            }
+            \node (nombres) [process, below=of fondo, text width=6cm] {Escribir lista de nombres:\\ \texttt{"Perci", "Tenshi", "Victor", "Fofo"}\\ (Con diferentes colores y eje Y)};
             
-            % Retorno del bus al punto de unión
-            \draw [arrow] (bus |- exec_s.east) -- (bus) |- (loop_entry);
+            \node (titulo) [process, below=of nombres, text width=5.5cm] {Escribir título:\\ \texttt{"Equipo 6"} en (5, 100)\\ Tamaño de fuente: Escala 2};
+            
+            \node (fin) [startstop, below=of titulo] {Fin};
 
-            % Caso "No" final (si no es ninguna de las letras anteriores)
-            \draw [arrow] (dec_s.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec_s.east);
+            % --- Conexiones Lineales ---
+            \draw [arrow] (inicio) -- (spi);
+            \draw [arrow] (spi) -- (tft);
+            \draw [arrow] (tft) -- (fondo);
+            \draw [arrow] (fondo) -- (nombres);
+            \draw [arrow] (nombres) -- (titulo);
+            \draw [arrow] (titulo) -- (fin);
+
         \end{tikzpicture}
         \centering
-        \caption{Diagrama de flujo para la Actividad 6.}
     \end{figure}
+
 
     \subsection*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6,basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=-90]{img/Actividad6/Act6_1.png}
+        \caption{Actividad 6:Despliegue gráfico en el panel TFT ST7735, mostrando los nombres de cada integrante del equipo}
+    \end{figure}
+
     \subsection*{Análisis de resultados}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_5.jpg}
-        \caption{Presionando el botón: \texttt{A} - LED 0 encendido.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_1.jpg}
-        \caption{Presionando el botón: \texttt{T} - LED 1 encendido.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_2.jpg}
-        \caption{Presionando el botón: \texttt{D} - LED 2 encendido.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_3.jpg}
-        \caption{Presionando el botón: \texttt{I} - LED 3 encendido.}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[angle=90,width=0.75\textwidth]{img/Actividad6/Act6_4.jpg}
-        \caption{Presionando el botón: \texttt{S} - Todos los LED apagados.}
-    \end{figure}
-
-    Cargando el programa anteriormente descrito así como vinculando el módulo Bluetooth a la Raspberry Pi Pico, se logró controlar el encendido y apagado de los LEDs conectados a los pines GPIO0 a GPIO3, de acuerdo a los comandos enviados desde la aplicación de control Bluetooth. Cada comando activó el LED correspondiente o apagó todos los LEDs según lo especificado en la tabla de control,donde la comunicación que se realiza través de la aplicación que se conecta al modulo bluetooth fue estable, de forma que la comunicación por medio del protocolo UART se realizó sin pérdida de datos, permitiendo que cada comando se ejecute de manera inmediata al ser enviado desde la aplicación.
+    A partir de la imagen obtendida se puede observar que el programa logra desplegar los nombres de cada integrante del equipo, usando diferentes colores para cada nombre y un título con un tamaño de fuente más grande para destacar el número de equipo. A demás los textos se encuentran bien distribuidos en la pantalla, evitando que se amontonen y asegurando una buena legibilidad. Por lo que para mostrar texto en el display TFT se hizo uso del método \texttt{tft.text()} que permite colocar texto en coordenadas específicas, con un color y tamaño de fuente determinado, lo que facilita la personalización del despliegue gráfico así como personalizar el formato de presentación de la información. Ya que se podrían importar fuentes tipográficas adicionales para usar en el display, o incluso crear gráficos personalizados para acompañar el texto, aprovechando la capacidad de color y resolución del panel TFT.
 
     \newpage
     \section*{Actividad 7}
-    Realizar un programa que controle el funcionamiento de los motores de Corriente Directa de la practica 5, por medio de la comunicación serie empleando el módulo Bluetooth.
 
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|c|}
-            \hline
-            \rowcolor[HTML]{5B9BD5} 
-            \cellcolor[HTML]{5B9BD5}\textcolor{white}{\textbf{Comando}} & \multicolumn{2}{c|}{\cellcolor[HTML]{5B9BD5}\textcolor{white}{\textbf{ACCION}}} \\ \cline{2-3} 
-            \rowcolor[HTML]{5B9BD5} 
-            \cellcolor[HTML]{5B9BD5}\textcolor{white}{\textbf{Puerto Serie}} & \cellcolor[HTML]{D9E2F3}\textbf{MOTOR 1} & \cellcolor[HTML]{D9E2F3}\textbf{MOTOR 2} \\ \hline
-            ``S'' & PARO & PARO \\ \hline
-            ``A'' & HORARIO & HORARIO \\ \hline
-            ``T'' & ANTI-HORARIO & ANTI-HORARIO \\ \hline
-            ``D'' & HORARIO & ANTI-HORARIO \\ \hline
-            ``I'' & ANTI-HORARIO & HORARIO \\ \hline
-        \end{tabular}
-        \caption*{Tabla 7-5. Control UART; actividad 7}
-    \end{table}
+    Realizar un programa que muestre el valor del contador generado por dos entradas
+    digitales, tal como se muestra en la tabla 8-3; el contador debe mostrarse en los tres dispositivos
+    utilizados en esta práctica (Display TFT, Matriz 4x8x8 y el Display de 8 dígitos) al mismo tiempo.
 
-\noindent \textit{\textcolor[HTML]{4A72B8}{Nota: Descargar la aplicación de control bluetooth de la página del Laboratorio de Microcomputadoras.}}
+    \begin{tikzpicture}[
+        scale=0.65, transform shape,
+        pin_label/.style={font=\sffamily\bfseries\small},
+        title_label/.style={font=\sffamily\bfseries\large, text=blue!60!black},
+        dest_label/.style={font=\sffamily\bfseries\normalsize, text=black},
+        break_label/.style={font=\sffamily\bfseries\small, fill=white, inner sep=1.5pt} 
+    ]
 
-    \section*{Propuesta de solución}
 
-    Para implementar el control de los motores de corriente directa de acuerdo a los comandos recibidos por Bluetooth, es necesario en el programa importar la librería \texttt{machine} donde se usaran los módulos de salida \texttt{Pin} para controlar los pines GPIO y el módulo \texttt{UART} para el protocolo de comunicación serial.
+        \picoboard
 
-    Una vez importadas las librerías, es necesario configurar la comunicación \texttt{UART} a través del módulo Bluetooth, para esto por medio de la función \texttt{UART} se establece la velocidad de comunicación \textit{baudrate} a 9600 baudios, se asignan los pines de transmisión y recepción (TX = \texttt{PIN 16} y RX = \texttt{PIN 17}).
+        \node[title_label, anchor=south west] at (-11.5, -0.2) {Display 8 dígitos};
+        
+        % Caja principal
+        \draw[thick] (-11.5, -0.5) rectangle (-4.5, -3.5);
+        
+        % Rectángulos de los 8 dígitos
+        \foreach \i in {0,...,7} {
+            \draw[thick] (-11.2 + \i*0.8, -0.8) rectangle ++(0.65, -2.4);
+        }
 
-    Posteriormente, se configuran los pines de los motores, dado que el control de los motores se realiza por medio de un puente H, se necesitan 3 pines para controlar el motor, 2 pines para la dirección del giro y un pin para apagar o encender el motor. Para el primer motor se usan los pines \texttt{GPIO0}, \texttt{GPIO1} y \texttt{GPIO20}, mientras que para el segundo motor se usan los pines \texttt{GPIO2}, \texttt{GPIO3} y \texttt{GPIO19}. Es importante destacar que todos los pines se configuran como salidas digitales (\texttt{Pin.OUT}).
+        % Conexión VCC 
+        \draw[red, thick] (-6.5, -0.5) -- (-6.5, 0.5) -- (-5.5, 0.5);
+        \node[break_label] at (-6.5, -0.5) {VCC};
+        \node[above, pin_label] at (-6.5, 0.5) {5V};
+        \node[right, pin_label] at (-5.5, 0.5) {VBUS};
 
-    Para una mejor organización del código, se define una función auxiliar llamada \texttt{control\_motor} la cuál realiza dos acciones principales, la primeara es elegir que pines usar según el número que recibe como argumento y la segunda es ejecutar la acción correspondiente al comando recibido, para esto se hace uso de una estructura condicional \texttt{if-elif} que compara el comando recibido con los caracteres definidos en la tabla de control, dependiendo del comando se asignan los valores necesarios a los pines para lograr el giro deseado o detener el motor.
+        % Conexión GND
+        \draw[thick] (-6.5, -3.5) -- (-6.5, -4.5);
+        \node[break_label] at (-6.5, -3.5) {GND};
+        
+        % Símbolo de Tierra
+        \draw[thick] (-7.0, -4.5) -- (-6.0, -4.5);
+        \draw[thick] (-6.8, -4.65) -- (-6.2, -4.65);
+        \draw[thick] (-6.6, -4.8) -- (-6.4, -4.8);
+        \node[right, pin_label] at (-6.0, -4.65) {GND};
 
-    Antes de entrar al bucle principal, se inicializa en estado de apago ambos motores, para esto se asigna un valor de 0 a los pines de control de ambos motores, esto con la finalidad de evitar que los motores se activen de manera inesperada al iniciar el programa.
+        % Conexiones laterales derechas
+        \draw[blue!40!black, very thick] (-4.5, -1.8) -- (0, -1.8);
+        \node[above, pin_label] at (-3.7, -1.8) {SCK};
+        
+        \draw[green!60!black, very thick] (-4.5, -2.5) -- (0, -2.5);
+        \node[below, pin_label] at (-3.7, -2.5) {MOSI};
+        
+        \draw[red!80!black, very thick] (-4.5, -3.2) -- (0, -3.2);
+        \node[below, pin_label] at (-3.7, -3.2) {$\overline{SS}$};
 
-    Se implementa un bucle infinito el cual constantemente monitorea el buffer de recepción del puerto serie, utilizando la función \texttt{uart.any()} para verificar si hay datos disponibles. Si se recibe un comando, se lee el primmer carácter del buffer con \texttt{uart.read(1)}, se convierte los bytes recibidos a una cadena de texto usando \texttt{decode('utf-8')} además por medio del método \texttt{upper()} se asegura que el comando se interprete correctamente sin importar si el usuario lo ingresa en mayúscula o minúscula. 
-    De acuerdo al valor del comando recibido  por medio de una estructura condicional \texttt{if-elif} se identifica que acción se debe ejecutar, para esto se llama a la función \texttt{control\_motor} pasando como argumentos el número del motor a controlar y el comando recibido. 
 
+
+        \node[title_label, anchor=south west] at (-11.5, -6.2) {Matriz 8x8 x 4};
+        
+        % Caja principal
+        \draw[thick] (-11.5, -6.5) rectangle (-4.5, -9.5);
+        
+        % Las 4 matrices cuadradas
+        \foreach \i in {0,...,3} {
+            \draw[thick] (-11.1 + \i*1.6, -6.8) rectangle ++(1.3, -2.4);
+        }
+
+        % Conexión VCC
+        \draw[red, thick] (-6.5, -6.5) -- (-6.5, -5.5) -- (-5.5, -5.5);
+        \node[break_label] at (-6.5, -6.5) {VCC};
+        \node[above, pin_label] at (-6.5, -5.5) {5V};
+        \node[right, pin_label] at (-5.5, -5.5) {VBUS};
+
+        % Conexión GND
+        \draw[thick] (-6.5, -9.5) -- (-6.5, -10.5);
+        \node[break_label] at (-6.5, -9.5) {GND};
+        
+        % Símbolo de Tierra
+        \draw[thick] (-7.0, -10.5) -- (-6.0, -10.5);
+        \draw[thick] (-6.8, -10.65) -- (-6.2, -10.65);
+        \draw[thick] (-6.6, -10.8) -- (-6.4, -10.8);
+        \node[right, pin_label] at (-6.0, -10.65) {GND};
+
+        % Conexiones laterales derechas 
+        \draw[blue!40!black, very thick] (-4.5, -7.5) -- (-2.5, -7.5) node[right, dest_label] {GP2};
+        \node[above, pin_label] at (-3.7, -7.5) {CLK};
+        
+        \draw[green!60!black, very thick] (-4.5, -8.2) -- (-2.5, -8.2) node[right, dest_label] {GP3};
+        \node[below, pin_label] at (-3.7, -8.2) {MOSI};
+        
+        \draw[red!80!black, very thick] (-4.5, -8.9) -- (-2.5, -9.4) node[right, dest_label] {GP6};
+        \node[below, pin_label] at (-3.7, -9.2) {$\overline{CS}$};
+
+
+
+        \node[title_label, align=center] at (9.0, 0.2) {DISPLAY TFT\\[0.1cm]ST 7735};
+        
+        % Caja principal
+        \draw[thick] (6.5, -0.8) rectangle (10.5, -5.5);
+
+        % Textos internos derechos
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -1.8) {SCK};
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -2.25) {MOSI};
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -3.0) {$\overline{CS}$};
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -4.0) {RESET};
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -4.8) {A0};
+
+        % Conexiones laterales
+        \draw[blue!40!black, very thick] (10.5, -1.8) -- (12.0, -1.8) node[right, dest_label] {GP2};
+        \draw[green!60!black, very thick] (10.5, -2.25) -- (12.0, -2.25) node[right, dest_label] {GP3};
+        \draw[red!80!black, very thick] (10.5, -3.0) -- (12.5, -3.8) node[right, dest_label] {GP7};
+
+        % Textos VCC
+        \node[right, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (6.5, -1.2) {VCC};
+        \node[left, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (10.5, -1.2) {VCC, LED};
+
+        % Conexión 3.3V
+        \draw[red, thick] (7.2, -0.8) -- (7.2, 0.0);
+        \draw[green!60!black, thick] (6.8, 0.0) -- (7.6, 0.0);
+        \node[above, pin_label] at (7.2, 0.0) {3.3V};
+
+        % Conexión GND inferior
+        \draw[thick] (9.5, -5.5) -- (9.5, -6.1);
+        \draw[green!60!black, thick] (9.5, -6.1) -- (9.5, -6.3);
+        \draw[thick] (9.0, -6.3) -- (10.0, -6.3);
+        \draw[thick] (9.2, -6.45) -- (9.8, -6.45);
+        \draw[thick] (9.4, -6.6) -- (9.6, -6.6);
+        \node[right, pin_label, font=\sffamily\bfseries\itshape\normalsize] at (9.8, -5.8) {GND};
+
+    \end{tikzpicture}
+
+    \begin{center}
+    \begin{tikzpicture}
+        % Se encierra la tabla en un nodo para dibujar la llave al lado
+        \node (tbl1) [inner sep=0pt] {
+            \setlength{\tabcolsep}{8pt}
+            \renewcommand{\arraystretch}{1.3}
+            \arrayrulecolor{white} % Líneas separadoras en blanco
+            
+            \begin{tabular}{>{\columncolor{hdrblue}\color{white}\bfseries}l | l | l}
+            \rowcolor{hdrblue}
+            Control & \textcolor{white}{\textbf{Estado}} & \textcolor{white}{\textbf{Acción}} \\ \hline
+            GPIO12 (Pull\_Up) & \cellcolor{row1blue}Cerrado & \cellcolor{row1blue}Inicia/Reinicia cuenta \\ \hline
+            GPIO13 (Pull\_Up) & \cellcolor{row2blue}Cerrado & \cellcolor{row2blue}Detiene cuenta \\ 
+            \end{tabular}
+        };
+        
+        % Llave decorativa a la derecha
+        \draw [hdrblue, very thick, decorate, decoration={brace, amplitude=6pt, raise=4pt}]
+        (tbl1.north east) -- (tbl1.south east)
+        node [midway, right=14pt, align=left, font=\itshape, text=black] {Display TFT\\Matriz\\Display de 8 dígitos};
+    \end{tikzpicture}
+
+    \vspace{10pt}
+    Tabla 8-3. Acciones de control; actividad 7
+    \end{center}
+    
     \newpage
 
-    \begin{figure}[H]
-        \begin{tikzpicture}[
-            node distance=0.5cm,
-            every node/.style={scale=0.75, font=\small},
-            % Estilos de los bloques
-            startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.8cm, text centered, draw=black, fill=red!20},
-            process/.style={rectangle, minimum width=4cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
-            decision/.style={diamond, aspect=2.5, minimum width=3.8cm, text centered, draw=black, fill=green!20},
-            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3.8cm, minimum height=0.8cm, text centered, draw=black, fill=blue!15},
-            arrow/.style={thick, ->, >=stealth}
-        ]
-
-            \node (start) [startstop] {Inicio};
-            \node (import) [process, below=of start] {Importar \texttt{machine}, \texttt{time}};
-            \node (uart_cfg) [process, below=of import] {Configurar UART0\\(9600 bps, Pins 16, 17)};
-            \node (m1_cfg) [process, below=of uart_cfg] {Configurar Pins Motor 1\\(Dir: 0,1 | En: 20)};
-            \node (m2_cfg) [process, below=of m1_cfg] {Configurar Pins Motor 2\\(Dir: 2,3 | En: 19)};
-            \node (init_p) [process, below=of m2_cfg] {Llamar \texttt{control\_motor}\\M1 y M2 en PARO};
-
-            \node (uart_check) [decision, below=1.5cm of init_p] {¿\texttt{uart.any() > 0}?};
-            
-            \coordinate (loop_entry) at ($(init_p.south)!0.8!(uart_check.north)$);
-
-            \node (read) [io, below=of uart_check] {Leer \texttt{cmd}\\(Decode + Upper)};
-
-            \node (dec_s) [decision, below=0.8cm of read] {¿Es 'S'?};
-            \node (exec_s) [process, right=2cm of dec_s] {M1: PARO / M2: PARO};
-
-            \node (dec_a) [decision, below=0.8cm of dec_s] {¿Es 'A'?};
-            \node (exec_a) [process, right=2cm of dec_a] {M1: HOR / M2: HOR};
-
-            \node (dec_r) [decision, below=0.8cm of dec_a] {¿Es 'R' o 'T'?};
-            \node (exec_r) [process, right=2cm of dec_r] {M1: A-HOR / M2: A-HOR};
-
-            \node (dec_d) [decision, below=0.8cm of dec_r] {¿Es 'D'?};
-            \node (exec_d) [process, right=2cm of dec_d] {M1: HOR / M2: A-HOR};
-
-            \node (dec_i) [decision, below=0.8cm of dec_d] {¿Es 'I'?};
-            \node (exec_i) [process, right=2cm of dec_i] {M1: A-HOR / M2: HOR};
-
-            
-            \draw [arrow] (start) -- (import);
-            \draw [arrow] (import) -- (uart_cfg);
-            \draw [arrow] (uart_cfg) -- (m1_cfg);
-            \draw [arrow] (m1_cfg) -- (m2_cfg);
-            \draw [arrow] (m2_cfg) -- (init_p);
-            
-            \draw [thick] (init_p) -- (loop_entry);
-            \draw [arrow] (loop_entry) -- (uart_check);
-
-            \draw [arrow] (uart_check) -- node[anchor=east] {Sí} (read);
-            \draw [arrow] (uart_check.west) -- ++(-1,0) |- (loop_entry);
-            \node at ($(uart_check.west) + (-0.5,0.3)$) {No};
-
-            \draw [arrow] (read) -- (dec_s);
-
-            \foreach \x/\y in {s/a, a/r, r/d, d/i} {
-                \draw [arrow] (dec_\x) -- node[anchor=south] {Sí} (exec_\x);
-                \draw [arrow] (dec_\x) -- node[anchor=east] {No} (dec_\y);
-            }
-            \draw [arrow] (dec_i) -- node[anchor=south] {Sí} (exec_i);
-
-            \coordinate (bus) at ($(exec_s.east) + (1.2,0)$); 
-            
-            \foreach \x in {s, a, r, d, i} {
-                \draw [arrow] (exec_\x.east) -- (bus |- exec_\x.east);
-            }
-            
-            \draw [arrow] (bus |- exec_i.east) -- (bus) |- (loop_entry);
-
-            \draw [arrow] (dec_i.south) -- node[anchor=west] {No} ++(0,-0.4) -| (bus |- exec_i.east);
-        \end{tikzpicture}
-        \centering
-        \caption{Diagrama de flujo Actividad 7: Programa de control de motores por Bluetooth.}
-    \end{figure}
+    \section*{Propuesta de solución}
+    Para controlar tres periféricos gráficos diferentes de forma simultánea, se implementa una topología de bus SPI compartido. El microcontrolador actúa como maestro y conecta sus únicas líneas de reloj (SCK) y datos (MOSI) a las tres pantallas en paralelo. La regla crítica de esta solución es asignar un pin de Selección de Chip (CS) exclusivo para cada módulo: GP5 para el display de 7 segmentos, GP6 para la matriz 8x8 y GP7 para la pantalla TFT. 
     
+    El flujo del programa depende de botones físicos configurados con resistencias \textit{pull-up} internas. Al presionar el botón de inicio, se activa una bandera lógica que permite a un ciclo continuo aumentar un contador numérico. En cada iteración, el microcontrolador formatea el número como texto y lo envía secuencialmente a cada pantalla activando solo su pin CS correspondiente por breves fracciones de segundo. En la pantalla TFT, se dibuja el texto antiguo en color negro como método de "borrado rápido" antes de pintar el nuevo número, optimizando la velocidad del sistema.
 
+    \noindent En el script actual, las decisiones de inicio y paro están modeladas como banderas lógicas fijas, por lo que la ruta activa entra a \texttt{corriendo} desde el primer ciclo. A partir de ahí, el contador se convierte en texto y se distribuye por SPI a los tres dispositivos usando su CS independiente; la TFT recibe un refresco doble, primero en \texttt{CYAN} y luego en \texttt{BLACK}, para borrar la cifra anterior sin limpiar toda la pantalla.
+
+    \begin{center}
+    \begin{tikzpicture}[
+        scale=0.75, transform shape, % Reduce el tamaño de todo el diagrama al 75%
+        node distance=5mm and 10mm,
+        every node/.style={font=\footnotesize\sffamily}
+    ]
+        % --- Tronco Central Superior ---
+        \node (inicio) [startstop] {Inicio};
+        \node (spi) [process, below=of inicio, text width=6.2cm, align=center] {Importar librerías\\ y configurar el bus \texttt{SPI(0)}};
+        \node (dispositivos) [process, below=of spi, text width=6.2cm, align=center] {Inicializar display de 8 dígitos,\\ matriz 8x8 y pantalla TFT};
+        \node (tft) [process, below=of dispositivos, text width=6.2cm, align=center] {Configurar la TFT\\ y mostrar el título inicial};
+        \node (variables) [process, below=of tft, text width=6.2cm, align=center] {Definir \texttt{contador}, \texttt{corriendo}\\ y las banderas de control};
+        \node (bucle) [process, below=of variables, text width=5cm, align=center] {Entrar al ciclo\\ \texttt{while True}};
+
+        % --- Rombos de Decisión y Fin del Tronco ---
+        \node (inicia) [decision, below=of bucle, yshift=-3mm, text width=3.8cm, align=center] {¿\texttt{btn\_inicia == 0}?};
+        \node (detiene) [decision, below=of inicia, yshift=-6mm, text width=3.8cm, align=center] {¿\texttt{btn\_detiene == 1}?};
+        \node (corriendo) [decision, below=of detiene, yshift=-6mm, text width=3.8cm, align=center] {¿\texttt{corriendo}?};
+        \node (reposo) [process, below=of corriendo, yshift=-4mm, text width=4.5cm, align=center] {Esperar 0.1 s\\ y volver al ciclo};
+
+        % --- Bloques de la Derecha (Acciones Sí) ---
+        \node (arranca) [process, right=14mm of inicia, text width=4.5cm, align=center] {Activar \texttt{corriendo = True}\\ y esperar antirrebote};
+        \node (para) [process, right=14mm of detiene, text width=4.5cm, align=center] {Desactivar \texttt{corriendo}\\ y esperar antirrebote};
+
+        % Pila de bloques a la derecha de "corriendo"
+        \node (muestra) [process, right=14mm of corriendo, text width=4.8cm, align=center] {Convertir \texttt{contador} a texto\\ y enviarlo a los 3 módulos};
+        \node (sale) [process, below=of muestra, text width=4.8cm, align=center] {Mostrar en el display de 8 dígitos,\\ en la matriz y en la TFT};
+        \node (borra) [process, below=of sale, text width=4.8cm, align=center] {Pintar el número en CYAN,\\ esperar 0.5 s y reescribirlo en BLACK};
+        \node (inc) [process, below=of borra, text width=4.8cm, align=center] {Incrementar \texttt{contador}\\ y esperar 0.5 s};
+
+        % --- Conexiones Tronco Superior ---
+        \draw [arrow] (inicio) -- (spi);
+        \draw [arrow] (spi) -- (dispositivos);
+        \draw [arrow] (dispositivos) -- (tft);
+        \draw [arrow] (tft) -- (variables);
+        \draw [arrow] (variables) -- (bucle);
+        \draw [arrow] (bucle) -- (inicia);
+
+        % --- Conexiones de las flechas "No" (Rectas hacia abajo) ---
+        % Se define el punto medio entre nodos para que los retornos se enganchen ahí
+        \draw [arrow] (inicia.south) -- node[right, pos=0.3, font=\scriptsize]{No} (detiene.north) coordinate[midway] (mid1);
+        \draw [arrow] (detiene.south) -- node[right, pos=0.3, font=\scriptsize]{No} (corriendo.north) coordinate[midway] (mid2);
+        \draw [arrow] (corriendo.south) -- node[right, pos=0.3, font=\scriptsize]{No} (reposo.north);
+
+        % --- Conexiones de las flechas "Sí" ---
+        \draw [arrow] (inicia.east) -- node[above, font=\scriptsize]{Sí} (arranca.west);
+        \draw [arrow] (detiene.east) -- node[above, font=\scriptsize]{Sí} (para.west);
+        \draw [arrow] (corriendo.east) -- node[above, font=\scriptsize]{Sí} (muestra.west);
+
+        % --- Retornos al Tronco Central desde "arranca" y "para" ---
+        % Bajan de la caja y se unen al punto medio de la línea central
+        \draw [arrow] (arranca.south) |- (mid1);
+        \draw [arrow] (para.south) |- (mid2);
+
+        % --- Conexiones de la pila de actualización visual ---
+        \draw [arrow] (muestra) -- (sale);
+        \draw [arrow] (sale) -- (borra);
+        \draw [arrow] (borra) -- (inc);
+
+        % --- Bucles de retorno al 'while True' ---
+        % 1. El reposo (cuando no corre) retorna por la IZQUIERDA
+        \draw [arrow] (reposo.west) -- ++(-1.8,0) |- (bucle.west);
+        % 2. El incremento (cuando sí corre) retorna por la DERECHA para evitar cruces
+        \draw [arrow] (inc.east) -- ++(0.8,0) |- (bucle.east);
+
+    \end{tikzpicture}
+    \end{center}
+
+    \newpage
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7,basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7]{Code/Act7.py}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_7.png}
+        \caption{Estado de inicialización ("0"). Esta captura representa la lectura del estado base del sistema (o la detención/reseteo por botón). Los tres periféricos se actualizan para reflejar la variable en cero, validando que el arbitraje de datos del RP2040 funciona desde el primer ciclo de reloj.}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_1.png}
+        \caption{Avance del contador al valor "1". El microcontrolador envía la información a través del bus SPI compartido, conmutando rápidamente los pines de selección de chip (CS) para actualizar el display de 8 dígitos, la matriz de LEDs y la pantalla TFT casi al mismo instante.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_2.png}
+        \caption{Conteo en el valor "2". Se aprecia el efecto de la técnica de borrado selectivo en la pantalla TFT. El número anterior fue sobrescrito en color negro justo antes de renderizar el nuevo valor en cian, logrando una transición limpia y sin parpadeos lentos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_3.png}
+        \caption{Conteo en el valor "3". Los controladores MAX7219 dedicados a la matriz y al display de 7 segmentos procesan las tramas de datos de forma paralela al panel gráfico a color, demostrando la ausencia de latencia visual entre las tres arquitecturas físicas.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_4.png}
+        \caption{Conteo en el valor "4". El formato de cadena configurado en el código (\texttt{"\{:8d\}"}) se hace evidente en el display superior, empujando numéricamente el dígito hacia el extremo derecho, mientras que en la matriz y el TFT se respeta la impresión por coordenadas absolutas.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_5.png}
+        \caption{Conteo en el valor "5". La ejecución continua confirma la estabilidad del bus SPI operando a 10 MHz. A pesar de comunicarse secuencialmente con tres esclavos distintos en cada ciclo, el procesador mantiene un flujo constante sin cuellos de botella.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=-90]{img/Actividad7/Act7_6.png}
+        \caption{Conteo en el valor "6". El avance numérico fluye de manera natural respetando el retardo programado de 0.5 segundos en el código principal, lo que comprueba que la bandera lógica \texttt{corriendo} opera de forma correcta al liberar la pausa del sistema.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+    El código demuestra en la práctica cómo funciona el arbitraje en el protocolo SPI con múltiples esclavos. A nivel de hardware, los tres módulos reciben continuamente la misma señal de reloj y los mismos trenes de datos. Sin embargo, las librerías bajan el voltaje a 0V únicamente en el pin CS del periférico al que va dirigida la instrucción en ese momento exacto. Esto hace que el módulo seleccionado lea la información mientras los otros dos la ignoran por completo, permitiendo actualizar las tres pantallas casi al instante y sin mezclar los datos.
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_1.jpg}
-        \caption{Presionando el botón: \texttt{A} - Motor 1 (Horario) y  Motor 2 (Horario).}
-    \end{figure}
+    Al entrar en el bloque \texttt{if corriendo:}, el contador aumenta su valor. La matriz recibe el dato convertido a texto directo, el display de 8 dígitos lo recibe con formato de espaciado (\texttt{"\{:8d\}"}), y el TFT lo posiciona gráficamente. Un punto técnico destacable es la optimización gráfica en la pantalla a color: en lugar de usar \texttt{tft.fill()} para limpiar toda la pantalla en cada número —lo cual causaría un parpadeo constante y lento—, el programa imprime el número actual en color \texttt{CYAN}, espera un momento y luego reescribe exactamente el mismo número pero en color \texttt{BLACK}. 
+    Esto actúa como una goma de borrar localizada, dejando el espacio listo para el siguiente dígito y asegurando que la cuenta avance de manera rápida y fluida en los tres dispositivos a la vez.
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_2.jpg}
-        \caption{Presionando el botón: \texttt{T} - Motor 1 (Antihorario) y  Motor 2 (Antihorario).}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_3.jpg}
-        \caption{Presionando el botón: \texttt{D} - Motor 1 (Horario) y  Motor 2 (Antihorario).}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_5.jpg}
-        \caption{Presionando el botón: \texttt{I} - Motor 1 (Antihorario) y  Motor 2 (Horario).}
-    \end{figure}
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{img/Actividad7/Act7_4.jpg}
-        \caption{Presionando el botón: \texttt{S} - Motor 1 (Paro) y  Motor 2 (Paro).}
-    \end{figure}
-
-    A partir de las imagenes obtenidas, al cargar el programa en la Raspberry Pi Pico y conectar el módulo Bluetooth por medio de la aplicación de control, se verificó que al presionar cada botón correspondiente a los comandos definidos en la tabla de control, los motores respondían de manera correcta según lo programado. Dicho comportamiento corresponde a las acciones esperadas: los motores giraban en la dirección indicada (horario o antihorario) o se detenían completamente al recibir el comando de paro. El proceso de comunicación se realizó de manera fluida y sin retrasos perceptibles, de forma que la implementación del protocolo UART a través del módulo Bluetooth fue exitosa y eficiente para el control remoto de los motores.
 
     \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} A través de la resolución e implementación de las acticidades de esta práctica, logré comprender a fondo el funcionamiento de la comunicación serie asíncrona por medio del protocolo UART, así como la importancia de configurar correctamente los parámetros de comunicación (baud rate, bits de datos, bits de paro) para establecer una conexión exitosa entre la Raspberry Pi Pico y otros dispositivos.
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la resolución de las actividades propuestas en esta práctica, logré tener una mejor comprensión del funcionamiento y aplicación del protocolo de comunicación SPI, ya que a partir de este protocolo se pueden controlar múltiples dispositivos, especificamente en está practica el control de diferentes displays, como el display de 8 dígitos, la matriz de LEDs y la pantalla TFT. Al implementar el código para controlar estos dispositivos, pude compredner los valores de configuración necesarios para establecer la comunicación, como la frecuencia de reloj y la asignación de pines para SCK, MOSI y MISO. Además, al trabajar con el bus SPI compartido, entendí cómo se pueden gestionar múltiples periféricos utilizando líneas de control independientes (CS) para cada dispositivo, lo que permite una comunicación eficiente sin interferencias entre ellos.
         
-        Al hacer uso de terminales externas como PuTTY, pude comprender cómo la comunicación se establece de manera transparente, permitiendo interactuar directamente con el REPL de MicroPython sin intermediarios, lo que resulta más estable y predecible que la consola integrada de Thonny para aplicaciones de comunicación serie pura.  De forma que esta práctica me permitió diferenciar claramente entre las herramientas de desarrollo (Thonny) y las herramientas de comunicación serie (terminales externas), entendiendo que cada una tiene aplicaciones específicas, así como la importancia de la comunicación UART ya sea por medio de cable serial o por medio de un módulo Bluetooth para el control remoto de dispositivos, sinedo una aplicación de gran relevancia en el mundo de las aplicaciones de los microntroladores y la ingeniería en general.
+        Por otro lado también logré comprender la importancia de las librerías específicas para cada dispositivo, ya que estas simplifican significativamente el proceso de programación al proporcionar funciones predefinidas para inicializar los displays, configurar sus parámetros y mostrar información de manera sencilla, de forma que el usar MicroPython y las librerías adecuadas proporcionan un buen flujo de trabajo a la hora de implementar soluciones con la Raspberry Pi Pico y hardware adicional.
         
-   
 
-        \item \textbf{Flores Colin Victor Jaziel:} En esta septima práctica, comprendí la importancia y el funcionamiento de la comunicación serie asíncrona UART, enfocándome en la identificación y configuración de puertos COM para establecer comunicación entre la Raspberry Pi Pico y una laptop o computadora. Al utilizar terminales externas como PuTTY o el Monitor Serie de Arduino, noté cómo la conexión se establece de manera transparente a una velocidad específica (9600 baudios), permitiendo interactuar directamente con el REPL de MicroPython sin intermediarios, lo que resulta más estable y predecible que la consola integrada de Thonny para aplicaciones de comunicación serie pura.
+        \item \textbf{Flores Colin Victor Jaziel:} A lo largo de esta práctica número ocho he comprendido el funcionamiento del protocolo SPI como medio de comunicación síncrona para controlar múltiples dispositivos desde un solo microcontrolador y esto fue evidenciado al trabajar con diferentes módulos que fueron controlados a partir de la Raspberry. Al trabajar con el display de 8 dígitos, la matriz de LEDs MAX7219 y la pantalla TFT ST7735, pude observar cómo se comparten las líneas de reloj (SCK) y datos (MOSI), mientras que cada periférico se selecciona de manera independiente mediante su propio pin CS, evitando interferencias. También entendí la importancia de configurar correctamente parámetros como la frecuencia de reloj y la asignación de pines y finalmente, comprobé que el uso de librerías específicas como max7219\_8digit, max7219.py y ST7735 simplifica enormemente la programación, permitiendo inicializar, configurar y mostrar información en cada dispositivo con pocas instrucciones.
 
-        Identificar el puerto COM asignado a la Pico a través del Administrador de Dispositivos y configurar correctamente la terminal externa me sirvió para comprender la importancia de los parámetros de comunicación (baud rate, bits de datos, bits de paro) y cómo estos deben coincidir en ambos extremos para lograr una transmisión exitosa. Esta práctica me permitió diferenciar claramente entre las herramientas de desarrollo (Thonny) y las herramientas de comunicación serie (terminales externas), entendiendo que cada una tiene aplicaciones específicas: Thonny es ideal para programar y depurar, mientras que las terminales externas son más adecuadas para pruebas de comunicación y aplicaciones que requieren interacción directa con el REPL.
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré integrar de forma más clara el uso del bus SPI como medio de comunicación síncrona para controlar distintos dispositivos con un mismo microcontrolador. Al trabajar con el display de 8 dígitos, la matriz MAX7219 y la pantalla TFT ST7735 entendí mejor cómo se comparten las líneas de reloj y datos, pero se mantiene el control independiente de cada periférico mediante su pin de selección de chip, lo cual hace posible que varios módulos funcionen sin interferirse entre sí.
 
-        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica comprendí la importancia y el funcionamiento de la comunicación serial asíncrona, enfocándome en el uso del módulo \texttt{select} para evitar bloqueos en el microcontrolador. Al utilizar funciones como \texttt{poll(0)} y \texttt{read(1)}, noté cómo el procesador puede seguir ejecutando otras tareas de fondo mientras está a la espera de recibir instrucciones, lo que es un enfoque muchísimo más eficiente que detener todo el flujo del programa esperando que el usuario ingrese un comando.
-        
-        Implementar este envío y recepción de  datos para desencadenar acciones físicas, como encender un LED o configurar el giro y paro de motores de corriente directa con un módulo Bluetooth, me sirvió mucho para ver la aplicación práctica de estos conceptos. 
-
+        También me quedó más claro que las librerías dedicadas simplifican mucho la programación, porque permiten inicializar la pantalla, corregir el orden de color, orientar la imagen y escribir texto con solo unas cuantas instrucciones. 
+    
     \end{itemize}
 
     \newpage
 
-    % Impresión Referencias
-    \nocite{*}
+
+    \nocite{*} 
     \printbibliography[heading=bibintoc, title={Referencias}]
 \end{document}

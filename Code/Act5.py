@@ -1,71 +1,25 @@
-from machine import Pin, UART, ADC, PWM
-import time
+from ST7735 import TFT
+from sysfont import sysfont
+from machine import SPI, Pin
 
-# Configuración UART
-uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+# Configuración SPI0. Las pantallas TFT ST7735 suelen requerir una frecuencia alta (20MHz) y polaridad 0
+spi = SPI(0, baudrate=20000000, polarity=0, phase=0, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
 
-# Configuración de periféricos de prácticas anteriores 
-pot = ADC(26)
-ldr = ADC(27)
-tmp36 = ADC(28)
-buzzer = PWM(Pin(22))
-buzzer.duty_u16(0)
-leds = [Pin(i, Pin.OUT) for i in range(8)]
+# Inicialización (spi, A0/DC=15, RESET=14, CS=5)
+tft = TFT(spi, 15, 14, 5)
 
-def apagar_leds():
-    for led in leds: led.value(0)
+# Rutina de inicio en hardware de la pantalla
+tft.initg()
 
-uart.write('Menú Actividad 5 listo. Ingrese una opcion (1-7):\n')
+# Configura el espacio de color correcto (True para pantallas que invierten BGR por RGB)
+tft.rgb(True)
 
-while True:
-    if uart.any() > 0:
-        # Lee 1 byte y lo decodifica a texto
-        cmd = uart.read(1).decode('utf-8') 
-        
-        if cmd == '1':
-            voltaje = pot.read_u16() * (3.3 / 65535)
-            uart.write(f"Potenciometro: {voltaje:.2f} V\n")  
-            
-        elif cmd == '2':
-            val_ldr = ldr.read_u16()
-            uart.write(f"LDR (Hex): {hex(val_ldr)}\n")  
-            
-        elif cmd == '3':
-            v_tmp = tmp36.read_u16() * (3.3 / 65535)
-            temp_c = (v_tmp - 0.5) * 100
-            temp_f = (temp_c * 9/5) + 32
-            temp_k = temp_c + 273.15
-            uart.write(f"TMP36: {temp_c:.1f} C, {temp_f:.1f} F, {temp_k:.1f} K\n")  
-            
-        elif cmd == '4':
-            uart.write("Reproduciendo DO...\n")  
-            buzzer.freq(261) # Frecuencia DO
-            buzzer.duty_u16(32768)
-            time.sleep(0.5)
-            buzzer.duty_u16(0)
-            
-        elif cmd == '5':
-            uart.write("Parpadeo 5 veces\n")  
-            for _ in range(5):
-                for led in leds: led.value(1)
-                time.sleep(0.2)
-                for led in leds: led.value(0)
-                time.sleep(0.2)
-                
-        elif cmd == '6':
-            uart.write("Corrimiento Derecha\n")  
-            apagar_leds()
-            for i in range(8):
-                leds[i].value(1)
-                time.sleep(0.1)
-                leds[i].value(0)
-                
-        elif cmd == '7':
-            uart.write("Corrimiento Izquierda\n")  
-            apagar_leds()
-            for i in range(7, -1, -1):
-                leds[i].value(1)
-                time.sleep(0.1)
-                leds[i].value(0)
-                
-    time.sleep(0.05)
+# Gira la orientación de la pantalla (0-3). '2' la pone invertida verticalmente o landscape
+tft.rotation(2)
+
+# Llena la pantalla con color blanco
+tft.fill(TFT.WHITE)
+
+# Escribe texto: (coordenadas), "Mensaje", Color, fuente, escala (tamaño), salto_de_línea
+tft.text((10, 10), "MICROS", TFT.RED, sysfont, 2, nowrap=True)
+tft.text((25, 30), "FI", TFT.GREEN, sysfont, 2, nowrap=True)

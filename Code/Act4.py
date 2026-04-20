@@ -1,21 +1,18 @@
-from machine import Pin, UART
-import time
+import max7219
+from machine import Pin, SPI
+from time import sleep
 
-# Configura el UART0 a 9600 baudios usando el GPIO16(TX) y GPIO17(RX) 
-uart = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
-# Formato estándar: 8 bits de datos, sin paridad, 1 bit de paro 
-uart.init(bits=8, parity=None, stop=1)
-led = Pin(25, Pin.OUT)
+num_display = 4
+spi = SPI(0, baudrate=10000000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3))
+cs_pin = Pin(6, Pin.OUT)
+display = max7219.Matrix8x8(spi, cs_pin, num_display)
 
-# Envía mensaje al módulo USB-TTL 
-uart.write('Inicia Comunicacion Serie\n')
+# Lista con los mensajes requeridos por el manual
+mensajes = ["UNAM", "FI", "*", "*", "2026", "26 - 2", "*", "*", "*", "*", "PEPE"]
 
 while True:
-    # Comprueba si hay datos en el buffer de recepción UART 
-    if uart.any() > 0: 
-        data = uart.read() # Lee todos los datos disponibles 
-        uart.write(data)   # Eco: retransmite lo mismo que recibió 
-        led.toggle()       # Cambia el estado del LED interno 
-    
-    # Se ajusta a 0.1s para mayor fluidez, en el manual dice 1s pero eso causa retrasos al teclear.
-    time.sleep(0.1)
+    for msg in mensajes:
+        display.fill(0)               # Limpia la pantalla antes de cada mensaje
+        display.text(msg, 0, 0, 1)    # Posiciona el texto desde el píxel (0,0)
+        display.show()                # Ejecuta la impresión
+        sleep(2)                      # Retardo de 2 segundos entre mensajes
