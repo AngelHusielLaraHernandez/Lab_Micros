@@ -13,10 +13,10 @@ while True:
         for i in range(8):
             pixels.set_pixel(i, color)
             pixels.show()
-            time.sleep(0.1) # Retardo de 100ms entre cada LED para efecto de barrido
+            time.sleep(0.5) # Retardo de 100ms entre cada LED para efecto de barrido
             
         # Bucle de apagado (limpieza) para notar el cambio de color
         for i in range(8):
-            pixels.set_pixel(i, (0, 0, 0))
+            pixels.set_pixel(8 - i - 1, (0, 0, 0))
             pixels.show()
-            time.sleep(0.05)
+            time.sleep(0.5)
