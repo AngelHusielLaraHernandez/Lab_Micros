@@ -1,18 +1,19 @@
-import max7219
-from machine import Pin, SPI
-from time import sleep
+import tm1637
+from machine import Pin
+from utime import sleep
 
-num_display = 4
-spi = SPI(0, baudrate=10000000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3))
-cs_pin = Pin(6, Pin.OUT)
-display = max7219.Matrix8x8(spi, cs_pin, num_display)
+tm = tm1637.TM1637(clk=Pin(0), dio=Pin(1))
+tm.brightness(3)
 
-# Lista con los mensajes requeridos por el manual
-mensajes = ["UNAM", "FI", "*", "*", "2026", "26 - 2", "*", "*", "*", "*", "PEPE"]
+# Configura el zumbador en el GPIO 17
+zumbador = Pin(17, Pin.OUT) 
 
-while True:
-    for msg in mensajes:
-        display.fill(0)               # Limpia la pantalla antes de cada mensaje
-        display.text(msg, 0, 0, 1)    # Posiciona el texto desde el píxel (0,0)
-        display.show()                # Ejecuta la impresión
-        sleep(2)                      # Retardo de 2 segundos entre mensajes
+# Conteo desde 20 hasta 0
+for cuenta in range(20, -1, -1):
+    tm.number(cuenta) 
+    sleep(1)          
+    
+# Activa la alarma por 1 segundo
+zumbador.value(1) 
+sleep(1)          
+zumbador.value(0)

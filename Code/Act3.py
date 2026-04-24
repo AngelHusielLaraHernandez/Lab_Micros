@@ -1,27 +1,31 @@
-import max7219
-from machine import Pin, SPI
-from time import sleep
+import tm1637
+from machine import Pin
+from utime import sleep
 
-# Indica cuántos módulos de 8x8 conforman la pantalla física (el manual indica un módulo de 4 en línea)
-num_display = 4 
+# Inicializa el display TM1637 con Reloj (CLK) en GPIO 0 y Datos (DIO) en GPIO 1
+tm = tm1637.TM1637(clk=Pin(0), dio=Pin(1))
 
-# Configura el bus SPI0 
-spi = SPI(0, baudrate=10000000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3))
+# Configura el brillo a un nivel intermedio (0 a 7)
+tm.brightness(3)
 
-# El pin Chip Select (CS) para la matriz es el GPIO6
-cs_pin = Pin(6, Pin.OUT)
+# Variables iniciales para segundos y minutos
+Sec = 0
+Min = 0
 
-# Crea el objeto de la matriz
-display = max7219.Matrix8x8(spi, cs_pin, num_display)
-
-# Limpia completamente la pantalla (apaga todos los LEDs)
-display.fill(0)
-
-# Dibuja el texto '0' en la coordenada (x=0, y=1). El '1' final indica el color de encendido.
-display.text('0', 0, 1, 1)
-
-# Actualiza la pantalla para reflejar los cambios
-display.show()
-
-# Espera 3 segundos
-sleep(3)
+while True:
+    # Muestra los minutos y segundos activando los dos puntos centrales (colon=True)
+    tm.numbers(Min, Sec, colon=True)
+    sleep(0.5) # Retardo de medio segundo
+    
+    # Muestra los minutos y segundos desactivando los dos puntos (efecto de parpadeo)
+    tm.numbers(Min, Sec, colon=False)
+    sleep(0.5) # Retardo de medio segundo
+    
+    Sec = Sec + 1 # Lógica del reloj: incrementa 1 segundo
+    
+    if Sec == 60:      # Si llega a 60 segundos...
+        Min = Min + 1  # Incrementa un minuto
+        Sec = 0        # Reinicia los segundos a 0
+        
+        if Min == 60:  # Si llega a 60 minutos...
+            Min = 0    # Reinicia los minutos a 0

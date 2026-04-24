@@ -1,22 +1,29 @@
-from ST7735 import TFT
-from sysfont import sysfont
-from machine import SPI, Pin
+import machine, onewire, ds18x20, time
 
-spi = SPI(0, baudrate=20000000, polarity=0, phase=0, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
+# Configura el bus 1-Wire en el pin GPIO 16
+ds_pin = machine.Pin(16)
 
-# Nota: Cambiamos CS al pin 7 según el diagrama de integración de la siguiente actividad
-tft = TFT(spi, 15, 14, 7) 
-tft.initg()
-tft.rgb(True)
-tft.rotation(1) # Rotación en modo apaisado (Landscape)
+# Crea la instancia del sensor vinculándolo al bus 1-Wire
+ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
+
+# Escanea el bus para encontrar la dirección MAC/ROM del sensor conectado
+roms = ds_sensor.scan()
+print("Sensor detectado", roms)
+
+while True:
+    # Envía la orden para que el sensor inicie la conversión de temperatura
+    ds_sensor.convert_temp()
+    
+    # El manual técnico del DS18B20 exige al menos 750ms para completar la conversión a 12 bits
+    time.sleep_ms(750)
+    
+    # Itera sobre los sensores encontrados en el bus
+    for rom in roms:
+        print(rom) # Imprime el código ROM del sensor
+        # Recupera el valor convertido de temperatura
+        tempC = ds_sensor.read_temp(rom)
+        # Lo muestra formateado a 2 decimales
+        print('temperatura (C):', "{:.2f}".format(tempC))
+        print()
         
-tft.fill(TFT.BLACK) # Fondo Negro para resaltar colores
-        
-# Escribimos los nombres en diferentes líneas (eje Y va aumentando) y con distintos colores
-tft.text((5, 10), "1. Perci", TFT.CYAN, sysfont, 1, nowrap=True)
-tft.text((5, 30), "2. Tenshi", TFT.YELLOW, sysfont, 1, nowrap=True)
-tft.text((5, 50), "3. Victor", TFT.RED, sysfont, 1, nowrap=True)
-tft.text((5, 70), "4. Fofo", TFT.WHITE, sysfont, 1, nowrap=True)
-
-# Título más grande (escala 2) en la parte inferior
-tft.text((5, 100), "Equipo 6", TFT.RED, sysfont, 2, nowrap=True)
+    time.sleep(2) # Pausa antes de la siguiente lectura

@@ -1,22 +1,19 @@
-from machine import Pin, SPI
-import max7219_8digit
 import time
+from neopixel import Neopixel
 
-# Configura el bus SPI0. Frecuencia de 10MHz, polaridad 1 y fase 0 requeridas por el MAX7219.
-# SCK (Reloj) en GPIO2, MOSI (Datos de salida) en GPIO3.
-spi = SPI(0, baudrate=10000000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3))
+# Configuración: 8 LEDs, estado 0, pin físico GPIO 4, formato de color GRB
+pixels = Neopixel(8, 0, 4, "GRB")
+brightness = 0.1 # Limita el brillo al 10% para proteger el puerto USB
 
-# Configura el pin GPIO5 como salida para el Chip Select (SS/CS)
-ss = Pin(5, Pin.OUT)
+# Tuplas de color (Rojo, Verde, Azul)
+red = (255, 0, 0)
+black = (0, 0, 0)
 
-# Crea el objeto del display vinculando el bus SPI y el pin de selección
-display = max7219_8digit.Display(spi, ss)
-
-# Escribe la cadena de texto en la memoria intermedia (buffer) del controlador
-display.write_to_buffer("01234567")
-
-# Ejecuta el comando para que lo que está en el buffer se muestre físicamente en los LEDs
-display.display()
-
-# Pequeña pausa al finalizar
-time.sleep(1)
+while True:
+    pixels.set_pixel(0, red)   # Enciende el primer LED en rojo
+    pixels.show()              # Ejecuta la actualización física
+    time.sleep(1)              
+    
+    pixels.set_pixel(0, black) # Apaga el primer LED
+    pixels.show()              
+    time.sleep(1)
