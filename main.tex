@@ -1089,13 +1089,90 @@ El programa ejecuta correctamente el contador descendente desde 20 hasta 0, tal 
 
     \section*{Propuesta de solución}
 
+    El código proporcionado implementa la lectura de temperatura utilizando el sensor digital DS18B20, que se comunica a través del protocolo 1-Wire. 
+
+    De forma que lo primero que ser realiza en el programa es importar las librerías necesarias, entgre las librerías se encuentran \texttt{machine} para el control de pines y \texttt{onewire} para la comunicación 1-Wire, además de \texttt{ds18x20} que proporciona funciones específicas para interactuar con el sensor DS18B20, y por último \texttt{time} para gestionar los retardos necesarios.
+
+    Ya con las librerías importadas, se configura el pin GPIO 16 como entrada/salida para la comunicación con el sensor. Luego, se crea una instancia del controlador DS18B20 utilizando la clase \texttt{DS18X20} donde el pin se especifica que utilice la capa OneWire \texttt{onewire.OneWire(ds\_pin)}.
+
+    Como el sensor DS18B20 puede tener múltiples dispositivos conectados en paralelo, se realiza un escaneo del bus 1-Wire con el método \texttt{.scan()} para obtener las direcciones ROM únicas de cada sensor presente. De forma que en este caso se guarda unicamentela Rom de un solo sensor, al obener la dirección se imprinme en la consola para verificar la comunicación.
+
+    Por medio de un bucle infinito, se crea el ciclo para leer y mostrar los datos del sensor de forma continua, para eso por medio del método \texttt{.convert\_temp()} se inicia la conversión de temperatura en el sensor, luego se espera un tiempo de 750 ms para asegurar que la conversión se complete. Posteriormente, se lee la temperatura en grados Celsius utilizando el método \texttt{.read\_temp(rom)}, ya con el valor númerico se procede a mostrat su contenido por medio de la impresión en consola, mostrando la dirección ROM del sensor y la temperatura en grados Celsius.
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=1.35cm, scale=0.8,
+            every node/.style={font=\small},
+            % Definición de estilos para los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2.2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!20},
+            arrow/.style={thick,->,>=stealth}
+        ]
+
+            % Nodos
+            \node (start) [startstop, text width=3.2cm] {Inicio};
+            
+            \node (init) [process, below=of start, text width=8.6cm] {Configurar GPIO16, instanciar \texttt{ds\_sensor} en bus 1-Wire.};
+            
+            \node (scan) [process, below=of init, text width=8.6cm] {Ejecutar \texttt{roms = ds\_sensor.scan()} e imprimir "Sensor detectado".};
+            
+            \node (conv) [process, below=of scan, text width=7.0cm] {Iniciar conversión con \texttt{convert\_temp()}.};
+            
+            \node (wait) [process, below=of conv, text width=7.0cm] {Esperar 750 ms (\texttt{time.sleep\_ms(750)}).};
+            
+            \node (for) [decision, below=of wait, text width=4.0cm, aspect=2.2] {\texttt{for rom in roms}:\newline \textquestiondown Hay ROM pendiente?};
+            
+            \node (read) [process, below=of for, text width=8.0cm] {Imprimir \texttt{ROM}, leer \texttt{tempC} e imprimir temperatura formateada.};
+            
+            \node (pause) [process, right=2cm of for, text width=3.2cm, align=center] {Esperar 2 s (\texttt{time.sleep(2)}).};
+
+            % Conexiones (Flechas)
+            \draw [arrow] (start) -- (init);
+            \draw [arrow] (init) -- (scan);
+            \draw [arrow] (scan) -- (conv);
+            
+            % Bucle While (Implícito en la repetición hacia conv)
+            \draw [arrow] (conv) -- (wait);
+            \draw [arrow] (wait) -- (for);
+            
+            % Bucle For - Ruta Verdadera (Sí hay sensor pendiente)
+            \draw [arrow] (for) -- node[right, font=\scriptsize] {Sí} (read);
+            % Retorno del Bucle For (Sube nuevamente para la evaluación)
+            \draw [arrow] (read.west) -- ++(-2.8,0) |- (for.west);
+            
+            % Bucle For - Ruta Falsa (Fin del iterador For, pasa a la pausa del While)
+            \draw [arrow] (for.east) -- node[above, font=\scriptsize] {No} (pause.west);
+            
+            % Retorno del Bucle While (Regresa al inicio de la conversión después de la pausa)
+            \draw [arrow] (pause.north) |- (conv.east);
+
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de Flujo: Actividad 5}
+    \end{figure}
+
+    \newpage
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Actividad 5. Impresión de la dirección ROM del sensor y la temperatura en grados Celsius en un primer insante de tiempo.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad5/Act5_2.jpg}
+        \caption{Actividad 5. Impresión de la dirección ROM del sensor y la temperatura en grados Celsius en un segundo insante de tiempo.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    A partir de las imagenes obtenidas al ejecutar el programa en la placa de desarrollo Raspberry Pi Pico, se puede observar que el microcontrolador logra establecer comunicación con el sensor DS18B20, detectando su presencia y obteniendo su dirección ROM única, lo que confirma que la capa de comunicación 1-Wire está funcionando correctamente. Además, el programa es capaz de iniciar la conversión de temperatura, esperar el tiempo necesario para que el sensor complete su medición, y luego leer e imprimir la temperatura en grados Celsius con un formato adecuado. De forma que el programa logra medir la temperatura usando el sensor DS18B20 y el protocolo 1-Wire, mostrando los resultados en la consola de manera continua cada 2 segundos.
 
     \newpage
     \section*{Actividad 6}
@@ -1233,13 +1310,75 @@ El programa ejecuta correctamente el contador descendente desde 20 hasta 0, tal 
 
     \section*{Propuesta de solución}
 
+    El código proporcionado corresponde a la implementación de un programa para medir la temperatura y humedad utilizando el sensor DTH11. Debiodo a esto la inicio del programa se realiza la imporación de bibliotecas necearias para su correcto funcionamiento.
+
+    Las bibliotecas que se utilizan son el módulo \texttt{dht} para poder realizar la comunicaciín con el sensor \texttt{DHT}, es importante destcar que este sensor emplea un protocolo de comunicación del tipo propiietario, de forma que a diferencia del protocolo one-wire del DS18B20, el DHT11 requiere una secuencia específica de señales para iniciar la comunicación y obtener los datos de temperatura y humedad. Por otro lado se reliza la imporación de la biblioteca \texttt{machine} para el control de los pines GPIO, y por último se importa la biblioteca \texttt{time} para gestionar los retardos necesarios en la comunicación con el sensor.
+
+    Por medio mde un ciclo infinito se realiza la lectura, para solicitar los datos correspondientes al sensor, port medio del método \texttt{dht11.measure()} se inicia la comunicación con el sensor, obteniendo una trama de datos de 40 bits que contiene la información de temperatura y humedad. Luego se extraen los valores de temperatura y humedad utilizando las propiedades \texttt{dht11.temperature()} y \texttt{dht11.humidity()}, respectivamente. Ya con los valores obtenidos se procede a imprimir en la consola la temperatura en grados Celsius y la humedad relativa en porcentaje, con un formato claro y legible. Este programa implementa un bloque try-catch para manejar posibles errores de comunicación con el sensor, como lecturas fallidas o desconexiones, lo que garantiza que el programa no se detenga abruptamente ante una falla en la lectura del DHT11.
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=1.5cm, 
+            every node/.style={font=\small},
+            % Estilos de los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!20},
+            arrow/.style={thick,->,>=stealth}
+        ]
+
+            % Nodos
+            \node (start) [startstop] {Inicio};
+            
+            \node (init) [process, below=of start, text width=6cm] {Configurar DHT11 en GPIO 21 (\texttt{Sensor = dht.DHT11(...)}).};
+            
+            \node (measure) [process, below=of init, text width=5cm] {Solicitar medición (\texttt{Sensor.measure()}).};
+            
+            \node (check) [decision, below=of measure, text width=3.5cm] {¿Ocurrió un \texttt{OSError}?};
+            
+            \node (success) [process, below=of check, text width=6cm] {Leer \texttt{temp}, \texttt{hum} e imprimir: \enquote{Temperatura: ... Humedad: ...}};
+            
+            \node (error) [process, right=1.5cm of check, text width=4cm] {Imprimir: \enquote{Fallo de sincronización, reintentando...}};
+            
+            \node (sleep) [process, below=of success, text width=4cm] {Esperar 2 s (\texttt{time.sleep(2)}).};
+
+            % Conexiones (Flechas)
+            \draw [arrow] (start) -- (init);
+            \draw [arrow] (init) -- (measure);
+            \draw [arrow] (measure) -- (check);
+            
+            % Ruta sin error (Try exitoso)
+            \draw [arrow] (check) -- node[right, font=\scriptsize] {No} (success);
+            
+            % Ruta con error (Except OSError)
+            \draw [arrow] (check) -- node[above, font=\scriptsize] {Sí} (error);
+            
+            % Ambas rutas convergen en la pausa de 2 segundos
+            \draw [arrow] (success) -- (sleep);
+            \draw [arrow] (error.south) |- (sleep.east);
+            
+            % Retorno del Bucle While (Vuelve a solicitar la medición)
+            \draw [arrow] (sleep.west) -- ++(-2.5,0) |- (measure.west);
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de Flujo: Actividad 7}
+    \end{figure}
+
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7, basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
-
-
-
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad7/Act7_1.jpg}
+        \caption{Actividad 7. Impresión de datos de Temperatura y Humedad.}
+    \end{figure}
+    
+    \newpage
+    
     \subsection*{Análisis de resultados}
+    Al ejecutar el programa en la Raspberry Pi Pico, se puede verificar que el programa funciona correctamente ya que en la consola se imprime de formna correcta la temperatura en grados Celsius y la humedad relativa en porcentaje, con un formato claro y legible. De forma que para verificar que el sensor DHT11 se encuentra en funcionando de fornma correcta, para esto se vario el ambiente del sensor, por ejemplo al colocar la mano sobre el sensor se puede observar un incremento en la temperatura y humedad relativa, lo que confirma que el programa logra medir correctamente la temperatura y humedad utilizando el sensor DHT11. Al poder recuperar los datos de temperatura y humedad se puede concluir que se realizo de forma correcta la comunicación con el sensor, y que el programa es capaz de manejar posibles errores de comunicación, como lecturas fallidas o desconexiones, lo que garantiza que el programa no se detenga abruptamente ante una falla en la lectura del DHT11.
 
     \newpage
     \section*{Actividad 8}
@@ -1283,13 +1422,102 @@ El programa ejecuta correctamente el contador descendente desde 20 hasta 0, tal 
 
     \section*{Propuesta de solución}
 
+    Para poder impolementar el programa que controle el funcionamiento de un LED y un zumbador en función de la temperatura medida por el sensor DHT11, se propone seguir los siguientes pasos:
+
+    Dado que se va a medir la temperatura usando el sensor DHT11, se seberealizar la importacón de las bibliotecas necesarias, entre las cuales se encuentran el módulo \texttt{dht} para la comunicación con el sensor DHT11, el módulo \texttt{machine} para el control de los pines GPIO, y el módulo \texttt{time} para gestionar los retardos necesarios.
+
+    Ya con las dependencias configuradas, se procede a instanciar una objeto del sensor DHT11 en el pin GPIO 21, y se configuran los pines GPIO 20 y GPIO 17 como salidas para controlar el LED y el zumbador, respectivamente. Posteriorment se define una variable de referencia para la temperatura, que se puede establecer a partir de una lectura previa del sensor o un valor fijo.
+
+    De igual igual forma que en implementaciones anteriores, se crea un ciclo infinito para realizar la lectura continua de la temperatura y humedad. Dentro del ciclo, se solicita una medición al sensor DHT11 y se extraen los valores de temperatura y humedad, y estos se muestran ppor medio de la consola, posteriormente se compara la temperatura actual con la temperatura de referencia más un margen de 5 °C. Si la temperatura actual supera este umbral, se enciende el LED y el zumbador; de lo contrario, ambos dispositivos permanecen apagados. Finalmente, se imprime en la consola la temperatura actual y se aplica una pausa de 2 segundos antes de la siguiente lectura.
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=0.7cm, scale=0.5,
+            every node/.style={font=\small},
+            % Estilos de los bloques
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!20},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!20},
+            arrow/.style={thick,->,>=stealth}
+        ]
+
+            % Nodos Principales
+            \node (start) [startstop] {Inicio};
+            
+            \node (init) [process, below=of start, text width=7.5cm] {Configurar DHT11 (GPIO21), LED (GPIO20), Buzzer (GPIO17) y \texttt{Temp\_ref = 25}.};
+            
+            \node (measure) [process, below=of init, text width=5cm] {Solicitar medición (\texttt{Sensor.measure()}).};
+            
+            % Nodo de Decisión de Error
+            \node (check_error) [decision, below=of measure, text width=3.5cm] {¿\texttt{OSError}?};
+            
+            % Ruta de Error (Hacia la izquierda)
+            \node (error_msg) [process, left=1cm of check_error, text width=3cm] {Imprimir error.};
+            
+            % Ruta Normal (Continuación hacia abajo)
+            \node (read_temp) [process, below=of check_error, text width=6cm] {Leer \texttt{Temp\_actual} e imprimir estado contra el umbral.};
+            
+            % Nodo de Decisión de Temperatura
+            \node (check_temp) [decision, below=of read_temp, text width=4.5cm] {¿\texttt{Temp\_actual} > \texttt{Temp\_ref} + 5?};
+            
+            % Acciones del Umbral
+            \node (alarm_on) [process, right=1.5cm of check_temp, text width=3cm] {Activar alarmas:\\\texttt{led.value(1)}\\\texttt{buzzer.value(1)}};
+            \node (alarm_off) [process, below=of check_temp, text width=3cm] {Apagar alarmas:\\\texttt{led.value(0)}\\\texttt{buzzer.value(0)}};
+            
+            % Pausa final
+            \node (sleep) [process, below=of alarm_off, text width=4cm] {Esperar 2 s (\texttt{time.sleep(2)}).};
+
+            % Conexiones Directas
+            \draw [arrow] (start) -- (init);
+            \draw [arrow] (init) -- (measure);
+            \draw [arrow] (measure) -- (check_error);
+            
+            % Conexiones del Check Error
+            \draw [arrow] (check_error) -- node[above, font=\scriptsize] {Sí} (error_msg);
+            \draw [arrow] (check_error) -- node[right, font=\scriptsize] {No} (read_temp);
+            
+            % Conexiones del Check Temp
+            \draw [arrow] (read_temp) -- (check_temp);
+            \draw [arrow] (check_temp) -- node[above, font=\scriptsize] {Sí} (alarm_on);
+            \draw [arrow] (check_temp) -- node[right, font=\scriptsize] {No} (alarm_off);
+            
+            % Convergencia hacia Sleep
+            \draw [arrow] (alarm_off) -- (sleep);
+            \draw [arrow] (alarm_on.south) |- (sleep.east);
+            \draw [arrow] (error_msg.south) |- (sleep.west);
+            
+            % Bucle While (Retorno seguro)
+            % Creamos una coordenada invisible a la izquierda del bloque de error para que la línea no lo corte
+            \path (error_msg.west) -- ++(-1.5,0) coordinate (loop_left);
+            % Trazamos la línea desde abajo de 'sleep', pasamos por 'loop_left' y subimos a 'measure'
+            \draw [arrow] (sleep.south) -- ++(0,-0.5) -| (loop_left) |- (measure.west);
+
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de Flujo: Actividad 8}
+    \end{figure}
+    
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 8, basicstyle=\ttfamily\scriptsize]{Code/Act8.py}
 
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.75\textwidth]{img/Actividad8/Act8_1.jpg}
+            \caption{Actividad 8. Medición de temperatura actual y comparación con el umbral de referencia en un primer instante de tiempo.}
+        \end{figure}
 
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.75\textwidth]{img/Actividad8/Act8_2.jpg}
+            \caption{Actividad 8. Medición de temperatura actual y comparación con el umbral de referencia en un segundo instante de tiempo.}
+        \end{figure}
+    
+    \newpage
 
     \subsection*{Análisis de resultados}
+    Al cargar el programa en la Raspberry Pi Pico, se puede observar que el programa funciona correctamente, ya que en la consola se imprime la temperatura actual y su comparación con el umbral de referencia. En el primer instante de tiempo, la temperatura actual es de 24 °C, lo que es menor que el umbral de referencia (30 °C), por lo que el LED y el zumbador permanecen apagados. En el segundo instante de tiempo, la temperatura actual es de 31 °C, lo que supera el umbral de referencia, por lo que el LED y el zumbador se activan. De forma que se puede concluir que el programa logra controlar correctamente el funcionamiento del LED y el zumbador en función de la temperatura medida por el sensor DHT11, indicando claramente cuándo la temperatura supera el umbral establecido.
 
 
     \newpage
@@ -1709,7 +1937,9 @@ El programa ejecuta correctamente el contador descendente desde 20 hasta 0, tal 
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} Gracias a la realización de esta práctica logré comprender y aplicar el protocolo de comunicación \textit{One Wire} con el sensor DS18B20, lo que me permitió adquirir datos de temperatura de manera eficiente utilizando un solo pin GPIO, comprendiendo la importancia de este tipo de comunicación, ya se puedeter multiples sensores conectados a un mismo pin, lo que es ideal para proyectos con limitaciones de pines. Por otro lado haciendo uso del display TM1637 pude visualizar los datos obtenidos de manera clara y sencilla, lo que me permitió validar el correcto funcionamiento del sensor y la comunicación. Además, al integrar ambos componentes en un mismo proyecto, pude entender cómo interactúan entre sí y cómo se pueden utilizar juntos para crear soluciones más completas y funcionales.
+        
+        De forma que el manejo de la raspberry pi pico usando microPython yt las bibliotecas necesarias para cada componente me permitió comprender de mejor forma como es que se realiza la comunicación entre el microcontrolador y los periféricos, por otro lado la sintaxis de microPython me permite comprender la flexbilidad que tienen estos protocolos de comunuicación para distintas aplicaciones en el ámbito de la ingeniería.
 
         \item \textbf{Flores Colin Victor Jaziel:} En esta practica número nueve logre comprender de manera más completa el manejo de perifericos de salida digital y visualizacion numerica con la Raspberry Pi Pico ya que junto a mi equipo combinamos por ejemplo un display TM1637 y un zumbador pasivo dentro de una misma solucion funcional como en la actividad 4, donde además trabaje con el protocolo I2C simulado (dos hilos: CLK y DIO), actualizando el numero mostrado en cada iteracion con el metodo \texttt{number()} y el uso del zumbador como actuador me permitio incorporar retroalimentacion auditiva al finalizar el conteo, activando el pin GPIO 17 durante exactamente 1 segundo.
 
