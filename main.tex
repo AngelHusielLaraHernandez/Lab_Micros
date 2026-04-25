@@ -5,6 +5,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 % --- PAQUETES MATEMÁTICOS --
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -248,119 +250,417 @@
     Conocer diversos protocolos de comunicación One Wire para el control de dispositivos a
     través de la plataforma Raspberry Pi Pico.
 
-    \section*{Actividad 1}
+   \section*{Actividad 1}
 
-    \noindent Escribir, comentar e indicar el funcionamiento del siguiente programa; estudiar la librería usada.
+\noindent Escribir, comentar e indicar el funcionamiento del siguiente programa; estudiar la librería usada.
 
-    \vspace{1.5cm}
+\vspace{1.5cm}
 
-    % Diagrama
-    \begin{center}
-    \begin{tikzpicture}
-        % 1. Dibujar la Raspberry Pi Pico
-        \picoboard
+% Diagrama
+\begin{center}
+\begin{tikzpicture}
+    % 1. Dibujar la Raspberry Pi Pico
+    \picoboard
 
-        % 2. Dibujar la tira Neopixel
-        % Contorno general
-        \draw[thick] (-7.5, -2.4) rectangle (-1.5, -3.0);
+    % 2. Dibujar la tira Neopixel
+    % Contorno general
+    \draw[thick] (-7.5, -2.4) rectangle (-1.5, -3.0);
+    
+    % Título del Neopixel
+    \node[above, text=blue!80!black, font=\sffamily\itshape\large] at (-4.5, -2.2) {Neopixel};
+    
+    % Los 8 LEDs (cuadrados interiores)
+    \foreach \i in {0,...,7} {
+        \draw[thick] (-7.35 + \i*0.73, -2.9) rectangle (-6.85 + \i*0.73, -2.5);
+    }
+
+    % 3. Etiquetas de los pines del Neopixel
+    \node[above left, font=\sffamily\bfseries] at (-7.5, -2.7) {DOUT};
+    \node[above right, font=\sffamily\bfseries] at (-1.5, -2.7) {DIN};
+    \node[below left, font=\sffamily\bfseries] at (-2.2, -3.0) {GND};
+
+    % 4. Conexiones (Cables)
+    % Cable DIN a GP4
+    \draw[blue, thick] (-1.5, -2.7) -- (-0.4, -2.7);
+    
+    % Cable DOUT
+    \draw[green!60!black, thick] (-7.5, -2.7) -- (-8.8, -2.7);
+
+    % Cable 3.3V
+    \draw[red, thick] (-2.2, -2.4) -- (-2.2, -1.6);
+    \node[above, font=\sffamily] at (-2.2, -1.6) {3.3V};
+    \draw[red, thick] (-2.4, -1.6) -- (-2.0, -1.6);
+
+    % Cable GND
+    \draw[black, thick] (-2.2, -3.0) -- (-2.2, -3.8);
+    \draw[thick] (-2.6, -3.8) -- (-1.8, -3.8);
+    \draw[thick] (-2.4, -4.0) -- (-2.0, -4.0);
+    \draw[thick] (-2.25, -4.2) -- (-2.15, -4.2);
+    \draw[green!60!black, thick] (-2.2, -3.8) -- (-2.2, -4.3);
+
+\end{tikzpicture}
+\end{center}
+
+\section*{Propuesta de solución}
+
+El programa de esta actividad consiste en controlar un anillo o tira de LEDs direccionables NeoPixel (basados en el chip WS2812) utilizando una Raspberry Pi Pico. Estos LEDs requieren una temporización muy precisa (del orden de microsegundos) para enviar los datos de color, por lo que se emplea la librería \texttt{neopixel} que aprovecha las capacidades de E/S programable (PIO) de las Raspberry.
+
+\subsection*{Investigacion de la libreria \texttt{neopixel}}
+
+La libreria neopixel para MicroPython (y su variante para Raspberry Pi Pico) proporciona una interfaz sencilla para controlar tiras de LEDs WS2812 o NeoPixel. El constructor Neopixel(n, state, pin, "GRB") recibe cuatro parametros: el numero de LEDs n, el estado inicial generalmente 0 para todos apagados, el numero del pin GPIO de salida y el orden de los componentes de color, que comunmente es RGB para los NeoPixel estandar, aunque algunos dispositivos usan RGB.
+
+El metodo \texttt{set\_pixel(i, color)} permite asignar un color al LED ubicado en la posicion \texttt{i} sin actualizar fisicamente la tira de LEDs. Para que los cambios se reflejen en el hardware, es necesario llamar al metodo \texttt{show()}, el cual transmite todos los datos por el bus serie hacia los LEDs. Esta funcion bloquea la ejecucion durante la transmision, que dura aproximadamente 30 microsegundos por cada LED de la tira.
+
+La propiedad \texttt{brightness} permite escalar globalmente el brillo de todos los LEDs sin modificar los valores de color originales. Esta caracteristica resulta especialmente util para limitar la corriente electrica consumida desde el puerto USB de la computadora, ya que cada LED WS2812 puede consumir hasta 60 mA cuando se enciende a maxima intensidad (blanco). Para una tira de 8 LEDs, el consumo maximo teorico alcanzaria los 480 mA, muy cerca del limite tipico de 500 mA que puede suministrar un puerto USB estandar.
+
+\begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start1) [startstop, text width=2.6cm] {Inicio};
+        \node (init1) [process, below=of start1, text width=7.5cm] {Importar \texttt{time} y \texttt{Neopixel}. Configurar 8 LEDs en GPIO 4, brillo 0.1.};
+        \node (color1) [process, below=of init1, text width=5.8cm] {Definir \texttt{red = (255,0,0)} y \texttt{black = (0,0,0)}.};
+        \node (ledon1) [process, below=of color1, text width=5.8cm] {Ejecutar \texttt{set\_pixel(0, red)} y \texttt{show()}.};
+        \node (waiton1) [process, below=of ledon1, text width=4.2cm] {Esperar 1 segundo con \texttt{time.sleep(1)}.};
+        \node (ledoff1) [process, below=of waiton1, text width=5.8cm] {Ejecutar \texttt{set\_pixel(0, black)} y \texttt{show()}.};
+        \node (waitoff1) [process, below=of ledoff1, text width=4.2cm] {Esperar 1 segundo con \texttt{time.sleep(1)}.};
+        \node (loop1) [decision, below=of waitoff1, text width=4.0cm, aspect=2.5] {¿Repetir ciclo?};
         
-        % Título del Neopixel
-        \node[above, text=blue!80!black, font=\sffamily\itshape\large] at (-4.5, -2.2) {Neopixel};
+        \draw [arrow] (start1) -- (init1);
+        \draw [arrow] (init1) -- (color1);
+        \draw [arrow] (color1) -- (ledon1);
+        \draw [arrow] (ledon1) -- (waiton1);
+        \draw [arrow] (waiton1) -- (ledoff1);
+        \draw [arrow] (ledoff1) -- (waitoff1);
+        \draw [arrow] (waitoff1) -- (loop1);
+        \draw [arrow] (loop1.west) -- node[above, font=\scriptsize] {Si} ++(-1.5,0) |- (ledon1.west);
+        \draw [arrow] (loop1.south) -- node[below, font=\scriptsize] {No} ++(0,-0.6) -- ++(0,0) node[below] {Fin};
         
-        % Los 8 LEDs (cuadrados interiores)
-        \foreach \i in {0,...,7} {
-            \draw[thick] (-7.35 + \i*0.73, -2.9) rectangle (-6.85 + \i*0.73, -2.5);
-        }
-
-        % 3. Etiquetas de los pines del Neopixel
-        \node[above left, font=\sffamily\bfseries] at (-7.5, -2.7) {DOUT};
-        \node[above right, font=\sffamily\bfseries] at (-1.5, -2.7) {DIN};
-        \node[below left, font=\sffamily\bfseries] at (-2.2, -3.0) {GND};
-
-        % 4. Conexiones (Cables)
-        % Cable DIN a GP4 (La coordenada Y es -6*0.45 = -2.7 según tu macro)
-        \draw[blue, thick] (-1.5, -2.7) -- (-0.4, -2.7);
-        
-        % Cable DOUT (Hacia la izquierda)
-        \draw[green!60!black, thick] (-7.5, -2.7) -- (-8.8, -2.7);
-
-        % Cable 3.3V (Hacia arriba)
-        \draw[red, thick] (-2.2, -2.4) -- (-2.2, -1.6);
-        \node[above, font=\sffamily] at (-2.2, -1.6) {3.3V};
-        % Base para la etiqueta 3.3V
-        \draw[red, thick] (-2.4, -1.6) -- (-2.0, -1.6);
-
-        % Cable GND (Hacia abajo)
-        \draw[black, thick] (-2.2, -3.0) -- (-2.2, -3.8);
-        % Símbolo de GND (Líneas horizontales y detalle verde central)
-        \draw[thick] (-2.6, -3.8) -- (-1.8, -3.8);
-        \draw[thick] (-2.4, -4.0) -- (-2.0, -4.0);
-        \draw[thick] (-2.25, -4.2) -- (-2.15, -4.2);
-        \draw[green!60!black, thick] (-2.2, -3.8) -- (-2.2, -4.3);
-
     \end{tikzpicture}
-    \end{center}
+    }
+\end{center}
 
-    \section*{Propuesta de solución}
+\section*{Desarrollo}
 
-    \section*{Desarrollo}
+\lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad1/Act1_1.jpg}
+    \caption{Conexión física de la Raspberry Pi Pico con la tira NeoPixel. Se observa la alimentación a 3.3V, la conexión a tierra (GND) y la línea de datos (DIN) conectada al pin GPIO 4.}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad1/Act1_2.jpg}
+    \caption{Secuencia de encendido del primer LED en color rojo. El LED ubicado en la posición 0 de la tira se enciende durante 1 segundo y se apaga durante otro segundo, generando un patrón de parpadeo continuo.}
+\end{figure}
 
+\subsection*{Análisis de resultados}
 
-    \subsection*{Análisis de resultados}
+El programa implementa un ciclo infinito que enciende y apaga el primer LED de la tira NeoPixel cada segundo, generando un parpadeo constante que nos sirve para comprender mejor la libreria neopixel.
+
+La libreria \texttt{neopixel} abstrae la complejidad del protocolo WS2812, generando automaticamente las señales mediante el subsistema PIO del RP2040. El uso de \texttt{brightness = 0.1} reduce el consumo de corriente a un nivel seguro para el puerto USB.
+
+La secuencia \texttt{set\_pixel()} y \texttt{show()} asegura que los cambios se reflejen fisicamente, mientras que \texttt{time.sleep(1)} introduce una pausa para apreciar mejor el cambio.
 
     \newpage
-    \section*{Actividad 2}
+   \section*{Actividad 2}
 
-    \noindent  Utilizando la tira de 8 leds RGB; generar el efecto mostrado en la figura 9-11, en forma secuencial con tres distintos colores.
+\noindent Utilizando la tira de 8 leds RGB; generar el efecto mostrado en la figura 9-11, en forma secuencial con tres distintos colores.
 
-    \vspace{1.5cm}
+\vspace{1.5cm}
 
-    % Gráfico de la secuencia
-    \begin{center}
-    \begin{tikzpicture}
-        % Definimos la secuencia de LEDs encendidos (Sube de 1 a 8 y baja de 8 a 1)
-        \foreach \val [count=\i] in {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1} {
+% Gráfico de la secuencia
+\begin{center}
+\begin{tikzpicture}
+    % Definimos la secuencia de LEDs encendidos (Sube de 1 a 8 y baja de 8 a 1)
+    \foreach \val [count=\i] in {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1} {
+        
+        % Calculamos la posición en X para cada tira (0.85 de separación)
+        \pgfmathsetmacro{\xoff}{(\i-1)*0.85}
+        
+        % Contorno principal de la tira de LEDs
+        \draw[gray!80, thick] (\xoff, 0) rectangle (\xoff+0.6, 4.1);
+        
+        % Dibujamos los 8 LEDs individuales (de abajo hacia arriba)
+        \foreach \j in {1,...,8} {
+            % Calculamos la posición en Y
+            \pgfmathsetmacro{\yoff}{(\j-1)*0.5 + 0.1}
             
-            % Calculamos la posición en X para cada tira (0.85 de separación)
-            \pgfmathsetmacro{\xoff}{(\i-1)*0.85}
-            
-            % Contorno principal de la tira de LEDs
-            \draw[gray!80, thick] (\xoff, 0) rectangle (\xoff+0.6, 4.1);
-            
-            % Dibujamos los 8 LEDs individuales (de abajo hacia arriba)
-            \foreach \j in {1,...,8} {
-                % Calculamos la posición en Y
-                \pgfmathsetmacro{\yoff}{(\j-1)*0.5 + 0.1}
-                
-                \ifnum\j>\val
-                    % Si el índice del LED es mayor que el valor de la secuencia -> APAGADO
-                    \draw[draw=gray!80, thick] (\xoff+0.1, \yoff) rectangle (\xoff+0.5, \yoff+0.35);
-                \else
-                    % Si el índice del LED es menor o igual -> ENCENDIDO (Rojo)
-                    \draw[fill=red, draw=gray!80, thick] (\xoff+0.1, \yoff) rectangle (\xoff+0.5, \yoff+0.35);
-                \fi
-            }
+            \ifnum\j>\val
+                % Si el índice del LED es mayor que el valor de la secuencia -> APAGADO
+                \draw[draw=gray!80, thick] (\xoff+0.1, \yoff) rectangle (\xoff+0.5, \yoff+0.35);
+            \else
+                % Si el índice del LED es menor o igual -> ENCENDIDO (Rojo)
+                \draw[fill=red, draw=gray!80, thick] (\xoff+0.1, \yoff) rectangle (\xoff+0.5, \yoff+0.35);
+            \fi
         }
+    }
+\end{tikzpicture}
+
+\vspace{0.8cm}
+% Pie de figura
+{\sffamily Figura 9-11. Muestra de secuencia a generar; actividad 2}
+\end{center}
+
+\section*{Propuesta de solucion}
+
+Para generar el efecto de barrido secuencial mostrado en la Figura 9-11, se utiliza la misma libreria \texttt{neopixel} documentada en la Actividad 1. La tira de 8 LEDs se conecta al pin GPIO 4. Se define una lista con tres colores (rojo, verde y azul). Por cada color, se ejecuta un bucle ascendente que enciende los LEDs desde la posicion 0 hasta la 7 con un retardo de 0.5 segundos entre cada encendido, logrando el efecto de llenado. Posteriormente, un bucle descendente apaga los LEDs desde la posicion 7 hasta la 0 con el mismo retardo, creando un efecto de vaciado que permite distinguir claramente la transicion entre colores.
+
+\begin{center}
+    \scalebox{0.82}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start2) [startstop, text width=2.6cm] {Inicio};
+        \node (init2) [process, below=of start2, text width=7.8cm] {Importar \texttt{time} y \texttt{Neopixel}. Configurar 8 LEDs en GPIO 4.};
+        \node (colors2) [process, below=of init2, text width=6.5cm] {Definir \texttt{colores = [(255,0,0), (0,255,0), (0,0,255)]}.};
+        \node (forcolor2) [process, below=of colors2, text width=4.8cm] {\texttt{for color in colores}: Iniciar};
+        \node (fill2) [process, below=of forcolor2, text width=6.8cm] {\texttt{for i in range(8)}: \texttt{set\_pixel(i, color)}, \texttt{show()}, esperar 0.5 s};
+        \node (clear2) [process, below=of fill2, text width=7.5cm] {\texttt{for i in range(8)}: \texttt{set\_pixel(7-i, (0,0,0))}, \texttt{show()}, esperar 0.5 s};
+        \node (nextcolor2) [decision, below=of clear2, text width=3.8cm, aspect=2.2] {¿Quedan colores?};
+        \node (repeat2) [decision, below=of nextcolor2, text width=3.5cm, aspect=2.2] {¿Repetir ciclo?};
+        
+        \draw [arrow] (start2) -- (init2);
+        \draw [arrow] (init2) -- (colors2);
+        \draw [arrow] (colors2) -- (forcolor2);
+        \draw [arrow] (forcolor2) -- (fill2);
+        \draw [arrow] (fill2) -- (clear2);
+        \draw [arrow] (clear2) -- (nextcolor2);
+        
+        % Flecha "Si" para nextcolor2 (siguiente color)
+        \draw [arrow] (nextcolor2.east) -- node[above, font=\scriptsize] {Si} ++(1.8,0) |- ([yshift=-0.3cm]forcolor2.east);
+        
+        % Flecha "No" para nextcolor2 (terminaron los colores)
+        \draw [arrow] (nextcolor2.south) -- node[right, font=\scriptsize] {No} (repeat2);
+        
+        % Flecha "Si" para repeat2 (repetir todo el ciclo)
+        \draw [arrow] (repeat2.west) -- node[above, font=\scriptsize] {Si} ++(-1.8,0) |- (forcolor2.west);
+        
+        % Flecha "No" para repeat2 (fin del programa)
+        \draw [arrow] (repeat2.south) -- node[below, font=\scriptsize] {No} ++(0,-0.6) -- ++(0,0) node[below] {Fin};
+        
     \end{tikzpicture}
+    }
+\end{center}
 
-    \vspace{0.8cm}
-    % Pie de figura
-    {\sffamily Figura 9-11. Muestra de secuencia a generar; actividad 2}
-    \end{center}
+\section*{Desarrollo}
 
-    \section*{Propuesta de solución}
+\lstinputlisting[language={[LAB]Python}, caption=Codigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
-    \section*{Desarrollo}
+% ==========================================
+% BLOQUE 1: Color Rojo (15 imagenes)
+% ==========================================
+\textbf{Secuencia en color rojo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_2.jpg}
+        \caption{Posicion 1}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_20.jpg}
+        \caption{Posicion 2}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_27.jpg}
+        \caption{Posicion 3}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_26.jpg}
+        \caption{Posicion 4}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_25.jpg}
+        \caption{Posicion 5}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_24.jpg}
+        \caption{Posicion 6}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_23.jpg}
+        \caption{Posicion 7}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_22.jpg}
+        \caption{Posicion 8}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_23.jpg}
+        \caption{Posicion 9}
+    \end{minipage}
+\end{figure}
 
-    \subsection*{Análisis de resultados}
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_24.jpg}
+        \caption{Posicion 10}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_25.jpg}
+        \caption{Posicion 11}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_26.jpg}
+        \caption{Posicion 12}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_27.jpg}
+        \caption{Posicion 13}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_20.jpg}
+        \caption{Posicion 14}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_2.jpg}
+        \caption{Posicion 15}
+    \end{minipage}
+\end{figure}
+
+% ==========================================
+% BLOQUE 2: Color Verde (15 imagenes)
+% ==========================================
+\textbf{Secuencia en color verde}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_3.jpg}
+        \caption{Posicion 1}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_4.jpg}
+        \caption{Posicion 3}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_5.jpg}
+        \caption{Posicion 5}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_6.jpg}
+        \caption{Posicion 7}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_7.jpg}
+        \caption{Posicion 9}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_8.jpg}
+        \caption{Posicion 11 }
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_9.jpg}
+        \caption{Posicion 12}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_10.jpg}
+        \caption{Posicion 14}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_11.jpg}
+        \caption{Posicion 15}
+    \end{minipage}
+\end{figure}
+
+% ==========================================
+% BLOQUE 3: Color Azul (15 imagenes)
+% ==========================================
+\textbf{Secuencia en color azul}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_13.jpg}
+        \caption{Posicion 2}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_14.jpg}
+        \caption{Posicion 4}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_15.jpg}
+        \caption{Posicion 6}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_16.jpg}
+        \caption{Posicion 9}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_17.jpg}
+        \caption{Posicion 11}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/Actividad2/Act2_18.jpg}
+        \caption{Posicion 13}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+        \centering
+        \includegraphics[width=0.3\textwidth]{img/Actividad2/Act2_19.jpg}
+        \caption{Posicion 15}
+\end{figure}
+
+\subsection*{Analisis de resultados}
+
+El programa ejecuta correctamente el efecto de barrido secuencial para los tres colores. El retardo de 0.5 segundos permite apreciar claramente cada transicion de encendido y apagado. El bucle ascendente (posiciones 0 a 7) genera un llenado progresivo de la tira, mientras que el bucle descendente (posiciones 7 a 0) vacia la tira. La eleccion de 0.5 segundos de retardo evita que el movimiento sea demasiado rapido para el ojo humano y las imagenes de la secuencia documentan cada posicion intermedia de la secuencia, validando el correcto funcionamiento del algoritmo.
     \newpage
     \section*{Actividad 3}
 
@@ -507,95 +807,222 @@
 
     El efecto de segundero se logra dividiendo el retardo total de un segundo en dos pausas de 0.5 segundos. En la primera mitad, el microcontrolador envía los datos con el parámetro de los dos puntos activado, y en la segunda mitad envía la instrucción de apagado. Las estructuras condicionales \texttt{if Sec == 60} y \texttt{if Min == 60} gestionan el reinicio de las variables, asegurando que el formato de reloj base 60 se mantenga íntegro ciclo tras ciclo antes de realizar la siguiente escritura en la pantalla.
     \newpage
-    \section*{Actividad 4}
 
-    \noindent Empleando el display TM1637; realizar un programa que muestre un contador descendente, iniciando en 20 y cuando corresponda el valor 0, active un sonido de 1 segundo de duración en el zumbador de la tarjeta (GPIO17).
+\section*{Actividad 4}
 
-    \vspace{1.5cm}
+\noindent Empleando el display TM1637; realizar un programa que muestre un contador descendente, iniciando en 20 y cuando corresponda el valor 0, active un sonido de 1 segundo de duracion en el zumbador de la tarjeta (GPIO17).
 
-    % Diagrama
-    \begin{center}
-    \begin{tikzpicture}
-        % 1. Dibujar la Raspberry Pi Pico
-        \picoboard
+\vspace{1.5cm}
 
-        % ==========================================
-        % 2. Módulo Display TM1637 (Lado Izquierdo)
-        % ==========================================
+% Diagrama
+\begin{center}
+\begin{tikzpicture}
+    % 1. Dibujar la Raspberry Pi Pico
+    \picoboard
+
+    % ==========================================
+    % 2. Modulo Display TM1637 (Lado Izquierdo)
+    % ==========================================
+    
+    % Contorno principal del Display
+    \draw[thick] (-6.5, 0.2) rectangle (-2.0, -1.3);
+    
+    % Titulo del Display
+    \node[above, text=blue!80!black, font=\sffamily\itshape\large] at (-5.5, 0.3) {Display TM1637};
+    
+    % Los 4 digitos
+    \draw[thick] (-6.3, 0.0) rectangle (-5.4, -1.1);
+    \draw[thick] (-5.2, 0.0) rectangle (-4.3, -1.1);
+    \draw[thick] (-4.1, 0.0) rectangle (-3.2, -1.1);
+    \draw[thick] (-3.0, 0.0) rectangle (-2.1, -1.1);
+
+    % Cables del Display
+    % Cable CLK (Azul) a GP0
+    \draw[blue, thick] (-2.0, -0.45) -- (-0.4, -0.45);
+    \node[above, font=\sffamily\bfseries\small, inner sep=2pt] at (-1.5, -0.45) {CLK};
+    
+    % Cable DIO (Verde) a GP1
+    \draw[green!70!black, thick] (-2.0, -0.90) -- (-0.4, -0.90);
+    \node[below, font=\sffamily\bfseries\small, inner sep=2pt] at (-1.5, -0.90) {DIO};
+
+    % Cable VCC (Rojo hacia arriba)
+    \draw[red, thick] (-2.8, 0.2) -- (-2.8, 1.2);
+    \node[right, font=\sffamily\bfseries\small, inner sep=4pt] at (-2.8, 0.6) {VCC};
+    \node[above, font=\sffamily\footnotesize] at (-2.8, 1.2) {3.3V};
+    \draw[red, thick] (-3.0, 1.2) -- (-2.6, 1.2);
+
+    % Cable GND (Negro hacia abajo)
+    \draw[black, thick] (-2.8, -1.3) -- (-2.8, -2.1);
+    \node[right, font=\sffamily\bfseries\small, inner sep=4pt] at (-2.8, -1.7) {GND};
+    
+    % Simbolo de GND
+    \draw[green!70!black, thick] (-3.2, -2.1) -- (-2.4, -2.1);
+    \draw[green!70!black, thick] (-3.0, -2.3) -- (-2.6, -2.3);
+    \draw[green!70!black, thick] (-2.85, -2.5) -- (-2.75, -2.5);
+
+    % ==========================================
+    % 3. Modulo Zumbador (Lado Derecho)
+    % ==========================================
+    
+    % Conexion del zumbador al pin GP17
+    \draw[red, thick] (4.4, -8.55) -- (5.2, -8.55);
+    
+    % Dibujo del Zumbador
+    \draw[thick, fill=white] (5.2, -8.2) rectangle (5.5, -8.9);
+    \draw[thick, fill=white] (5.5, -8.2) -- (6.0, -7.9) -- (6.0, -9.2) -- (5.5, -8.9) -- cycle;
+
+    % Cable GND del Zumbador
+    \draw[black, thick] (5.35, -8.9) -- (5.35, -9.6);
+    
+    % Simbolo de GND
+    \draw[green!70!black, thick] (4.95, -9.6) -- (5.75, -9.6);
+    \draw[green!70!black, thick] (5.15, -9.8) -- (5.55, -9.8);
+    \draw[green!70!black, thick] (5.3, -10.0) -- (5.4, -10.0);
+
+\end{tikzpicture}
+
+\vspace{0.8cm}
+{\sffamily Figura 9-13. Esquematico de la actividad 4}
+\end{center}
+
+\section*{Propuesta de solucion}
+
+Se emplea el modulo TM1637 para controlar un display de 4 digitos de 7 segmentos mediante los pines GPIO 0 (CLK) y GPIO 1 (DIO), utilizando la libreria \texttt{tm1637}. El zumbador pasivo se conecta al GPIO 17 como salida digital. El algoritmo implementa un contador descendente desde 20 hasta 0 usando el metodo \texttt{number()} del display para mostrar el valor actual. En cada iteracion se aplica una pausa de 1 segundo y al alcanzar el valor 0, el programa pone el pin del zumbador en nivel alto durante 1 segundo para generar un tono audible, y luego lo apaga.
+
+% Diagrama de flujo
+\begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start4) [startstop, text width=2.6cm] {Inicio};
+        \node (init4) [process, below=of start4, text width=8.2cm] {Importar librerias. Configurar TM1637 en GPIO 0 y 1, brillo 3. Configurar zumbador en GPIO 17 como salida.};
+        \node (for4) [process, below=of init4, text width=5.5cm] {\texttt{for cuenta in range(20, -1, -1)}:};
+        \node (show4) [process, below=of for4, text width=5.2cm] {Mostrar \texttt{cuenta} en display con \texttt{tm.number(cuenta)}.};
+        \node (wait4) [process, below=of show4, text width=4.2cm] {Esperar 1 segundo con \texttt{sleep(1)}.};
+        \node (check4) [decision, below=of wait4, text width=3.5cm, aspect=2.2] {\texttt{cuenta == 0}?};
+        \node (alarm4) [process, below=of check4, text width=6.2cm] {Activar zumbador: \texttt{zumbador.value(1)}. Esperar 1 segundo. Apagar zumbador: \texttt{zumbador.value(0)}.};
+        \node (end4) [startstop, below=of alarm4, text width=2.2cm] {Fin};
         
-        % Contorno principal del Display
-        \draw[thick] (-6.5, 0.2) rectangle (-2.0, -1.3);
+        \draw [arrow] (start4) -- (init4);
+        \draw [arrow] (init4) -- (for4);
+        \draw [arrow] (for4) -- (show4);
+        \draw [arrow] (show4) -- (wait4);
+        \draw [arrow] (wait4) -- (check4);
         
-        % Título del Display
-        \node[above, text=blue!80!black, font=\sffamily\itshape\large] at (-5.5, 0.3) {Display TM1637};
+        % Flecha "No" (aun no es cero) - regresa al siguiente valor del for
+        \draw [arrow] (check4.east) -- node[above, font=\scriptsize] {No} ++(1.8,0) |- ([yshift=-0.3cm]for4.east);
         
-        % Los 4 dígitos
-        \draw[thick] (-6.3, 0.0) rectangle (-5.4, -1.1);
-        \draw[thick] (-5.2, 0.0) rectangle (-4.3, -1.1);
-        \draw[thick] (-4.1, 0.0) rectangle (-3.2, -1.1);
-        \draw[thick] (-3.0, 0.0) rectangle (-2.1, -1.1);
-
-        % Cables del Display (Con coordenadas ajustadas para evitar empalmes con texto)
-        % Cable CLK (Azul) a GP0 (y = -0.45)
-        \draw[blue, thick] (-2.0, -0.45) -- (-0.4, -0.45);
-        \node[above, font=\sffamily\bfseries\small, inner sep=2pt] at (-1.5, -0.45) {CLK};
+        % Flecha "Si" (llegó a cero)
+        \draw [arrow] (check4.south) -- node[right, font=\scriptsize] {Si} (alarm4);
         
-        % Cable DIO (Verde) a GP1 (y = -0.90)
-        \draw[green!70!black, thick] (-2.0, -0.90) -- (-0.4, -0.90);
-        \node[below, font=\sffamily\bfseries\small, inner sep=2pt] at (-1.5, -0.90) {DIO};
-
-        % Cable VCC (Rojo hacia arriba)
-        \draw[red, thick] (-2.8, 0.2) -- (-2.8, 1.2);
-        \node[right, font=\sffamily\bfseries\small, inner sep=4pt] at (-2.8, 0.6) {VCC};
-        \node[above, font=\sffamily\footnotesize] at (-2.8, 1.2) {3.3V};
-        \draw[red, thick] (-3.0, 1.2) -- (-2.6, 1.2); % Base etiqueta 3.3V
-
-        % Cable GND (Negro hacia abajo con símbolo verde)
-        \draw[black, thick] (-2.8, -1.3) -- (-2.8, -2.1);
-        \node[right, font=\sffamily\bfseries\small, inner sep=4pt] at (-2.8, -1.7) {GND};
+        % Flecha de alarm4 hacia Fin
+        \draw [arrow] (alarm4) -- (end4);
         
-        % Símbolo de GND (Display)
-        \draw[green!70!black, thick] (-3.2, -2.1) -- (-2.4, -2.1);
-        \draw[green!70!black, thick] (-3.0, -2.3) -- (-2.6, -2.3);
-        \draw[green!70!black, thick] (-2.85, -2.5) -- (-2.75, -2.5);
-
-
-        % ==========================================
-        % 3. Módulo Zumbador (Lado Derecho)
-        % ==========================================
-        
-        % Conexión del zumbador al pin GP17 (y = -8.55 según la macro)
-        \draw[red, thick] (4.4, -8.55) -- (5.2, -8.55);
-        
-        % Dibujo del Zumbador (Cuerpo y Campana)
-        \draw[thick, fill=white] (5.2, -8.2) rectangle (5.5, -8.9); % Base trasera
-        \draw[thick, fill=white] (5.5, -8.2) -- (6.0, -7.9) -- (6.0, -9.2) -- (5.5, -8.9) -- cycle; % Campana frontal
-
-        % Cable GND del Zumbador
-        \draw[black, thick] (5.35, -8.9) -- (5.35, -9.6);
-        
-        % Símbolo de GND (Zumbador)
-        \draw[green!70!black, thick] (4.95, -9.6) -- (5.75, -9.6);
-        \draw[green!70!black, thick] (5.15, -9.8) -- (5.55, -9.8);
-        \draw[green!70!black, thick] (5.3, -10.0) -- (5.4, -10.0);
-
     \end{tikzpicture}
+    }
+\end{center}
 
-    \vspace{0.8cm}
-    % Pie de figura
-    {\sffamily Figura 9-13. Esquemático de la actividad 4}
-    \end{center}
+\section*{Desarrollo}
 
-    \section*{Propuesta de solución}
+\lstinputlisting[language={[LAB]Python}, caption=Codigo de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
-    \section*{Desarrollo}
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_15.jpg}
+        \caption{Valor 20}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_1.jpg}
+        \caption{Valor 19}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_7.jpg}
+        \caption{Valor 18}
+    \end{minipage}
+\end{figure}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_8.jpg}
+        \caption{Valor 17}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_9.jpg}
+        \caption{Valor 16}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_10.jpg}
+        \caption{Valor 15}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_11.jpg}
+        \caption{Valor 14}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_12.jpg}
+        \caption{Valor 13}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_13.jpg}
+        \caption{Valor 12}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_14.jpg}
+        \caption{Valor 11}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_2.jpg}
+        \caption{Valor 10}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_3.jpg}
+        \caption{Valor 9}
+    \end{minipage}
+\end{figure}
 
-    \subsection*{Análisis de resultados}
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_4.jpg}
+        \caption{Valor 8}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_5.jpg}
+        \caption{Valor 7}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.6\textwidth, angle=90]{img/Actividad4/Act4_6.jpg}
+        \caption{Valor 6}
+    \end{minipage}
+\end{figure}
 
+\subsection*{Analisis de resultados}
+
+El programa ejecuta correctamente el contador descendente desde 20 hasta 0, tal y como se obsevó en las figuras anteriores, cada valor se mostro en el display TM1637 con un intervalo de 1 segundo y al llegar a cero, el zumbador se activa durante 1 segundo emitiendo un tono audible. El uso del metodo \texttt{number()} simplifica el formateo de numeros hasta 4 digitos sin necesidad de gestionar manualmente los segmentos. El tiempo de espera de 1 segundo entre decrementos permite apreciar claramente cada valor antes de la siguiente actualizacion. La alarma al finalizar el conteo confirma visual y auditivamente la terminacion del proceso.
     \newpage
     \section*{Actividad 5}
 
@@ -1284,7 +1711,9 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
 
-        \item \textbf{Flores Colin Victor Jaziel:}
+        \item \textbf{Flores Colin Victor Jaziel:} En esta practica número nueve logre comprender de manera más completa el manejo de perifericos de salida digital y visualizacion numerica con la Raspberry Pi Pico ya que junto a mi equipo combinamos por ejemplo un display TM1637 y un zumbador pasivo dentro de una misma solucion funcional como en la actividad 4, donde además trabaje con el protocolo I2C simulado (dos hilos: CLK y DIO), actualizando el numero mostrado en cada iteracion con el metodo \texttt{number()} y el uso del zumbador como actuador me permitio incorporar retroalimentacion auditiva al finalizar el conteo, activando el pin GPIO 17 durante exactamente 1 segundo.
+
+        Tambien me ayudo mucho a reforzar el uso de estructuras de control como el bucle \texttt{for} para generar un decremento o incremento automatico para nuestras demás implementaciones para comunicación One Wire que implementamos con la Raspberry Pi Pico y el uso de las librerias Neopixel, tm1637, onewire, ds18x20 y dht de MicroPython.
         
         \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré comprender de manera más completa el objetivo del tema de comunicación \textit{One Wire}, porque pasé de usar cada módulo por separado a integrarlos dentro de una misma solución funcional con la Raspberry Pi Pico. Al trabajar con el DS18B20 confirmé cómo se maneja el flujo real de datos en este protocolo: primero la detección del dispositivo en el bus, luego la conversión térmica con su tiempo de espera y finalmente la lectura del dato. Además, al convertir de \textdegree C a \textdegree F y mostrar resultados en consola y display, pude validar que la adquisición y el procesamiento de la información se realizan de forma consistente.
 
