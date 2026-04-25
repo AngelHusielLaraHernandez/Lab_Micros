@@ -420,15 +420,92 @@
 
 
     \section*{Propuesta de solución}
+    Para implementar un reloj digital, se propone utilizar un módulo controlador de display de 7 segmentos TM1637. Este componente se comunica con el microcontrolador a través de un protocolo serie síncrono de dos hilos (CLK y DIO). La solución emplea la librería \texttt{tm1637} para abstraer el manejo a bajo nivel de los segmentos LED. 
+    
+    El programa plantea un bucle infinito que incrementa una variable de segundos, utilizando condicionales lógicas para manejar el acarreo matemático hacia los minutos cada vez que se alcanza el valor de 60. Para dar el efecto visual característico de un reloj real, se encienden y apagan los dos puntos centrales (\texttt{colon=True} y \texttt{colon=False}) intercalando retardos de medio segundo en el procesador. Esto logra una frecuencia de parpadeo estable de 1 Hz de manera sincronizada con el avance del tiempo.
+
+    \begin{center}
+        \scalebox{0.82}{
+        \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+            \node (start3) [startstop, text width=2.8cm] {Inicio};
+            \node (init3) [process, below=of start3, text width=7.2cm] {Inicializar \texttt{tm1637}, brillo, \texttt{Min=0} y \texttt{Sec=0}.};
+            \node (on3) [process, below=of init3, text width=6.6cm] {Mostrar \texttt{Min:Sec} con \texttt{colon=True}, esperar 0.5 s.};
+            \node (off3) [process, below=of on3, text width=6.6cm] {Mostrar \texttt{Min:Sec} con \texttt{colon=False}, esperar 0.5 s.};
+            \node (incsec3) [process, below=of off3, text width=4.8cm] {\texttt{Sec = Sec + 1}.};
+            \node (sec603) [decision, below=of incsec3, text width=3.2cm, aspect=2.2] {\texttt{Sec == 60}?};
+            \node (incmin3) [process, below=of sec603, text width=5.4cm] {\texttt{Min = Min + 1}\newline \texttt{Sec = 0}};
+            \node (min603) [decision, below=of incmin3, text width=3.2cm, aspect=2.2] {\texttt{Min == 60}?};
+            \node (resetmin3) [process, below=of min603, text width=4.2cm] {\texttt{Min = 0}.};
+
+            \draw [arrow] (start3) -- (init3);
+            \draw [arrow] (init3) -- (on3);
+            \draw [arrow] (on3) -- (off3);
+            \draw [arrow] (off3) -- (incsec3);
+            \draw [arrow] (incsec3) -- (sec603);
+            \draw [arrow] (sec603) -- node[right, font=\scriptsize] {Si} (incmin3);
+            \draw [arrow] (incmin3) -- (min603);
+            \draw [arrow] (min603) -- node[right, font=\scriptsize] {Si} (resetmin3);
+            
+            % --- LÍNEAS CORREGIDAS ---
+            % El texto "No" se coloca sobre la primera línea horizontal (node[above]).
+            % Las distancias en X van de menor a mayor (1.5, 2.2, 2.9) para que no se crucen.
+            % Las llegadas a `on3.east` tienen un yshift para entrar en alturas distintas.
+            \draw [arrow] (sec603.east) -- node[above, font=\scriptsize] {No} ++(1.5,0) |- ([yshift=-0.25cm]on3.east);
+            \draw [arrow] (min603.east) -- node[above, font=\scriptsize] {No} ++(2.2,0) |- (on3.east);
+            \draw [arrow] (resetmin3.east) -- ++(2.9,0) |- ([yshift=0.25cm]on3.east);
+            
+        \end{tikzpicture}
+        }
+        \end{center}
+
+    El flujo de datos inicia con la inicializacion del controlador TM1637 y de las variables \texttt{Min} y \texttt{Sec}. En cada iteracion se envian al display dos tramas consecutivas del mismo dato temporal (primero con dos puntos encendidos y luego apagados), despues se actualiza \texttt{Sec}. Cuando \texttt{Sec} alcanza 60, el flujo redirige el dato hacia \texttt{Min} y reinicia segundos; si \texttt{Min} llega a 60, tambien se reinicia. Finalmente, el valor normalizado vuelve al bloque de visualizacion y el ciclo se repite indefinidamente.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
+    
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_1.jpg}
+        \caption{Inicio de la ejecución (00:07). El microcontrolador inicializa la comunicación con el display TM1637. Las variables de minutos y segundos arrancan en cero, y la instrucción \texttt{tm.numbers(Min, Sec, colon=True)} enciende de manera estática los dos puntos centrales.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_2.jpg}
+        \caption{Efecto de parpadeo inicial. Tras un retardo de 500 ms, el programa actualiza la pantalla pasando el parámetro \texttt{colon=False}, lo que apaga los LEDs centrales simulando el pulso visual característico de un segundero real.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_3.jpg}
+        \caption{Avance continuo del reloj (00:09). La lógica del bucle incrementa la variable \texttt{Sec}. El protocolo serie sincroniza los registros de los cuatro dígitos del módulo simultáneamente para reflejar el progreso del tiempo con el separador activo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_4.jpg}
+        \caption{Avance continuo del reloj (00:10).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_5.jpg}
+        \caption{Avance continuo del reloj (00:11).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad3/Act3_6.jpg}
+        \caption{Culminación del ciclo de muestra. }
+    \end{figure}
 
 
     \subsection*{Análisis de resultados}
+    Al ejecutar el programa, se comprueba la comunicación exitosa entre el RP2040 y el circuito integrado TM1637. La instrucción \texttt{tm.numbers(Min, Sec)} procesa internamente las variables enteras y envía la trama de datos necesaria para encender los LEDs correctos en los cuatro dígitos de manera simultánea, evitando la necesidad de hacer multiplexación manual por software.
 
+    El efecto de segundero se logra dividiendo el retardo total de un segundo en dos pausas de 0.5 segundos. En la primera mitad, el microcontrolador envía los datos con el parámetro de los dos puntos activado, y en la segunda mitad envía la instrucción de apagado. Las estructuras condicionales \texttt{if Sec == 60} y \texttt{if Min == 60} gestionan el reinicio de las variables, asegurando que el formato de reloj base 60 se mantenga íntegro ciclo tras ciclo antes de realizar la siguiente escritura en la pantalla.
     \newpage
     \section*{Actividad 4}
 
@@ -622,14 +699,61 @@
     \end{center}    
 
     \section*{Propuesta de solución}
+    Para leer la temperatura ambiental con alta precisión, se propone implementar la comunicación mediante el protocolo \textit{1-Wire} (un solo hilo) exigido por el sensor digital DS18B20. Haciendo uso de las librerías \texttt{onewire} y \texttt{ds18x20}, el algoritmo escanea inicialmente el bus de datos en el GPIO 16 para detectar e identificar las direcciones ROM únicas de todos los dispositivos conectados en paralelo.
+
+    Dentro del ciclo continuo, se envía un comando global para iniciar la conversión térmica. Se debe aplicar un retardo estricto de 750 milisegundos para permitir que el convertidor analógico-digital interno del sensor finalice su cálculo. Posteriormente, se extrae el dato crudo en grados Celsius. A través de una operación aritmética simple, este valor se convierte a grados Fahrenheit. Finalmente, el microcontrolador formatea e imprime en la consola tanto la dirección física del dispositivo como las dos magnitudes de temperatura resultantes.
+
+\begin{center}
+    \begin{tikzpicture}[node distance=1.35cm, every node/.style={font=\small}]
+        \node (start6) [startstop, text width=3.2cm] {Inicio};
+        \node (init6) [process, below=of start6, text width=8.6cm] {Importar modulos, crear \texttt{ds\_sensor} en GPIO16 y ejecutar \texttt{roms = ds\_sensor.scan()}.};
+        \node (conv6) [process, below=of init6, text width=7.0cm] {Iniciar conversion con \texttt{convert\_temp()}.};
+        \node (wait6) [process, below=of conv6, text width=7.0cm] {Esperar 750 ms para completar conversion.};
+        \node (for6) [decision, below=of wait6, text width=4.0cm, aspect=2.2] {\texttt{for rom in roms}:\newline \textquestiondown Hay ROM pendiente?};
+        \node (read6) [process, below=of for6, text width=8.0cm] {Leer \texttt{tempC = read\_temp(rom)} y calcular \texttt{tempF = tempC*9/5 + 32}.};
+        \node (print6) [process, below=of read6, text width=8.0cm] {Imprimir \texttt{ROM}, temperatura en \textdegree C y en \textdegree F.};
+        
+        % CORRECCIÓN: Se cambió "below=of" por "right=2cm of" para mover el bloque a la derecha
+        \node (pause6) [process, right=2cm of for6, text width=3.2cm, align=center] {Esperar 2 s.};
+
+        \draw [arrow] (start6) -- (init6);
+        \draw [arrow] (init6) -- (conv6);
+        \draw [arrow] (conv6) -- (wait6);
+        \draw [arrow] (wait6) -- (for6);
+        \draw [arrow] (for6) -- node[right, font=\scriptsize] {Si} (read6);
+        \draw [arrow] (read6) -- (print6);
+        \draw [arrow] (print6.west) -- ++(-2.8,0) |- (for6.west);
+        
+        % CORRECCIÓN: La flecha sale por el este hacia el oeste de la pausa
+        \draw [arrow] (for6.east) -- node[above, font=\scriptsize] {No} (pause6.west);
+        
+        % CORRECCIÓN: La flecha sube desde el norte de la pausa y entra por el este a la conversión
+        \draw [arrow] (pause6.north) |- (conv6.east);
+    \end{tikzpicture}
+    \end{center}
+
+    El flujo de datos parte de la deteccion inicial de direcciones ROM en el bus 1-Wire y luego entra al ciclo principal de conversion termica. En cada vuelta se genera una conversion global, se espera el tiempo fisico del sensor y se recorre la lista \texttt{roms}; por cada direccion se extrae \texttt{tempC}, se transforma a \texttt{tempF} y ambas magnitudes se envian a salida serial junto con la ROM que identifica al dispositivo. Cuando termina el recorrido de sensores, el programa aplica una pausa de 2 segundos y reinicia el proceso de muestreo.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad6/Act6_1.jpg}
+        \caption{Identificación y respuesta térmica inicial. }
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{img/Actividad6/Act6_2.jpg}
+        \caption{Pico térmico y disipación de calor. En las iteraciones posteriores, el sistema registra un máximo térmico sostenido de 32.50 °C seguido de una caída a 31.56 °C. Este registro demuestra que el ciclo de muestreo captura fielmente la inercia térmica y el enfriamiento natural del componente físico en tiempo real, garantizando lecturas estables tras el tiempo de conversión de 750 ms.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+    El script demuestra un control sólido sobre el protocolo bidireccional de un solo hilo. La instrucción \texttt{ds\_sensor.scan()} localiza físicamente el sensor y devuelve su dirección inalterable de fábrica en un arreglo de bytes (\texttt{bytearray}), el cual coincide exactamente con la salida observada en el monitor serial. Esto asegura que los comandos posteriores se dirijan al hardware correcto.
+
+    La ejecución de \texttt{ds\_sensor.convert\_temp()} ordena al DS18B20 tomar una muestra del entorno. El retardo de 750 ms resulta crítico en esta etapa, ya que es el tiempo físico que tarda el sensor en procesar la temperatura con su máxima resolución de 12 bits. Una vez extraído el valor con \texttt{read\_temp()}, el procesador aplica la conversión (\texttt{tempC * 9/5 + 32}). Los resultados impresos en la consola, como los 23.56 °C y 74.41 °F, muestran una lectura térmica estable, validando la inmunidad al ruido eléctrico que ofrece este sensor digital frente a los sensores analógicos de las prácticas anteriores.
 
     \newpage
     \section*{Actividad 7}
@@ -1033,13 +1157,126 @@
 
 
     \section*{Propuesta de solución}
+    Para integrar múltiples periféricos, se propone un sistema secuencial dividido en dos fases. La Fase A controla una tira de LEDs direccionables (Neopixel) para emular un cruce de semáforos, manipulando los canales de color (RGB) de píxeles específicos con tiempos de bloqueo asignados. 
+    
+    La Fase B realiza un monitoreo térmico durante una ventana de 10 segundos utilizando el DS18B20 y el DHT11. Para consolidar la salida visual y optimizar el hardware, la solución centraliza las lecturas en un único display TM1637. El programa utiliza una variable de estado (\texttt{modo\_sensor}) para determinar cuál sensor se procesará en el bucle actual. Para alternar entre ellos a petición del usuario, se configura un botón físico en el GPIO 13 que dispara una interrupción de hardware, invirtiendo la variable de estado de forma instantánea sin importar en qué parte del ciclo de visualización se encuentre el procesador.
+
+    \begin{center}
+        \scalebox{0.78}{
+        \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+            \node (start9) [startstop, text width=3.0cm] {Inicio};
+            \node (init9) [process, below=of start9, text width=8.8cm] {Inicializar Neopixel, TM1637, DS18B20 y DHT11. Configurar IRQ del boton (GPIO13) para alternar \texttt{modo\_sensor}.};
+            \node (fasea9) [process, below=of init9, text width=8.8cm] {Fase A: ejecutar la secuencia de semaforos (verdes, amarillos, rojos e intermitencias).};
+            \node (timer9) [process, below=of fasea9, text width=7.4cm] {Fase B: \texttt{inicio\_fase = time.time()}.};
+            \node (tcheck9) [decision, below=of timer9, text width=3.3cm, aspect=2.1] {\texttt{time.time()-inicio\_fase < 10}?};
+            \node (modo9) [decision, below=of tcheck9, text width=3.3cm, aspect=2.1] {\texttt{modo\_sensor == 0}?};
+
+            \node (ds9) [process, below left=1.2cm and 2.3cm of modo9, text width=4.6cm] {Ruta DS18B20:\newline \texttt{scan()}, \texttt{convert\_temp()}, esperar 750 ms, leer y mostrar \texttt{"DS"} + valor.};
+            \node (dht9) [process, below right=1.2cm and 2.3cm of modo9, text width=4.6cm] {Ruta DHT11:\newline \texttt{measure()}, leer temperatura y mostrar \texttt{"DH"} + valor.};
+            \node (exc9) [decision, below=of modo9, yshift=-2.3cm, text width=3.0cm, aspect=2.1] {\texttt{Excepcion\newline de lectura?}};
+            \node (err9) [process, right=2.3cm of exc9, text width=3.6cm] {Mostrar error:\newline \texttt{tm.show("ERR ")}.};
+            \node (wait9) [process, below=of exc9, text width=4.0cm] {Esperar 1 s.};
+            \node (clear9) [process, right=2.9cm of tcheck9, text width=4.2cm] {Limpiar display:\newline \texttt{tm.write([0,0,0,0])}.};
+
+            \draw [arrow] (start9) -- (init9);
+            \draw [arrow] (init9) -- (fasea9);
+            \draw [arrow] (fasea9) -- (timer9);
+            \draw [arrow] (timer9) -- (tcheck9);
+            \draw [arrow] (tcheck9) -- node[right] {Si} (modo9);
+            \draw [arrow] (modo9) -- node[above left, font=\scriptsize] {Si} (ds9);
+            \draw [arrow] (modo9) -- node[above right, font=\scriptsize] {No} (dht9);
+
+            % --- CORRECCIONES A PARTIR DE AQUÍ ---
+            
+            % 1. Las ramas de los sensores se unen limpiamente y entran por el NORTE del rombo de excepción
+            \draw (ds9.south) |- ([yshift=0.6cm]exc9.north);
+            \draw (dht9.south) |- ([yshift=0.6cm]exc9.north);
+            \draw [arrow] ([yshift=0.6cm]exc9.north) -- (exc9.north);
+
+            % 2. El bloque de error (err9) recibe la respuesta "Si" por su izquierda y baja directo al "esperar 1s"
+            \draw [arrow] (exc9.east) -- node[above, font=\scriptsize] {Si} (err9.west);
+            \draw [arrow] (err9.south) |- (wait9.east);
+
+            % 3. Si no hay error ("No"), baja recto sin cruces
+            \draw [arrow] (exc9.south) -- node[left, font=\scriptsize] {No} (wait9.north);
+
+            % 4. La flecha de retorno general sale por la izquierda y rodea el bloque ds9 para no pisarlo
+            \draw [arrow] (wait9.west) -| ([xshift=-0.8cm]ds9.west) |- (tcheck9.west);
+
+            % --- FIN DE CORRECCIONES ---
+
+            \draw [arrow] (tcheck9.east) -- node[above, font=\scriptsize] {No} (clear9.west);
+            \draw [arrow] (clear9.north) |- (fasea9.east);
+        \end{tikzpicture}
+        }
+    \end{center}
+
+    El flujo de datos integra dos ciclos anidados: primero la fase de semaforos, donde se escriben secuencias RGB sobre Neopixel, y despues la fase de monitoreo de 10 segundos, donde el dato termico se enruta segun \texttt{modo\_sensor}. Si el modo es 0, el dato proviene del DS18B20 (escaneo, conversion y lectura); en modo 1, proviene del DHT11 (muestreo y lectura directa). En ambos casos el valor se transforma a entero para desplegarse en TM1637 con una etiqueta de contexto (DS o DH). Si ocurre una excepcion, el flujo desvía la salida hacia \texttt{ERR}. Al finalizar la ventana temporal, se limpia el display y se reinicia la secuencia completa; en paralelo, la interrupcion del boton puede cambiar la ruta de datos en cualquier instante.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 9, basicstyle=\ttfamily\scriptsize]{Code/Act9.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad9/Act9_3.jpg}
+        \caption{Inicio de la Fase A (Secuencia de tráfico). El microcontrolador comanda la barra Neopixel estableciendo el píxel 0 en verde y el píxel 5 en rojo mediante ráfagas de 800 kHz. Esto emula el estado inicial del cruce (V1 y R2 activos).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_12.jpg}
+        \caption{Transición de precaución en el primer semáforo. El algoritmo apaga el LED verde y satura el píxel 1 con los canales rojo y verde al 100\% para generar el color amarillo (A1), manteniendo el segundo semáforo bloqueado en rojo (R2).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_1.jpg}
+        \caption{Inversión del flujo vehicular. El primer semáforo pasa a estado de detención iluminando el píxel 2 en rojo (R1), mientras que se habilita el paso en el segundo carril encendiendo el píxel 3 en color verde (V2).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_6.jpg}
+        \caption{Finalización del ciclo de tráfico. El píxel 4 cambia a amarillo (A2) indicando precaución en el segundo semáforo, preparándose para apagar la barra completa y liberar los recursos del procesador para la etapa de sensado.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_8.jpg}
+        \caption{Inicio de la Fase B (Monitoreo térmico). La barra Neopixel se apaga. El programa entra al bloque del sensor DS18B20 (\texttt{modo\_sensor == 0}) e imprime el prefijo "dS" en el display TM1637 como identificador visual antes de procesar el dato numérico.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_2.jpg}
+        \caption{Lectura del protocolo \textit{1-Wire}. Tras cumplir el tiempo de conversión de 750 ms, el DS18B20 arroja la temperatura ambiental. El microcontrolador formatea el valor entero y actualiza el display para mostrar "dS 28" (28 °C).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_9.jpg}
+        \caption{Actualización dinámica del DS18B20. Al aplicarse calor físico al encapsulado, el sensor detecta la variación térmica. El bucle de 10 segundos captura el evento y el display refleja el incremento a "dS 29" de manera continua.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_10.jpg}
+        \caption{Interrupción por hardware y cambio de modo. Al presionar el botón físico en el GPIO 13, se altera la variable de estado. El flujo principal conmuta al bloque del DHT11 e imprime el prefijo "dH" en la pantalla de 7 segmentos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth, angle=90]{img/Actividad9/Act9_11.jpg}
+        \caption{Lectura del segundo sensor.}
+    \end{figure}
+
+
     \subsection*{Análisis de resultados}
-    
+    La ejecución del sistema muestra el manejo concurrente de protocolos muy variados: trenes de pulsos a 800 kHz para los Neopixels, comunicación \textit{1-Wire} para el DS18B20, el protocolo de bus propietario del DHT11 y el protocolo serie del display TM1637. Durante la primera etapa, las funciones de la librería Neopixel aplican las tuplas de color a los LEDs correspondientes, logrando una secuencia de tráfico perfecta y coordinada.
+
+    En la ventana de visualización térmica, resalta la eficiencia en la gestión de sensores. Si la variable de estado corresponde al DS18B20, el microcontrolador respeta la espera necesaria de su conversión analógica, extrae la temperatura y la proyecta en la pantalla anteponiendo temporalmente las letras "DS" para darle contexto visual al usuario. Al presionar el pulsador, la rutina de interrupción cambia el modo. En el siguiente ciclo, el flujo se dirige hacia \texttt{dht\_sensor.measure()}, extrayendo la humedad y temperatura del módulo DHT11 y anteponiendo las letras "DH" en el display. Esta implementación comprueba que es posible integrar dispositivos con requerimientos de sincronización completamente diferentes, unificando sus datos en una sola pantalla mediante el uso inteligente de banderas lógicas e interrupciones.
+
 
     \newpage
     \section{Conclusiones:}
@@ -1049,7 +1286,10 @@
 
         \item \textbf{Flores Colin Victor Jaziel:}
         
-        \item \textbf{Lara Hernandez Angel Husiel:} 
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré comprender de manera más completa el objetivo del tema de comunicación \textit{One Wire}, porque pasé de usar cada módulo por separado a integrarlos dentro de una misma solución funcional con la Raspberry Pi Pico. Al trabajar con el DS18B20 confirmé cómo se maneja el flujo real de datos en este protocolo: primero la detección del dispositivo en el bus, luego la conversión térmica con su tiempo de espera y finalmente la lectura del dato. Además, al convertir de \textdegree C a \textdegree F y mostrar resultados en consola y display, pude validar que la adquisición y el procesamiento de la información se realizan de forma consistente.
+
+        También me ayudó mucho integrar en un solo programa la lógica de semáforos con Neopixel, el despliegue con TM1637 y la lectura alternada de DS18B20 y DHT11 mediante interrupción por botón.
+                
     \end{itemize}
 
     \newpage

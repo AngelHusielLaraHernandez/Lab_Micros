@@ -1,4 +1,4 @@
-# Práctica 8 — Laboratorio de Microcomputadoras: Comunicación SPI y control de pantallas
+# Práctica 9 — Laboratorio de Microcomputadoras: Comunicación One Wire
 
 > **Plataforma Raspberry Pi Pico (RP2040) — Programación en MicroPython con IDE Thonny**
 
@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Aprender el funcionamiento de la comunicación SPI; realizar comunicación entre diferentes componentes por medio de la comunicación serie síncrona en la modalidad SPI, y estudiar librerías para controlar pantallas SPI.
+Conocer diversos protocolos de comunicación One Wire para el control de dispositivos a través de la plataforma Raspberry Pi Pico.
 
 ---
 
@@ -14,93 +14,103 @@ Aprender el funcionamiento de la comunicación SPI; realizar comunicación entre
 
 | # | Descripción | Estado |
 |:-:|-------------|:------:|
-| 1 | Control del display MAX7219 de 8 dígitos con mensajes predefinidos | Completada |
-| 2 | Control del display de 8 dígitos mediante GPIO12 y GPIO13 | Completada |
-| 3 | Control de la matriz MAX7219 de 4 módulos 8x8 | Completada |
-| 4 | Despliegue secuencial de mensajes en la matriz SPI | Completada |
-| 5 | Manejo del display TFT ST7735 con texto a color | Completada |
-| 6 | Despliegue de nombres del equipo en pantalla TFT | Completada |
-| 7 | Contador compartido en display TFT, matriz 8x8 y display de 8 dígitos | Completada |
+| 1 | Estudio de librería para control de tira Neopixel | Completada |
+| 2 | Secuencia de 8 LEDs RGB en patrón ascendente/descendente | Completada |
+| 3 | Implementación de reloj con display TM1637 | Completada |
+| 4 | Contador descendente con activación de zumbador | Completada |
+| 5 | Lectura base de sensor DS18B20 | Completada |
+| 6 | Lectura DS18B20 en °C y conversión a °F | Completada |
+| 7 | Estudio de librería y lectura con sensor DHT11 | Completada |
+| 8 | Detección de incremento térmico de referencia con DHT11 | Completada |
+| 9 | Integración final: semáforos, sensores y display TM1637 | Completada |
 
 ### Progreso general
 
-\Completadas : [#######        ] 3 / 7
-Pendientes  : [#######         ] 4 / 7
-\
-> **Nota:** Todas las actividades incluyen códigos fuente en MicroPython comentados, análisis de resultados con redacción actualizada, y se elaboraron **diagramas de flujo funcionales en TikZ para las actividades 4, 5 y 7**, detallando el flujo de datos y control en el reporte LaTeX.
+Completadas: 9 / 9
+
+> **Nota:** El reporte incluye propuesta, desarrollo y análisis por actividad. En esta versión se integraron diagramas de flujo TikZ completos para las actividades 3, 6 y 9, alineados con su implementación en código.
 
 ---
 
 ## Contenido técnico
 
-### Actividades 1-3: Control de pantallas MAX7219
-- Despliegue de texto en display de 8 dígitos mediante SPI.
-- Control ascendente y descendente con entradas digitales GPIO12 y GPIO13.
-- Manejo de una matriz 4x8x8 con mensajes programados.
+### Actividades 1-2: Neopixel y secuencias RGB
+- Configuración de tira direccionable en Raspberry Pi Pico.
+- Manejo de patrones temporizados con cambios de color.
 
-### Actividades 4-5: Diagramas de flujo y control de TFT
-- Despliegue secuencial de mensajes en la matriz SPI.
-- Configuración e inicialización del display TFT ST7735.
-- Escritura de texto estático con color, posición y escala.
+### Actividades 3-4: Control con TM1637 y actuadores
+- Reloj digital con parpadeo de separador central.
+- Temporización de cuenta regresiva y activación de zumbador.
 
-### Actividades 6-7: Integración visual de múltiples salidas
-- Despliegue de nombres del equipo en la TFT.
-- Contador simultáneo en TFT, matriz 8x8 y display de 8 dígitos.
-- Compartición del bus SPI con selección de chip independiente.
+### Actividades 5-6: Sensado de temperatura con One Wire
+- Detección de dispositivos DS18B20 por dirección ROM.
+- Conversión de temperatura de °C a °F y visualización por consola.
+
+### Actividades 7-8: Sensado ambiental con DHT11
+- Lectura de temperatura/humedad con librería dedicada.
+- Comparación con umbral térmico para control de salida.
+
+### Actividad 9: Integración de sistema embebido
+- Secuencia de semáforos con Neopixel.
+- Ventana de monitoreo térmico con DS18B20 y DHT11.
+- Cambio de modo de sensor mediante interrupción por botón.
+- Despliegue de temperatura en TM1637 con identificación de fuente.
 
 ---
 
 ## Estructura del proyecto
 
-
-```
+```text
 Practica1/
-├── Code/                    # Códigos fuente en MicroPython
-│   ├── Ac1SinNombres.py     # Código base sin comentarios (Act. 1)
-│   ├── Act1.py              # Actividad 1 — Display MAX7219 de 8 dígitos
-│   ├── Act2.py              # Actividad 2 — Control con GPIO12 y GPIO13
-│   ├── Act3.py              # Actividad 3 — Matriz MAX7219 4x8x8
-│   ├── Act4.py              # Actividad 4 — Mensajes secuenciales en matriz SPI
-│   ├── Act5SinNombre.py     # Código base sin comentarios (Act. 5)
-│   ├── Act5.py              # Actividad 5 — TFT ST7735 con texto a color
-│   ├── Act6.py              # Actividad 6 — Nombres del equipo en TFT
-│   └── Act7.py              # Actividad 7 — Contador compartido en tres pantallas
-├── img/                     # Fotografías del hardware
-│   ├── Actividad1/          # Montaje y pruebas Act. 1
-│   ├── Actividad2/          # Montaje y pruebas Act. 2
-│   ├── Actividad3/          # Montaje y pruebas Act. 3
-│   ├── Actividad4/          # Montaje y pruebas Act. 4
-│   ├── Actividad5/          # Montaje y pruebas Act. 5
-│   ├── Actividad6/          # Montaje y pruebas Act. 6
-│   └── Actividad7/          # Montaje y pruebas Act. 7
-├── portada_img/             # Escudos UNAM / FI para la portada
-├── PracticasPasadas/        # Prácticas anteriores (1 a 5)
-├── main.tex                 # Documento principal LaTeX
-├── portada.tex              # Portada del reporte
-├── referencias.bib          # Referencias bibliográficas
-├── main.pdf                 # PDF compilado
-└── README.md                # Este archivo
+├── Code/
+│   ├── Act1.py
+│   ├── Act2.py
+│   ├── Act3.py
+│   ├── Act4.py
+│   ├── Act5.py
+│   ├── Act6.py
+│   ├── Act7.py
+│   ├── Act8.py
+│   └── Act9.py
+├── img/
+│   ├── Actividad1/
+│   ├── Actividad2/
+│   ├── Actividad3/
+│   ├── Actividad4/
+│   ├── Actividad5/
+│   ├── Actividad6/
+│   ├── Actividad7/
+│   ├── Actividad8/
+│   └── Actividad9/
+├── document/
+├── portada_img/
+├── PracticasPasadas/
+├── main.tex
+├── portada.tex
+├── referencias.bib
+├── main.pdf
+└── README.md
 ```
 
-## Diagramas incluidos
+---
 
-El reporte incluye los siguientes diagramas lógicos actualizados elaborados en **TikZ**:
+## Diagramas de flujo incluidos
 
 | Tipo | Actividad | Descripción |
 |------|-----------|-------------|
-| **Flujograma** | **Actividad 4** | Recorrido secuencial de mensajes en la matriz MAX7219 con limpieza y retardo controlado |
-| **Flujograma** | **Actividad 5** | Inicialización completa del TFT ST7735 y despliegue de texto a color |
-| **Flujograma** | **Actividad 7** | Lógica del contador compartido para tres dispositivos SPI con botones de control |
+| Flujograma | Actividad 3 | Lógica de reloj MM:SS en TM1637 con acarreo de segundos y minutos |
+| Flujograma | Actividad 6 | Lectura DS18B20, conversión térmica y salida en °C/°F |
+| Flujograma | Actividad 9 | Integración de semáforos, doble ruta de sensores y manejo de excepción |
 
 ---
 
 ## Compilación del reporte
 
 ```bash
-latexmk -pdf main.tex
+latexmk -pdf -g -interaction=nonstopmode main.tex
 ```
 
-Si prefieres compilar paso a paso:
+Alternativa paso a paso:
 
 ```bash
 pdflatex main.tex
@@ -108,6 +118,7 @@ biber main
 pdflatex main.tex
 pdflatex main.tex
 ```
+
 ---
 
 ## Equipo
@@ -121,22 +132,12 @@ pdflatex main.tex
 **Grupo:** 06  
 **Semestre:** 2026-2  
 **Profesor:** Ing. Moisés Meléndez Reyes  
-**Fecha de entrega:** 12 de Abril del 2026
+**Práctica:** 9 (Comunicación One Wire)
 
 ---
 
 ## Notas importantes
 
-- Esta práctica se centra en la comunicación SPI compartida y el control de pantallas MAX7219 y TFT ST7735.
-- Se incorporaron diagramas de flujo en TikZ para las actividades 4, 5 y 7.
-- Se actualizó la conclusión personal de *Lara Hernandez Angel Husiel* para reflejar el trabajo realizado en esta práctica.
-- Los códigos fuente se ubican listos para ejecución en \Code/\.
-
----
-
-## Componentes principales
-- Raspberry Pi Pico (RP2040)
-- Display MAX7219 de 8 dígitos
-- Matriz MAX7219 de 4 módulos 8x8
-- Display TFT ST7735
-- Resistencias, cables y conexiones SPI compartidas
+- Este README corresponde a la práctica 9 y sustituye la descripción previa de SPI.
+- Se actualizaron las secciones de propuesta para actividades 3, 6 y 9 con diagramas TikZ y flujo de datos.
+- La conclusión de Lara Hernandez Angel Husiel fue completada en la sección de conclusiones del reporte.
