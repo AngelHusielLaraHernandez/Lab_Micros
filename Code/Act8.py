@@ -1,30 +1,23 @@
-import dht
-from machine import Pin
-import time
 
-Sensor = dht.DHT11(Pin(21))
-led = Pin(20, Pin.OUT)       # Salida para LED
-buzzer = Pin(17, Pin.OUT)    # Salida para Zumbador
+# Importa la librería utime para retardos
+import utime
+# Importa las clases Pin e I2C del módulo machine
+from machine import Pin, I2C
+# Importa la librería ahtx0 para el sensor de temperatura y humedad
+import ahtx0
 
-# Valor que deberás ajustar basado en lo que te dio tu sensor en reposo (por ejemplo 25°C)
-Temp_ref = 25 
 
+# Inicializa el bus I2C en los pines 8 (SDA) y 9 (SCL) a 400kHz
+i2c = I2C(0, sda=Pin(8), scl=Pin(9), freq=400000)
+# Crea el objeto sensor para leer el AHT10
+sensor = ahtx0.AHT10(i2c)
+
+
+# Bucle infinito para mostrar temperatura y humedad
 while True:
-    try:
-        Sensor.measure()
-        Temp_actual = Sensor.temperature()
-        
-        print(f"Temperatura Actual: {Temp_actual}°C | Umbral de disparo: {Temp_ref + 5}°C")
-        
-        # Evalúa las condiciones de la tabla 9-1
-        if Temp_actual > (Temp_ref + 5):
-            led.value(1)     # Acción LED = ON
-            buzzer.value(1)  # Acción BUZZER = ON
-        else:
-            led.value(0)     # Acción LED = OFF
-            buzzer.value(0)  # Acción BUZZER = OFF
-            
-    except OSError as e:
-        print("Error de lectura del sensor:", e)
-        
-    time.sleep(2)
+    # Imprime la temperatura en grados centígrados (2 decimales)
+    print("\nTemperature: %0.2f C" % sensor.temperature)
+    # Imprime la humedad relativa (2 decimales)
+    print("Humidity: %0.2f %%" % sensor.relative_humidity)
+    # Espera 5 segundos antes de la siguiente lectura
+    utime.sleep(5)

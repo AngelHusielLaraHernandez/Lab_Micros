@@ -1,31 +1,32 @@
-import tm1637
-from machine import Pin
-from utime import sleep
 
-# Inicializa el display TM1637 con Reloj (CLK) en GPIO 0 y Datos (DIO) en GPIO 1
-tm = tm1637.TM1637(clk=Pin(0), dio=Pin(1))
+# Importa la librería para manejar el expansor PCF8574
+import pcf8574
+# Importa las clases I2C y Pin del módulo machine
+from machine import I2C, Pin
+# Importa la librería time para retardos
+import time
 
-# Configura el brillo a un nivel intermedio (0 a 7)
-tm.brightness(3)
 
-# Variables iniciales para segundos y minutos
-Sec = 0
-Min = 0
+# Inicializa el bus I2C en los pines 9 (SCL) y 8 (SDA)
+i2c = I2C(0, scl=Pin(9), sda=Pin(8))
+# Crea el objeto pcf para controlar el expansor en la dirección 0x39
+pcf = pcf8574.PCF8574(i2c, 0x39)
 
+
+# Lista con los valores binarios para encender cada pin del puerto (P0 a P5)
+secuencia = [
+    0b000001, # Enciende P0
+    0b000010, # Enciende P1
+    0b000100, # Enciende P2
+    0b001000, # Enciende P3
+    0b010000, # Enciende P4
+    0b100000  # Enciende P5
+]
+
+
+# Bucle infinito para recorrer la secuencia
 while True:
-    # Muestra los minutos y segundos activando los dos puntos centrales (colon=True)
-    tm.numbers(Min, Sec, colon=True)
-    sleep(0.5) # Retardo de medio segundo
-    
-    # Muestra los minutos y segundos desactivando los dos puntos (efecto de parpadeo)
-    tm.numbers(Min, Sec, colon=False)
-    sleep(0.5) # Retardo de medio segundo
-    
-    Sec = Sec + 1 # Lógica del reloj: incrementa 1 segundo
-    
-    if Sec == 60:      # Si llega a 60 segundos...
-        Min = Min + 1  # Incrementa un minuto
-        Sec = 0        # Reinicia los segundos a 0
-        
-        if Min == 60:  # Si llega a 60 minutos...
-            Min = 0    # Reinicia los minutos a 0
+    for valor in secuencia:
+        # Envía el valor de la secuencia al puerto del expansor
+        pcf.port = valor
+        time.sleep(0.5)      # Velocidad de la secuencia

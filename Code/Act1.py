@@ -1,19 +1,24 @@
-import time
-from neopixel import Neopixel
 
-# Configuración: 8 LEDs, estado 0, pin físico GPIO 4, formato de color GRB
-pixels = Neopixel(8, 0, 4, "GRB")
-brightness = 0.1 # Limita el brillo al 10% para proteger el puerto USB
+# Importa las clases Pin e I2C del módulo machine
+from machine import Pin, I2C
 
-# Tuplas de color (Rojo, Verde, Azul)
-red = (255, 0, 0)
-black = (0, 0, 0)
 
-while True:
-    pixels.set_pixel(0, red)   # Enciende el primer LED en rojo
-    pixels.show()              # Ejecuta la actualización física
-    time.sleep(1)              
-    
-    pixels.set_pixel(0, black) # Apaga el primer LED
-    pixels.show()              
-    time.sleep(1)
+# Configura el pin 8 como SDA (Serial Data Line)
+sda = Pin(8)
+# Configura el pin 9 como SCL (Serial Clock Line)
+scl = Pin(9)
+# Inicializa el bus I2C número 0 con los pines definidos
+i2c = I2C(0, scl=scl, sda=sda)
+
+
+# Escanea los dispositivos conectados al bus I2C
+devices = i2c.scan()
+
+if devices:
+    # Si se encontraron dispositivos I2C
+    for d in devices:
+        # Imprime la dirección de cada dispositivo en formato hexadecimal
+        print("Dispositivo I2C en dirección:", hex(d))
+else:
+    # Si no se encontró ningún dispositivo I2C
+    print("No se encontraron dispositivos")
