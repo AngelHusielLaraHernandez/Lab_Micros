@@ -6,9 +6,9 @@ from machine import I2C, Pin
 import time
 
 # Inicializa el bus I2C en los pines 9 (SCL) y 8 (SDA)
-i2c = I2C(0, scl=Pin(9), sda=Pin(8)) # [cite: 818]
-# Crea el objeto pcf para controlar el expansor en la dirección 0x39
-pcf = pcf8574.PCF8574(i2c, 0x39) 
+i2c = I2C(0, scl=Pin(9), sda=Pin(8)) 
+# Crea el objeto pcf para controlar el expansor en la dirección 0x21
+pcf = pcf8574.PCF8574(i2c, 0x21) 
 
 while True: # [cite: 819]
     pcf.port = 0x3F

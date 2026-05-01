@@ -605,13 +605,81 @@
 
     \section*{Propuesta de solución}
 
+    Para generar la secuencia mostrada en la Tabla 10-1, se propone utilizar el expansor de puertos PCF8574 comunicado mediante el protocolo I2C con la Raspberry Pi Pico. La estrategia consiste en definir una lista de valores binarios donde cada elemento representa el estado de los pines P0 a P5, activando únicamente un pin a la vez mientras los demás permanecen apagados. Esta decisión se toma porque la tabla muestra un patrón de desplazamiento de un solo bit activo que recorre las posiciones P0 hasta P5 de forma cíclica, lo cual se traduce directamente en los valores \texttt{0b000001}, \texttt{0b000010}, \texttt{0b000100}, \texttt{0b001000}, \texttt{0b010000} y \texttt{0b100000}. Al escribir cada valor directamente en el puerto del expansor mediante la propiedad \texttt{pcf.port}, se logra controlar los seis LEDs conectados de manera eficiente y con un código compacto. El uso de un retardo de 0.5 segundos entre cada cambio permite observar claramente la transición de un LED al siguiente, generando el efecto visual de una secuencia de luces en movimiento.
+
+    \begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start) [startstop, text width=2.6cm] {Inicio};
+        \node (import) [process, below=of start, text width=7.5cm] {Importar \texttt{pcf8574}, \texttt{I2C}, \texttt{Pin} y \texttt{time}.};
+        \node (init) [process, below=of import, text width=7.5cm] {Inicializar I2C en pines SCL=9, SDA=8. Crear objeto PCF8574 en dirección \texttt{0x39}.};
+        \node (seq) [process, below=of init, text width=7.5cm] {Definir secuencia: \texttt{[0b000001, 0b000010, 0b000100, 0b001000, 0b010000, 0b100000]}.};
+        \node (loop) [process, below=of seq, text width=5.5cm] {\texttt{for valor in secuencia}:};
+        \node (write) [process, below=of loop, text width=5.5cm] {Escribir \texttt{pcf.port = valor}.};
+        \node (wait) [process, below=of write, text width=4.5cm] {Esperar 0.5 segundos.};
+        \node (next) [decision, below=of wait, text width=3.5cm, aspect=2.2] {¿Quedan valores?};
+        \node (repeat) [decision, below=of next, text width=3.5cm, aspect=2.2] {¿Repetir ciclo?};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (init);
+        \draw [arrow] (init) -- (seq);
+        \draw [arrow] (seq) -- (loop);
+        \draw [arrow] (loop) -- (write);
+        \draw [arrow] (write) -- (wait);
+        \draw [arrow] (wait) -- (next);
+        \draw [arrow] (next.east) -- node[above, font=\scriptsize] {Sí} ++(2.0,0) |- (write.east);
+        \draw [arrow] (next.south) -- node[right, font=\scriptsize] {No} (repeat);
+        \draw [arrow] (repeat.west) -- node[above, font=\scriptsize] {Sí} ++(-2.0,0) |- (loop.west);
+        \draw [arrow] (repeat.south) -- node[right, font=\scriptsize] {No} ++(0,-0.6) node[below] {Fin};
+    \end{tikzpicture}
+    }
+    \end{center}
+
+    El diagrama de flujo muestra un proceso que inicia con la importación de las librerías necesarias y la configuración del bus I2C junto con el objeto del expansor PCF8574. Posteriormente se define el arreglo con los seis valores binarios que conforman la secuencia de la Tabla 10-1. El flujo principal consiste en un bucle infinito que recorre cada elemento del arreglo, escribe el valor correspondiente en el puerto del expansor para activar un LED específico y espera medio segundo antes de avanzar al siguiente valor. Cuando se agotan los elementos del arreglo, el ciclo externo reinicia la iteración desde el primer valor, generando así la secuencia cíclica continua. Este diseño resulta óptimo porque separa la definición de la secuencia de la lógica de ejecución, facilitando la modificación del patrón sin alterar la estructura del programa.
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_1.jpg}
+        \caption{Secuencia en posición P0: se observa el LED conectado al pin P0 del PCF8574 encendido en color azul, correspondiente al valor binario \texttt{0b000001} de la secuencia.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_2.jpg}
+        \caption{Secuencia en posición P1: el LED del pin P1 se enciende mientras P0 se apaga, mostrando el desplazamiento del bit activo al valor \texttt{0b000010}.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_3.jpg}
+        \caption{Secuencia en posición P2: el LED del pin P2 se activa con el valor \texttt{0b000100}, continuando el patrón de desplazamiento hacia la izquierda.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_4.jpg}
+        \caption{Secuencia en posición P3: el LED del pin P3 se enciende correspondiente al valor \texttt{0b001000} de la tabla de control.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_5.jpg}
+        \caption{Secuencia en posición P4: el LED del pin P4 se activa con el valor \texttt{0b010000}, penúltimo paso de la secuencia ascendente.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.25\textwidth, angle=90]{img/Actividad3/Act3_6.jpg}
+        \caption{Secuencia en posición P5: último LED de la secuencia encendido con el valor \texttt{0b100000}, antes de reiniciar el ciclo desde P0.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Al ejecutar el programa, se comprobó que la secuencia generada coincide exactamente con el patrón descrito en la Tabla 10-1. Las Figuras 3 a 8 evidencian cómo cada LED del expansor PCF8574 se enciende de forma individual y secuencial, comenzando por el pin P0 y avanzando hasta el pin P5, para luego reiniciar el ciclo de manera continua. El comportamiento observado confirma que la escritura directa en el puerto del expansor mediante \texttt{pcf.port} permite controlar simultáneamente el estado de todos los pines de salida con un solo valor binario, lo cual resulta más eficiente que manipular cada pin de forma independiente. La comunicación I2C entre la Raspberry Pi Pico y el PCF8574 en la dirección \texttt{0x39} se mantuvo estable durante toda la ejecución, sin pérdida de datos ni errores de transmisión. El retardo de 0.5 segundos entre cada transición permitió apreciar claramente el desplazamiento del bit activo a través de los seis LEDs, generando un efecto visual de luz en movimiento que recorre los pines de menor a mayor peso. Como se observa en las imágenes, cada LED se enciende con un color específico del RGB del PCF8574, donde el color varía según el pin activo, lo que verifica que la asignación de pines y la polaridad de los LEDs están configuradas correctamente en el circuito. El resultado obtenido es el esperado y cumple con los requisitos de la actividad, demostrando el dominio del protocolo I2C para el control de dispositivos periféricos mediante el expansor de puertos.
 
     \newpage
 
@@ -643,17 +711,62 @@
             pcf.pin (6, 1)
     \end{lstlisting}
     
-    \section*{Propuesta de solucion}
+    \section*{Propuesta de solución}
 
+    Para esta actividad se propone implementar un sistema de lectura de botón y control de LED utilizando el expansor PCF8574 como dispositivo de entrada y salida simultánea a través del bus I2C. La lógica invertida es fundamental en este circuito: dado que los pines del PCF8574 operan con resistencias de pull-up internas, un botón presionado genera un nivel lógico bajo (0) mientras que un botón sin presionar mantiene un nivel alto (1). Por esta razón, se definen las constantes \texttt{ON = 0} y \texttt{OFF = 1} para reflejar correctamente esta polaridad. El pin P6 se configura como entrada para leer el estado del botón, mientras que el pin P0 actúa como salida para controlar el LED. El valor inicial del puerto se establece en \texttt{0x37} (0b00110111) para configurar adecuadamente los pines de salida. Se utiliza un retardo de 0.1 segundos en el bucle principal para evitar la saturación del bus I2C y proporcionar un antirrebote básico por software, garantizando lecturas estables del botón.
+
+    \begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start) [startstop, text width=2.6cm] {Inicio};
+        \node (import) [process, below=of start, text width=7.5cm] {Importar \texttt{pcf8574}, \texttt{I2C}, \texttt{Pin} y \texttt{time}.};
+        \node (init) [process, below=of import, text width=7.5cm] {Inicializar I2C en SCL=9, SDA=8. Crear objeto PCF8574 en \texttt{0x39}.};
+        \node (const) [process, below=of init, text width=5.5cm] {Definir \texttt{ON = 0}, \texttt{OFF = 1}.};
+        \node (port) [process, below=of const, text width=5.5cm] {Establecer \texttt{pcf.port = 0x37}.};
+        \node (print) [io, below=of port, text width=4.5cm] {Imprimir ``Iniciamos''.};
+        \node (setinp) [process, below=of print, text width=5.5cm] {Configurar P6 como entrada: \texttt{pcf.pin(6, 1)}.};
+        \node (check) [decision, below=of setinp, text width=3.5cm, aspect=2.5] {¿\texttt{pcf.pin(6)} == 0?};
+        \node (ledon) [process, right=2.5cm of check, text width=4.5cm] {Encender LED: \texttt{pcf.pin(0, ON)}. Imprimir ``Bajo''.};
+        \node (ledoff) [process, left=2.5cm of check, text width=4.5cm] {Apagar LED: \texttt{pcf.pin(0, OFF)}. Imprimir ``Alto''.};
+        \node (delay) [process, below=2.0cm of check, text width=4.5cm] {Esperar 0.1 segundos.};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (init);
+        \draw [arrow] (init) -- (const);
+        \draw [arrow] (const) -- (port);
+        \draw [arrow] (port) -- (print);
+        \draw [arrow] (print) -- (setinp);
+        \draw [arrow] (setinp) -- (check);
+        \draw [arrow] (check.east) -- node[above, font=\scriptsize] {Sí} (ledon.west);
+        \draw [arrow] (check.west) -- node[above, font=\scriptsize] {No} (ledoff.east);
+        \draw [arrow] (ledon.south) |- (delay.east);
+        \draw [arrow] (ledoff.south) |- (delay.west);
+        \draw [arrow] (delay.south) -- ++(0,-0.5) -| ([xshift=-7.5cm]setinp.west) -- (setinp.west);
+    \end{tikzpicture}
+    }
+    \end{center}
+
+    El diagrama de flujo ilustra el funcionamiento del programa, que inicia con la configuración del hardware y la definición de las constantes de lógica invertida. Tras establecer el estado inicial del puerto e imprimir el mensaje de inicio, el programa entra en un bucle infinito donde primero configura el pin P6 como entrada de alta impedancia y luego evalúa su estado. Si el botón está presionado (nivel bajo), se enciende el LED en P0 y se imprime ``Bajo'' en la consola serial; en caso contrario, se apaga el LED y se imprime ``Alto''. Después de cada evaluación, se introduce un retardo de 100 milisegundos antes de reiniciar el ciclo. Este flujo garantiza una respuesta inmediata al cambio de estado del botón, demostrando la capacidad del PCF8574 para funcionar como dispositivo bidireccional en el bus I2C.
 
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Codigo de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_1.jpg}
+        \caption{Botón S4 presionado: se observa el dedo presionando el botón conectado al pin P6 del PCF8574, lo que provoca que el LED en P0 se encienda en color rojo, confirmando la lectura de nivel bajo en la entrada.}
+    \end{figure}
 
-    \subsection*{Analisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Botón S4 sin presionar: al liberar el botón, el pin P6 retorna a nivel alto por la resistencia de pull-up interna, apagando el LED en P0 y confirmando el funcionamiento correcto de la lógica invertida.}
+    \end{figure}
 
+    \subsection*{Análisis de resultados}
 
+    La ejecución del programa demostró el correcto funcionamiento del expansor PCF8574 como dispositivo bidireccional a través del protocolo I2C. Como se observa en la Figura 9, al presionar el botón S4 conectado al pin P6, el LED conectado al pin P0 se enciende inmediatamente en color rojo, mientras que en la consola serial se imprime el mensaje ``Bajo'', indicando que el pin de entrada detectó un nivel lógico bajo. Por el contrario, la Figura 10 muestra que al soltar el botón, el LED se apaga y el mensaje ``Alto'' aparece en la consola, confirmando que la resistencia de pull-up interna del PCF8574 retorna el pin a su estado de reposo. La lógica invertida implementada con las constantes \texttt{ON = 0} y \texttt{OFF = 1} es correcta y necesaria porque el PCF8574 utiliza salidas de colector abierto: un nivel bajo en el pin permite que fluya corriente a través del LED hacia tierra, encendiéndolo, mientras que un nivel alto lo apaga. La reconfiguración del pin P6 como entrada dentro del bucle mediante \texttt{pcf.pin(6, 1)} es indispensable porque cada escritura en el puerto podría alterar el estado de dicho pin. El retardo de 0.1 segundos proporciona un antirrebote básico que evita lecturas erráticas durante la transición mecánica del botón. Los resultados obtenidos son los esperados y demuestran que el PCF8574 puede gestionar entradas y salidas de manera simultánea, ampliando las capacidades de E/S de la Raspberry Pi Pico mediante una comunicación I2C de solo dos líneas.
 
     \newpage
     \section*{Actividad 5}
@@ -725,16 +838,59 @@
 
     \section*{Propuesta de solución}
 
+    Para esta actividad se propone controlar una pantalla LCD de 16 columnas por 2 filas mediante el protocolo I2C, utilizando el módulo adaptador PCF8574 integrado en el módulo LCD I2C con dirección por defecto \texttt{0x27}. La librería \texttt{esp8266\_i2c\_lcd} proporciona una interfaz de alto nivel que abstrae la complejidad del controlador HD44780 del LCD, permitiendo escribir texto, limpiar la pantalla y posicionar el cursor con métodos sencillos. Se decide inicializar el bus I2C a una frecuencia de 200 kHz para garantizar la estabilidad de la comunicación con el módulo LCD. El programa se estructura en dos fases: primero muestra el texto ``UNAM!'' en la primera línea y ``FI'' en la segunda línea durante 3 segundos, y después limpia la pantalla para mostrar ``Laboratorio'' centrado en la primera línea y ``* MICROS*'' en la segunda. El uso de \texttt{lcd.move\_to(columna, fila)} permite posicionar el cursor en coordenadas específicas para centrar el texto visualmente, lo cual resulta más elegante que escribir espacios en blanco. Esta estrategia demuestra las capacidades fundamentales de la librería: escritura directa, limpieza de pantalla y posicionamiento del cursor.
+
+    \textbf{Explicacion diagra de flujo:}
+
+    El diagrama de flujo presenta un programa de ejecución lineal sin bucles, que sigue una secuencia de pasos bien definida. Tras la importación de las librerías y la inicialización del bus I2C con el objeto LCD, el programa escribe el primer mensaje utilizando el carácter de salto de línea \texttt{\textbackslash n} para distribuir el texto en ambas filas de la pantalla. Después de una pausa de 3 segundos que permite al usuario leer el mensaje, se ejecuta la limpieza completa del display. A continuación, se utiliza el método \texttt{move\_to} para posicionar el cursor en la columna 3 de la primera fila, logrando que el texto ``Laboratorio'' aparezca centrado, y luego en la columna 0 de la segunda fila para escribir ``* MICROS*''. El programa finaliza tras una espera de 1 segundo. Este flujo es correcto porque demuestra las operaciones fundamentales del LCD I2C: escritura con salto de línea automático, limpieza de pantalla, posicionamiento preciso del cursor y la capacidad de actualizar el contenido de la pantalla de manera dinámica.
+
+    \begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start) [startstop, text width=2.6cm] {Inicio};
+        \node (import) [process, below=of start, text width=7.5cm] {Importar \texttt{I2C}, \texttt{Pin}, \texttt{time} y \texttt{I2cLcd}.};
+        \node (init) [process, below=of import, text width=7.5cm] {Inicializar I2C en SCL=9, SDA=8 a 200 kHz. Crear objeto LCD (2 filas, 16 columnas) en \texttt{0x27}.};
+        \node (write1) [process, below=of init, text width=5.5cm] {Escribir ``UNAM!\textbackslash nFI'' en la pantalla.};
+        \node (wait1) [process, below=of write1, text width=4.5cm] {Esperar 3 segundos.};
+        \node (clear) [process, below=of wait1, text width=4.5cm] {Limpiar la pantalla LCD.};
+        \node (move1) [process, below=of clear, text width=6.0cm] {Mover cursor a columna 3, fila 0. Escribir ``Laboratorio''.};
+        \node (move2) [process, below=of move1, text width=6.0cm] {Mover cursor a columna 0, fila 1. Escribir ``* MICROS*''.};
+        \node (wait2) [process, below=of move2, text width=4.5cm] {Esperar 1 segundo.};
+        \node (end) [startstop, below=of wait2, text width=2.6cm] {Fin};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (init);
+        \draw [arrow] (init) -- (write1);
+        \draw [arrow] (write1) -- (wait1);
+        \draw [arrow] (wait1) -- (clear);
+        \draw [arrow] (clear) -- (move1);
+        \draw [arrow] (move1) -- (move2);
+        \draw [arrow] (move2) -- (wait2);
+        \draw [arrow] (wait2) -- (end);
+    \end{tikzpicture}
+    }
+    \end{center}
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_2.jpg}
+        \caption{Primera fase del programa: la pantalla LCD muestra ``UNAM!'' en la primera línea y ``FI'' en la segunda línea, correspondiente a la instrucción \texttt{lcd.putstr("UNAM!\textbackslash nFI")} ejecutada al inicio del programa.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Segunda fase del programa: tras limpiar la pantalla, el LCD muestra ``Laboratorio'' centrado en la primera línea (posicionado en la columna 3) y ``* MICROS*'' en la segunda línea, verificando el correcto funcionamiento de \texttt{lcd.move\_to()} y \texttt{lcd.putstr()}.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
-    \newpage
+    La ejecución del programa confirmó el correcto funcionamiento de la comunicación I2C entre la Raspberry Pi Pico y la pantalla LCD a través del módulo adaptador con dirección \texttt{0x27}. Como se aprecia en la Figura 11, la primera fase del programa muestra exitosamente los textos ``UNAM!'' y ``FI'' distribuidos en las dos líneas del display, lo cual demuestra que el carácter de escape \texttt{\textbackslash n} dentro de la función \texttt{putstr()} es interpretado correctamente por la librería \texttt{esp8266\_i2c\_lcd} para realizar el salto de línea automático sin necesidad de reposicionar el cursor manualmente. La Figura 12 evidencia la segunda fase, donde después de ejecutar \texttt{lcd.clear()} para borrar completamente el contenido anterior, el texto ``Laboratorio'' aparece centrado horizontalmente en la primera fila gracias al desplazamiento de 3 columnas aplicado con \texttt{lcd.move\_to(3, 0)}, y ``* MICROS*'' se muestra alineado a la izquierda en la segunda fila. La frecuencia de operación del bus I2C de 200 kHz resultó adecuada para mantener una comunicación estable con el módulo LCD, ya que frecuencias superiores podrían generar errores de transmisión debido a las capacitancias parásitas del cableado. Los resultados obtenidos son los esperados y comprueban que la librería \texttt{I2cLcd} abstrae correctamente el protocolo de comunicación del controlador HD44780 del LCD, permitiendo controlar un display de 16x2 caracteres con solo dos líneas del bus I2C (SDA y SCL) más la alimentación, lo que representa una reducción significativa en el número de pines GPIO necesarios comparado con la conexión directa en modo paralelo que requeriría al menos 6 líneas de datos.
+
     \section*{Actividad 6}
 
     \noindent  Escribir el siguiente código, comentar e indicar que hace, revisar la librería utilizada.
@@ -782,6 +938,8 @@
         \end{tikzpicture}
         }
     \end{center}
+
+    \newpage
 
     \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-13. Código de prueba; actividad 6}]
     from machine import Pin, I2C
@@ -1099,6 +1257,10 @@
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
         \item \textbf{Flores Colin Victor Jaziel:} 
         \item \textbf{Lara Hernandez Angel Husiel:} 
+        
+        En esta práctica el funcionamiento y la versatilidad del protocolo de comunicación I2C integrado con la Raspberry Pi Pico. A través del desarrollo de las diferentes actividades, comprendí cómo un bus de comunicación de solo dos líneas (SDA y SCL) permite conectar y controlar múltiples periféricos simultáneamente, simplificando drásticamente el diseño del hardware y liberando pines GPIO.
+
+        Al trabajar con distintos dispositivos como el expansor de entradas y salidas PCF8574, la pantalla LCD I2C, y sensores complejos como el TMP102, el AHT10 (de temperatura y humedad) y el MPU6050 (acelerómetro y giroscopio), pude poner a prueba la flexibilidad de este protocolo. Observar cómo cada componente mantiene su propia dirección hexadecimal para ser identificado dentro del bus por el bus master de la Pico, me dejó muchísimo más claro el flujo de este protocolo maestro-esclavo en aplicaciones del mundo real.
         
     \end{itemize}
 

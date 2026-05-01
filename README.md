@@ -17,9 +17,9 @@ Aprender la teoría y aplicación del protocolo I2C, controlar módulos de diver
 | 1 | Código inicial de introducción a I2C | Pendiente |
 | 2 | Comunicación serie I2C usando el circuito PCF8574 | Pendiente |
 | 3 | Generar secuencia de la tabla 10-1 con PCF8574 | Pendiente |
-| 4 | Modificación de código y explicación de funcionamiento con PCF8574 | Pendiente |
-| 5 | Control de módulo LCD I2C y estudio de librerías | Pendiente |
-| 6 | Interacción y visualización con librería LCD I2C | Pendiente |
+| 4 | Modificación de código y explicación de funcionamiento con PCF8574 | Completada |
+| 5 | Control de módulo LCD I2C y estudio de librerías | Completada |
+| 6 | Interacción y visualización con librería LCD I2C | Completada |
 | 7 | Comunicación I2C a través del módulo TMP102 (sensor de temperatura) | Pendiente |
 | 8 | Comunicación I2C a través del módulo AHT10 (sensor de temperatura y humedad) | Pendiente |
 | 9 | Uso del módulo MPU6050 (Acelerómetro y giroscopio) | Pendiente |
@@ -27,7 +27,7 @@ Aprender la teoría y aplicación del protocolo I2C, controlar módulos de diver
 
 ### Progreso general
 
-Completadas: 0 / 10
+Completadas: 3 / 10
 
 > **Nota:** Las actividades listadas forman parte de la Práctica 10 y actualmente se encuentran todas pendientes de desarrollo y respuesta.
 
