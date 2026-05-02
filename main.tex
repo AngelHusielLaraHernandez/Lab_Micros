@@ -297,166 +297,265 @@
 
     \section*{Actividad 1}
 
-    \noindent Escribir el siguiente código, comentar; reportar que hace.
+\noindent Escribir el siguiente código, comentar; reportar que hace.
 
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, caption={Figura 10-9. Código de prueba; actividad 1}]
-    from machine import Pin, I2C
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, caption={Figura 10-9. Código de prueba; actividad 1}]
+from machine import Pin, I2C
 
-    sda = Pin(8)
-    scl = Pin(9)
-    i2c = I2C(0, scl=scl, sda=sda)
+sda = Pin(8)
+scl = Pin(9)
+i2c = I2C(0, scl=scl, sda=sda)
 
-    devices = i2c.scan()
-    if devices:
-        for d in devices:
-            print(hex(d))
-    \end{lstlisting}
+devices = i2c.scan()
+if devices:
+    for d in devices:
+        print(hex(d))
+\end{lstlisting}
 
+\section*{Propuesta de solución}
 
-    \section*{Propuesta de solución}
+El programa proporcionado implementa un escaneo del bus I2C para detectar todos los dispositivos conectados a la Raspberry Pi Pico. Se configuran los pines GPIO 8 como SDA (\textit{Serial Data Line}) y GPIO 9 como SCL (\textit{Serial Clock Line}), que corresponden al bus I2C numero 0. Mediante el metodo \texttt{scan()} se realiza un barrido por todas las direcciones I2C posibles (de 0x08 a 0x77). Cada direccion donde un dispositivo responde confirmando su presencia se almacena en la lista \texttt{devices}. Finalmente, si se encontraron dispositivos, se imprimen sus direcciones en formato hexadecimal; de lo contrario, se informa que no se detecto ninguno.
 
+% Diagrama de flujo
+\begin{center}
+    \scalebox{0.85}{
+    \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+        \node (start1) [startstop, text width=2.6cm] {Inicio};
+        \node (init1) [process, below=of start1, text width=7.5cm] {Importar \texttt{Pin} y \texttt{I2C} desde \texttt{machine}.};
+        \node (config1) [process, below=of init1, text width=7.5cm] {Configurar SDA en GPIO 8 y SCL en GPIO 9. Inicializar bus I2C(0).};
+        \node (scan1) [process, below=of config1, text width=5.8cm] {Ejecutar \texttt{i2c.scan()} para detectar dispositivos.};
+        \node (decision1) [decision, below=of scan1, text width=4.0cm, aspect=2.2] {¿\texttt{devices} tiene elementos?};
+        
+        % Bloque para "Si" (va abajo)
+        \node (print1) [process, below=of decision1, text width=6.5cm] {Recorrer \texttt{devices} e imprimir direcciones en hexadecimal.};
+        
+        % Bloque para "No" (va a la derecha)
+        \node (nofound1) [process, right=2.5cm of decision1, text width=5.5cm] {Imprimir "No se encontraron dispositivos".};
+        
+        \node (end1) [startstop, below=of print1, text width=2.0cm] {Fin};
+        
+        \draw [arrow] (start1) -- (init1);
+        \draw [arrow] (init1) -- (config1);
+        \draw [arrow] (config1) -- (scan1);
+        \draw [arrow] (scan1) -- (decision1);
+        
+        \draw [arrow] (decision1.south) -- node[right, font=\scriptsize] {Si} (print1.north);
+        
+        % Flecha "No" - sale por la derecha hacia nofound1
+        \draw [arrow] (decision1.east) -- node[above, font=\scriptsize] {No} (nofound1.west);
+        
+        % Flecha desde print1 hacia Fin
+        \draw [arrow] (print1) -- (end1);
+        
+        % Flecha desde nofound1 hacia Fin (baja y luego entra por la derecha de Fin)
+        \draw [arrow] (nofound1.south) |- (end1.east);
+        
+    \end{tikzpicture}
+    }
+\end{center}
 
-    \section*{Desarrollo}
+\section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+\lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{img/Actividad1/Act1_1.jpg}
+    \caption{Salida en consola mostrando los dispositivos I2C detectados a la pico.}
+\end{figure}
 
-    \subsection*{Análisis de resultados}
+\subsection*{Análisis de resultados}
+
+El programa logra escanear exitosamente el bus I2C y detectar cinco dispositivos conectados a la Raspberry Pi Pico, cuyas direcciones hexadecimales son 0x21, 0x27, 0x38, 0x3c y 0x68. La direccion 0x3c corresponde tipicamente a un display OLED, la 0x68 a un MPU6050 (acelerometro/giroscopio), y las restantes podrian ser expansores de puertos o modulos RTC. El uso del metodo \texttt{scan()} automatiza completamente la deteccion sin necesidad de conocer previamente las direcciones de los dispositivos. El bus I2C configurado en los pines GPIO 8 y 9 funciono correctamente, y la impresion en formato \texttt{hex(d)} facilita la identificacion de cada periferico para su posterior uso en programas mas complejos y el \texttt{if devices} maneja adecuadamente el caso de que no haya dispositivos conectados.
 
 
     \newpage
     \section*{Actividad 2}
 
-    \noindent Escribir, comentar e indicar el funcionamiento del siguiente código, será empleada la comunicación serie I2C usando el circuito PCF8574; estudiar la librería empleada
+\noindent Escribir, comentar e indicar el funcionamiento del siguiente c\'odigo, ser\'a empleada la comunicaci\'on serie I2C usando el circuito PCF8574; estudiar la librer\'ia empleada.
 
+\begin{center}
+\resizebox{\linewidth}{!}{
+\begin{tikzpicture}[>=latex]
 
-    \begin{center}
-    \resizebox{\linewidth}{!}{
-    \begin{tikzpicture}[>=latex]
-
-    % Macro para el circuito integrado PCF8574
-    \newcommand{\pcfboard}{
-        \draw[thick, fill=white] (-1.5, 1.0) rectangle (1.5, -2.6);
-        \node[align=center, font=\small\sffamily] at (0, -0.8) {PCF8574};
-        
-        % Pines lado Izquierdo
-        \foreach \i/\pin/\num in {0/A0/1, 1/A1/2, 2/A2/3, 3/P0/4, 4/P1/5, 5/P2/6, 6/P3/7, 7/GND/8} {
-            \draw[red, thick] (-1.5, 0.6-\i*0.4) -- (-1.9, 0.6-\i*0.4) coordinate (PCF\num);
-            \node[right, font=\tiny\sffamily] at (-1.5, 0.6-\i*0.4) {\pin};
-            \node[above, font=\tiny\sffamily, inner sep=1pt] at (-1.7, 0.6-\i*0.4) {\num};
-        }
-        
-        % Pines lado Derecho
-        \foreach \i/\pin/\num in {7/P4/9, 6/P5/10, 5/P6/11, 4/P7/12, 3/INT/13, 2/SCL/14, 1/SDA/15, 0/VCC/16} {
-            \draw[red, thick] (1.5, 0.6-\i*0.4) -- (1.9, 0.6-\i*0.4) coordinate (PCF\num);
-            \node[left, font=\tiny\sffamily] at (1.5, 0.6-\i*0.4) {\pin};
-            \node[above, font=\tiny\sffamily, inner sep=1pt] at (1.7, 0.6-\i*0.4) {\num};
-        }
+% Macro para el circuito integrado PCF8574
+\newcommand{\pcfboard}{
+    \draw[thick, fill=white] (-1.5, 1.0) rectangle (1.5, -2.6);
+    \node[align=center, font=\small\sffamily] at (0, -0.8) {PCF8574};
+    
+    % Pines lado Izquierdo
+    \foreach \i/\pin/\num in {0/A0/1, 1/A1/2, 2/A2/3, 3/P0/4, 4/P1/5, 5/P2/6, 6/P3/7, 7/GND/8} {
+        \draw[red, thick] (-1.5, 0.6-\i*0.4) -- (-1.9, 0.6-\i*0.4) coordinate (PCF\num);
+        \node[right, font=\tiny\sffamily] at (-1.5, 0.6-\i*0.4) {\pin};
+        \node[above, font=\tiny\sffamily, inner sep=1pt] at (-1.7, 0.6-\i*0.4) {\num};
     }
+    
+    % Pines lado Derecho
+    \foreach \i/\pin/\num in {7/P4/9, 6/P5/10, 5/P6/11, 4/P7/12, 3/INT/13, 2/SCL/14, 1/SDA/15, 0/VCC/16} {
+        \draw[red, thick] (1.5, 0.6-\i*0.4) -- (1.9, 0.6-\i*0.4) coordinate (PCF\num);
+        \node[left, font=\tiny\sffamily] at (1.5, 0.6-\i*0.4) {\pin};
+        \node[above, font=\tiny\sffamily, inner sep=1pt] at (1.7, 0.6-\i*0.4) {\num};
+    }
+}
 
-    % -------------------------------------------------------------
-    % DIBUJO DE COMPONENTES Y RUTEOS
-    % -------------------------------------------------------------
+% -------------------------------------------------------------
+% DIBUJO DE COMPONENTES Y RUTEOS
+% -------------------------------------------------------------
 
-    % 1. Pico desplazada hacia arriba (Alineación con pines I2C)
-    \begin{scope}[xshift=8cm, yshift=5.15cm]
-        \picoboard
-    \end{scope}
+% 1. Pico desplazada hacia arriba
+\begin{scope}[xshift=8cm, yshift=5.15cm]
+    \picoboard
+\end{scope}
 
-    % 2. PCF8574 en el centro
-    \begin{scope}[xshift=0cm, yshift=0cm]
-        \pcfboard
-    \end{scope}
+% 2. PCF8574 en el centro
+\begin{scope}[xshift=0cm, yshift=0cm]
+    \pcfboard
+\end{scope}
 
-    % 3. Conexiones I2C (PCF a Pico)
-    \draw[yellow, thick] (PCF15) -- (P11);  % SDA a GP8
-    \draw[brown, thick] (PCF14) -- (4.0, -0.2) |- (P12); % SCL a GP9
+% 3. Conexiones I2C (PCF a Pico)
+\draw[yellow, thick] (PCF15) -- (P11);  % SDA a GP8
+\draw[brown, thick] (PCF14) -- (4.0, -0.2) |- (P12); % SCL a GP9
 
-    % ================= LADO DERECHO ================= 
+% ================= LADO DERECHO ================= 
 
-    % Alimentación VCC (Pin 16) - Totalmente aislado para subir a 3.3V
-    \draw[thick] (PCF16) -- ++(0.5,0) |- ++(0, 1.2) node[vcc]{3.3V};
+% Alimentacion VCC (Pin 16)
+\draw[thick] (PCF16) -- ++(0.5,0) |- ++(0, 1.2) node[vcc]{3.3V};
 
-    % Botón S4 (Pin 12 / P7) 
-    \draw[magenta, thick] (PCF12) -| (3.5, 3.0) -- (4.0, 3.0);
-    \draw (4.0, 3.0) to[nopb, l=S4] (6.0, 3.0) node[ground]{};
+% Boton S4 (Pin 12 / P7) 
+\draw[magenta, thick] (PCF12) -| (3.5, 3.0) -- (4.0, 3.0);
+\draw (4.0, 3.0) to[nopb, l=S4] (6.0, 3.0) node[ground]{};
 
-    % RGB2 - Escalonado hacia ABAJO
-    \draw[cyan, thick] (PCF11) -| (3.2, -1.5) -- (4.0, -1.5); % P6 -> G 
-    \draw (6.0, -1.5) to[leDo, l_=G] (4.0, -1.5);
+% RGB2 - Escalonado hacia ABAJO
+\draw[cyan, thick] (PCF11) -| (3.2, -1.5) -- (4.0, -1.5);
+\draw (6.0, -1.5) to[leDo, l_=G] (4.0, -1.5);
 
-    \draw[green, thick] (PCF10) -| (2.9, -3.0) -- (4.0, -3.0); % P5 -> B 
-    \draw (6.0, -3.0) to[leDo, l_=B] (4.0, -3.0);
+\draw[green, thick] (PCF10) -| (2.9, -3.0) -- (4.0, -3.0);
+\draw (6.0, -3.0) to[leDo, l_=B] (4.0, -3.0);
 
-    \draw[blue, thick] (PCF9) -| (2.6, -4.5) -- (4.0, -4.5);  % P4 -> R 
-    \draw (6.0, -4.5) to[leDo, l_=R] (4.0, -4.5);
+\draw[blue, thick] (PCF9) -| (2.6, -4.5) -- (4.0, -4.5);
+\draw (6.0, -4.5) to[leDo, l_=R] (4.0, -4.5);
 
-    % Unión de ánodos RGB2 
-    \draw[thick] (6.0, -1.5) -- (6.0, -4.5); 
-    \draw[thick] (6.0, -3.0) -- (6.8, -3.0) node[vcc]{3.3V};
-    \node[right, font=\small\sffamily] at (6.3, -4.5) {RGB2};
+% Union de anodos RGB2 
+\draw[thick] (6.0, -1.5) -- (6.0, -4.5); 
+\draw[thick] (6.0, -3.0) -- (6.8, -3.0) node[vcc]{3.3V};
+\node[right, font=\small\sffamily] at (6.3, -4.5) {RGB2};
 
+% ================= LADO IZQUIERDO ================= 
 
-    % ================= LADO IZQUIERDO ================= 
+% Alimentacion A0 (Pin 1)
+\draw[thick] (PCF1) -- ++(-0.5,0) |- ++(0, 1.2) node[vcc]{3.3V};
 
-    % Alimentación A0 (Pin 1) - Totalmente aislado para subir a 3.3V
-    \draw[thick] (PCF1) -- ++(-0.5,0) |- ++(0, 1.2) node[vcc]{3.3V};
+% Pines GND (Pines 2, 3 y 8)
+\draw[thick] (PCF2) -- ++(-4.0,0) node[ground]{};
+\draw[thick] (PCF3) -- ++(-2.4,0) node[ground]{};
+\draw[thick] (PCF8) -- ++(-0.35,0) |- ++(0, -0.6) node[ground]{};
 
-    % Pines GND (Pines 2, 3 y 8) - Trazos individuales y relativos
-    \draw[thick] (PCF2) -- ++(-4.0,0) node[ground]{};
-    \draw[thick] (PCF3) -- ++(-2.4,0) node[ground]{};
-    \draw[thick] (PCF8) -- ++(-0.35,0) |- ++(0, -0.6) node[ground]{}; % Pin 8 directo a tierra hacia abajo
+% RGB1 - Escalonado hacia ABAJO
+\draw[blue, thick] (PCF4) -| (-3.5, -1.0) -- (-4.0, -1.0);
+\draw (-6.0, -1.0) to[leDo, l=G] (-4.0, -1.0);
 
-    % RGB1 - Escalonado hacia ABAJO
-    \draw[blue, thick] (PCF4) -| (-3.5, -1.0) -- (-4.0, -1.0);  % P0 -> G 
-    \draw (-6.0, -1.0) to[leDo, l=G] (-4.0, -1.0);
+\draw[green, thick] (PCF5) -| (-3.2, -2.5) -- (-4.0, -2.5);
+\draw (-6.0, -2.5) to[leDo, l=B] (-4.0, -2.5);
 
-    \draw[green, thick] (PCF5) -| (-3.2, -2.5) -- (-4.0, -2.5); % P1 -> B 
-    \draw (-6.0, -2.5) to[leDo, l=B] (-4.0, -2.5);
+\draw[cyan, thick] (PCF6) -| (-2.9, -4.0) -- (-4.0, -4.0);
+\draw (-6.0, -4.0) to[leDo, l=R] (-4.0, -4.0);
 
-    \draw[cyan, thick] (PCF6) -| (-2.9, -4.0) -- (-4.0, -4.0);  % P2 -> R 
-    \draw (-6.0, -4.0) to[leDo, l=R] (-4.0, -4.0);
+% Union de anodos RGB1
+\draw[thick] (-6.0, -1.0) -- (-6.0, -4.0); 
+\draw[thick] (-6.0, -2.5) -- (-7.0, -2.5) node[vcc]{3.3V};
+\node[left, font=\small\sffamily] at (-6.3, -0.5) {RGB1};
 
-    % Unión de ánodos RGB1
-    \draw[thick] (-6.0, -1.0) -- (-6.0, -4.0); 
-    \draw[thick] (-6.0, -2.5) -- (-7.0, -2.5) node[vcc]{3.3V};
-    \node[left, font=\small\sffamily] at (-6.3, -0.5) {RGB1};
+% Boton S3 (Pin 7 / P3) 
+\draw[orange, thick] (PCF7) -| (-2.6, -5.5) -- (-4.0, -5.5);
+\draw (-4.0, -5.5) to[nopb, l_=S3] (-6.0, -5.5) node[ground]{};
 
-    % Botón S3 (Pin 7 / P3) 
-    \draw[orange, thick] (PCF7) -| (-2.6, -5.5) -- (-4.0, -5.5);
-    \draw (-4.0, -5.5) to[nopb, l_=S3] (-6.0, -5.5) node[ground]{};
+\end{tikzpicture}
+}
+\end{center}
 
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-10. C\'odigo de ejemplo; actividad 2}]
+import pcf8574
+from machine import I2C, Pin
+import time
+
+i2c = I2C (0,scl=Pin(9), sda=Pin(8))
+pcf = pcf8574.PCF8574(i2c, 0x39)
+
+while True:
+    pcf.port = 0x3F
+    print(pcf.port)
+    time.sleep(0.8)
+
+    pcf.port = 0x3E
+    print(pcf.port)
+    time.sleep(0.8)
+\end{lstlisting}
+
+\section*{Propuesta de solución}
+
+El programa proporcionado implementa un expansor de pines PCF8574 para controlar 8 salidas digitales a través de solo dos líneas del bus I2C (SDA en GPIO 8 y SCL que en GPIO 9) y para ello se utiliza la librería \texttt{pcf8574} simplifica la escritura sobre el puerto paralelo del dispositivo. Se configura el expansor en la dirección hexadecimal 0x39 correspondiente a las conexiones A0, A1 y A2 a nivel alto o bajo. Dentro del ciclo infinito, se asigna el valor \texttt{0x3F} (binario 00111111) al puerto, lo que pone los pines P0 a P5 en nivel alto (1 lógico) y los pines P6 y P7 en bajo (0 lógico), activando los LEDS. Luego de 0.8 segundos, se asigna \texttt{0x3E} (00111110), que pone el pin P0 en bajo mientras mantiene los demás en alto.
+
+\subsection*{Investigación de la librería \texttt{pcf8574}}
+
+La librer\'ia \texttt{pcf8574} para MicroPython proporciona una interfaz para controlar el expansor de pines PCF8574/PCF8574A a trav\'es del bus I2C. Sus principales caracter\'isticas son:
+
+\begin{itemize}
+    \item \texttt{PCF8574(i2c, address)}: Constructor que recibe el objeto I2C configurado y la direcci\'on de 7 bits del dispositivo (com\'unmente 0x20 para PCF8574 o 0x38 para PCF8574A, m\'as el valor de los pines A0-A2).
+    \item \texttt{port}: Propiedad que permite leer o escribir el estado completo de los 8 pines como un byte. Al escribir, cada bit corresponde a un pin (bit0 = P0, bit1 = P1, ..., bit7 = P7). Al leer, devuelve el estado actual de los pines considerando si est\'an configurados como entrada o salida.
+    \item \texttt{pin(pin, value)}: M\'etodo alternativo para controlar un pin individual sin afectar los dem\'as.
+    \item La librer\'ia maneja autom\'aticamente la se\~nal de acknowledge del I2C y la configuraci\'on del registro de salida del PCF8574.
+\end{itemize}
+
+% Diagrama de flujo corregido Actividad 2
+\begin{center}
+    \scalebox{0.82}{
+    \begin{tikzpicture}[node distance=1.1cm, every node/.style={font=\scriptsize}]
+        \node (start2) [startstop, text width=2.6cm] {Inicio};
+        \node (init2) [process, below=of start2, text width=8.2cm] {Importar librerías: \texttt{pcf8574}, \texttt{I2C}, \texttt{Pin}, \texttt{time}.};
+        \node (config2) [process, below=of init2, text width=7.5cm] {Configurar I2C(0) con SDA=GP8, SCL=GP9. Crear objeto \texttt{pcf} en dirección \texttt{0x21}.};
+        \node (loop2) [process, below=of config2, text width=4.2cm] {\texttt{while True}: Iniciar ciclo infinito.};
+        
+        % Bloques internos del ciclo
+        \node (port3f2) [process, below=of loop2, text width=6.5cm] {Asignar \texttt{pcf.port = 0x3F} (111111). Imprimir estado.};
+        \node (wait12) [process, below=of port3f2, text width=4.2cm] {Esperar 0.8 segundos.};
+        \node (port3e2) [process, below=of wait12, text width=6.5cm] {Asignar \texttt{pcf.port = 0x3E} (111110). Imprimir estado.};
+        \node (wait22) [process, below=of port3e2, text width=4.2cm] {Esperar 0.8 segundos.};
+        
+        % Conexiones lineales
+        \draw [arrow] (start2) -- (init2);
+        \draw [arrow] (init2) -- (config2);
+        \draw [arrow] (config2) -- (loop2);
+        \draw [arrow] (loop2) -- (port3f2);
+        \draw [arrow] (port3f2) -- (wait12);
+        \draw [arrow] (wait12) -- (port3e2);
+        \draw [arrow] (port3e2) -- (wait22);
+        
+        % Flecha de retorno corregida (sale de abajo de wait22 y entra al lateral de port3f2)
+        \draw [arrow] (wait22.south) -- ++(0,-0.5) -- ++(-4.0,0) |- (port3f2.west);
+        
     \end{tikzpicture}
     }
-    \end{center}
+\end{center}
 
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-10. Código de ejemplo; actividad 2}]
-    import pcf8574
-    from machine import I2C, Pin
-    import time
+\section*{Desarrollo}
 
-    i2c = I2C (0,scl=Pin(9), sda=Pin(8))
-    pcf = pcf8574.PCF8574(i2c, 0x39)
+\lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
-    while True:
-        pcf.port = 0x3F
-        print(pcf.port)
-        time.sleep(0.8)
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad2/Act2_1.jpg}
+    \caption{Estado de encendido del led.}
+\end{figure}
 
-        pcf.port = 0x3E
-        print(pcf.port)
-        time.sleep(0.8)
-    \end{lstlisting}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth, angle=90]{img/Actividad2/Act2_2.jpg}
+    \caption{Estado de apagado del led.}
+\end{figure}
 
-    \section*{Propuesta de solucion}
+\subsection*{Análisis de resultados}
 
-
-    \section*{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=Codigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
-
-
-    \subsection*{Analisis de resultados}
+El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2C desde la Raspberry Pi Pico. Al asignar \texttt{0x3F} (00111111), los pines P0 a P5 se ponen en nivel alto, activando los componentes conectados a esas salidas como el LED que se enciende y apaga infiitamente. El uso de la propiedad \texttt{port} simplifica la escritura simultánea de todos los pines sin necesidad de modificar bits individualmente. El retardo de 0.8 segundos entre estados crea un efecto de parpadeo perceptible que permite verificar el cambio de estado. La dirección \texttt{0x39} corresponde a un PCF8574A con A0=1, A1=0, A2=0 (0x38 + 1 = 0x39), confirmando la correcta configuración de los pines de direccionamiento en el hardware y todo esto fue posible gracias a la librería \texttt{pcf8574} que abstrae completamente los detalles del protocolo I2C.
 
 
     \newpage
@@ -891,57 +990,55 @@
 
     La ejecución del programa confirmó el correcto funcionamiento de la comunicación I2C entre la Raspberry Pi Pico y la pantalla LCD a través del módulo adaptador con dirección \texttt{0x27}. Como se aprecia en la Figura 11, la primera fase del programa muestra exitosamente los textos ``UNAM!'' y ``FI'' distribuidos en las dos líneas del display, lo cual demuestra que el carácter de escape \texttt{\textbackslash n} dentro de la función \texttt{putstr()} es interpretado correctamente por la librería \texttt{esp8266\_i2c\_lcd} para realizar el salto de línea automático sin necesidad de reposicionar el cursor manualmente. La Figura 12 evidencia la segunda fase, donde después de ejecutar \texttt{lcd.clear()} para borrar completamente el contenido anterior, el texto ``Laboratorio'' aparece centrado horizontalmente en la primera fila gracias al desplazamiento de 3 columnas aplicado con \texttt{lcd.move\_to(3, 0)}, y ``* MICROS*'' se muestra alineado a la izquierda en la segunda fila. La frecuencia de operación del bus I2C de 200 kHz resultó adecuada para mantener una comunicación estable con el módulo LCD, ya que frecuencias superiores podrían generar errores de transmisión debido a las capacitancias parásitas del cableado. Los resultados obtenidos son los esperados y comprueban que la librería \texttt{I2cLcd} abstrae correctamente el protocolo de comunicación del controlador HD44780 del LCD, permitiendo controlar un display de 16x2 caracteres con solo dos líneas del bus I2C (SDA y SCL) más la alimentación, lo que representa una reducción significativa en el número de pines GPIO necesarios comparado con la conexión directa en modo paralelo que requeriría al menos 6 líneas de datos.
 
-    \section*{Actividad 6}
+\section*{Actividad 6}
 
-    \noindent  Escribir el siguiente código, comentar e indicar que hace, revisar la librería utilizada.
+\noindent Escribir el siguiente c\'odigo, comentar e indicar que hace, revisar la librer\'ia utilizada.
 
-    \begin{center}
-        \resizebox{0.6\linewidth}{!}{
-        \begin{tikzpicture}[>=latex]
+\begin{center}
+    \resizebox{0.6\linewidth}{!}{
+    \begin{tikzpicture}[>=latex]
 
-            % 1. Dibujar Raspberry Pi Pico (Desplazada a la derecha)
-            \begin{scope}[xshift=5cm, yshift=0cm]
-                \picoboard
-            \end{scope}
+        % 1. Dibujar Raspberry Pi Pico (Desplazada a la derecha)
+        \begin{scope}[xshift=5cm, yshift=0cm]
+            \picoboard
+        \end{scope}
 
-            % 2. Dibujar Módulo DISPLAY OLED
-            \draw[very thick] (-2.5, -3.8) rectangle (0, -6.6);
-            \node[above, font=\small\sffamily\bfseries] at (-1.25, -3.6) {DISPLAY OLED};
-            
-            % Textos de los pines del OLED alineados a la derecha de la caja
-            \node[left, font=\small\sffamily, text depth=0pt] at (0, -4.45) {SCL};
-            \node[left, font=\small\sffamily, text depth=0pt] at (0, -4.95) {SDA};
-            \node[left, font=\small\sffamily, text depth=0pt] at (0, -5.45) {VCC};
-            \node[left, font=\small\sffamily, text depth=0pt] at (0, -5.95) {GND};
+        % 2. Dibujar M\'odulo DISPLAY OLED
+        \draw[very thick] (-2.5, -3.8) rectangle (0, -6.6);
+        \node[above, font=\small\sffamily\bfseries] at (-1.25, -3.6) {DISPLAY OLED};
+        
+        % Textos de los pines del OLED alineados a la derecha de la caja
+        \node[left, font=\small\sffamily, text depth=0pt] at (0, -4.45) {SCL};
+        \node[left, font=\small\sffamily, text depth=0pt] at (0, -4.95) {SDA};
+        \node[left, font=\small\sffamily, text depth=0pt] at (0, -5.45) {VCC};
+        \node[left, font=\small\sffamily, text depth=0pt] at (0, -5.95) {GND};
 
-            % -------------------------------------------------------------
-            % RUTEOS (Coordenadas absolutas limpias)
-            % -------------------------------------------------------------
+        % -------------------------------------------------------------
+        % RUTEOS
+        % -------------------------------------------------------------
 
-            % Conexiones I2C
-            % SDA al pin P11 (GP8) - Cable Azul (Ruta directa horizontal)
-            \draw[blue, thick] (0, -4.95) -- (4.6, -4.95); 
+        % Conexiones I2C
+        % SDA al pin GP8 - Cable Azul
+        \draw[blue, thick] (0, -4.95) -- (4.6, -4.95); 
 
-            % SCL al pin P12 (GP9) - Cable Verde (Cruce limpio ortogonal a 90 grados)
-            \draw[green!70!black, thick] (0, -4.45) -| (2.8, -5.40) -- (4.6, -5.40); 
+        % SCL al pin GP9 - Cable Verde
+        \draw[green!70!black, thick] (0, -4.45) -| (2.8, -5.40) -- (4.6, -5.40); 
 
-            % Conexiones de Alimentación
-            % VCC a 3.3V (Cable Rojo)
-            \draw[red, thick] (0, -5.45) -- (1.8, -5.45) -- (1.8, -5.8);
-            \draw[very thick] (1.3, -5.8) -- (2.3, -5.8); % Barra horizontal del 3.3V
-            \node[below, font=\small\sffamily\bfseries] at (1.8, -5.8) {3.3V};
+        % Conexiones de Alimentaci\'on
+        % VCC a 3.3V (Cable Rojo)
+        \draw[red, thick] (0, -5.45) -- (1.8, -5.45) -- (1.8, -5.8);
+        \draw[very thick] (1.3, -5.8) -- (2.3, -5.8);
+        \node[below, font=\small\sffamily\bfseries] at (1.8, -5.8) {3.3V};
 
-            % GND a Tierra (Cable Gris)
-            \draw[gray, thick] (0, -5.95) -- (0.8, -5.95) -- (0.8, -6.3);
-            \node[ground] at (0.8, -6.3) {}; % Símbolo de tierra estándar
+        % GND a Tierra (Cable Gris)
+        \draw[gray, thick] (0, -5.95) -- (0.8, -5.95) -- (0.8, -6.3);
+        \node[ground] at (0.8, -6.3) {};
 
-        \end{tikzpicture}
-        }
+    \end{tikzpicture}
+    }
     \end{center}
 
-    \newpage
-
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-13. Código de prueba; actividad 6}]
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-13. C\'odigo de prueba; actividad 6}]
     from machine import Pin, I2C
     from ssd1306 import SSD1306_I2C
 
@@ -962,73 +1059,140 @@
 
     \section*{Propuesta de solución}
 
+    El programa proporcionado inicializa el bus I2C en los pines GPIO 8 (SDA) y GPIO 9 (SCL) con una frecuencia de 400 kHz y se apoya de la librería \texttt{ssd1306} para controlar el display OLED, lo primero que se hace es escanear el bus I2C con \texttt{scan()} para detectar todos los dispositivos conectados, mostrando sus direcciones hexadecimales en la consola. Luego, se limpia la pantalla con \texttt{fill(0)}, se escriben dos textos ("Microcomputadoras" en (1,6) y "Practica I2C" en (3,30)) con color blanco (1), y paralelamente, se imprime el mensaje "UNAM FI" en la consola serial.
+
+    \subsection*{Investigación de la librería \texttt{ssd1306}}
+
+    La librería \texttt{ssd1306} para MicroPython permite controlar displays OLED basados en el controlador SSD1306, tanto en versión I2C como SPI. Sus principales características son:
+
+    \begin{itemize}
+        \item \texttt{SSD1306\_I2C(width, height, i2c, addr=0x3C)}: Constructor que recibe el ancho y alto del display (com\'unmente 128x64 o 128x32), el objeto I2C configurado y la direcci\'on I2C del dispositivo (por defecto 0x3C, aunque algunos displays usan 0x3D).
+        \item \texttt{fill(c)}: Llena toda la pantalla con el valor especificado (0 para apagar p\'ixeles, 1 para encender).
+        \item \texttt{text(string, x, y, c)}: Escribe una cadena de texto en la posici\'on (x, y) con el color especificado (0=negro, 1=blanco). La librer\'ia incluye una fuente interna de 8x8 p\'ixeles.
+        \item \texttt{show()}: Transfiere el contenido del buffer interno al display f\'isico.
+        \item \texttt{pixel(x, y, c)}: Permite dibujar un p\'ixel individual en coordenadas espec\'ificas.
+        \item \texttt{scroll(dx, dy)}: Desplaza el contenido de la pantalla horizontal y verticalmente.
+    \end{itemize}
+
+    Esta librería nos ayuda a automatizar los comandos del controlador SSD1306 (como activaci\'on de display, configuraci\'on de contraste, direccionamiento de memoria), permitiendo al programador trabajar a nivel de abstracci\'on de p\'ixeles y texto.
+
+    % Diagrama de flujo corregido
+    \begin{center}
+        \scalebox{0.85}{
+        \begin{tikzpicture}[node distance=1.05cm, every node/.style={font=\scriptsize}]
+            \node (start6) [startstop, text width=2.6cm] {Inicio};
+            \node (init6) [process, below=of start6, text width=8.0cm] {Importar librerias: \texttt{Pin}, \texttt{I2C}, \texttt{SSD1306\_I2C}.};
+            \node (config6) [process, below=of init6, text width=8.0cm] {Configurar I2C(0) con SDA=GP8, SCL=GP9, freq=400kHz. Crear objeto \texttt{oled} de 128x64.};
+            \node (scan6) [process, below=of config6, text width=6.5cm] {Ejecutar \texttt{i2c.scan()} para detectar dispositivos I2C.};
+            
+            \node (decision6) [decision, below=of scan6, text width=3.5cm, aspect=2] {¿Hay dispositivos?};
+            
+            % Camino SI
+            \node (print6) [process, below=1.2cm of decision6, text width=6.5cm] {Recorrer \texttt{devices} e imprimir direcciones hexadecimales.};
+            
+            % Camino NO
+            \node (nofound6) [process, right=1.5cm of decision6, text width=4.5cm] {Imprimir "No se encontraron dispositivos".};
+            
+            % Bloques comunes (fuera del IF)
+            \node (fill6) [process, below=1.2cm of print6, text width=4.5cm] {Limpiar pantalla con \texttt{oled.fill(0)}.};
+            \node (text6) [process, below=of fill6, text width=7.0cm] {Escribir "Microcomputadoras" y "Practica I2C" con \texttt{oled.text()}.};
+            \node (show6) [process, below=of text6, text width=4.5cm] {Actualizar display con \texttt{oled.show()} e imprimir "UNAM FI".};
+            \node (end6) [startstop, below=of show6, text width=2.0cm] {Fin};
+            
+            % Dibujado de flechas principales
+            \draw [arrow] (start6) -- (init6);
+            \draw [arrow] (init6) -- (config6);
+            \draw [arrow] (config6) -- (scan6);
+            \draw [arrow] (scan6) -- (decision6);
+            
+            % Lógica condicional
+            \draw [arrow] (decision6) -- node[right] {Si} (print6);
+            \draw [arrow] (decision6) -- node[above] {No} (nofound6);
+            
+            % Unión de flujos hacia la sección de la OLED
+            \draw [arrow] (print6) -- (fill6);
+            \draw [arrow] (nofound6) |- (fill6); % El camino "No" se une antes de limpiar pantalla
+            
+            % Flujo final
+            \draw [arrow] (fill6) -- (text6);
+            \draw [arrow] (text6) -- (show6);
+            \draw [arrow] (show6) -- (end6);
+            
+        \end{tikzpicture}
+        }
+    \end{center}
+    \newpage
+
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
+    \lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
-
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{img/Actividad6/Act6_1.jpg}
+        \caption{Mensajes en el display OLED SSD1306 controlado por la Raspberry Pi Pico mediante bus I2C.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    El programa logra inicializar correctamente el bus I2C a 400 kHz y detectar el display OLED en la direcci\'on 0x3C y el escaneo previo con \texttt{scan()} resulta \'util para verificar la conexi\'on antes de intentar escribir en el dispositivo y la pantalla muestra correctamente los textos "Microcomputadoras" en la coordenada (1,6) y "Practica I2C" en (3,30), además del mensaje "UNAM FI". La frecuencia de 400 kHz permite una actualizaci\'on r\'apida del display, aunque para el SSD1306 la velocidad t\'ipica es de 100 kHz (modo est\'andar), por lo que 400 kHz tambi\'en funciona correctamente en la mayor\'ia de los casos. Las funciones \texttt{fill(0)} y \texttt{show()} gestionan eficientemente el buffer de 1024 bytes (128x64/8) correspondiente a la memoria del display.
 
     \newpage
     \section*{Actividad 7}
 
-    \noindent Escribir, comentar e indicar que hace el siguiente código, este usa la comunicación I2C a través del módulo TMP102 (sensor de temperatura).
+    \noindent Escribir, comentar e indicar que hace el siguiente c\'odigo, este usa la comunicaci\'on I2C a trav\'es del m\'odulo TMP102 (sensor de temperatura).
 
     \begin{center}
-        \resizebox{0.8\linewidth}{!}{
-        \begin{tikzpicture}[>=latex]
+    \resizebox{0.8\linewidth}{!}{
+    \begin{tikzpicture}[>=latex]
 
-            % 1. Dibujar Raspberry Pi Pico (Desplazada a la derecha)
-            \begin{scope}[xshift=5cm, yshift=0cm]
-                \picoboard
-            \end{scope}
+        % 1. Dibujar Raspberry Pi Pico (Desplazada a la derecha)
+        \begin{scope}[xshift=5cm, yshift=0cm]
+            \picoboard % Asumiendo que esta macro define los nodos P11 para GP8 y P12 para GP9
+        \end{scope}
 
-            % 2. Dibujar Sensor de Temperatura TMP102
-            \draw[thick, fill=white] (-3.0, -4.2) rectangle (0, -7.2);
-            \node[above, font=\small\sffamily] at (-1.5, -4.2) {Sensor de Temperatura};
-            \node[align=center, font=\small\sffamily] at (-1.5, -5.7) {TMP102};
+        % 2. Dibujar Sensor de Temperatura TMP102
+        \draw[thick, fill=white] (-3.0, -4.2) rectangle (0, -7.2);
+        \node[above, font=\small\sffamily] at (-1.5, -4.2) {Sensor de Temperatura};
+        \node[align=center, font=\small\sffamily] at (-1.5, -5.7) {TMP102};
 
-            % Pines del lado Izquierdo del TMP102
-            \foreach \y/\pin/\num in {-4.95/VCC/5, -6.75/GND/2} {
-                \draw[red, thick] (-3.0, \y) -- (-3.4, \y) coordinate (T\pin);
-                \node[right, font=\tiny\sffamily] at (-3.0, \y) {\pin};
-                \node[above right, font=\tiny\sffamily, inner sep=1pt] at (T\pin) {\num};
-            }
-
-            % Pines del lado Derecho del TMP102 (SDA y SCL alineados matemáticamente a la Pico)
-            \foreach \y/\pin/\num in {-4.95/SDA/6, -5.40/SCL/1, -6.30/ALERT/3, -6.75/ADD0/4} {
-                \draw[red, thick] (0, \y) -- (0.4, \y) coordinate (T\pin);
-                \node[left, font=\tiny\sffamily] at (0, \y) {\pin};
-                \node[above left, font=\tiny\sffamily, inner sep=1pt] at (T\pin) {\num};
-            }
-
-            % -------------------------------------------------------------
-            % RUTEOS (Coordenadas absolutas limpias)
-            % -------------------------------------------------------------
-
-            % Conexiones I2C
-            % SDA al pin P11 (GP8) - Cable Azul (Ruta directa horizontal)
-            \draw[blue, thick] (TSDA) -- (4.6, -4.95); 
-
-            % SCL al pin P12 (GP9) - Cable Verde (Ruta directa horizontal)
-            \draw[green!70!black, thick] (TSCL) -- (4.6, -5.40); 
-
-            % Conexiones de Alimentación
-            % VCC a 3.3V (Cable Rojo)
-            \draw[red, thick] (TVCC) -- (-4.2, -4.95) -- (-4.2, -4.3);
-            \draw[very thick] (-4.7, -4.3) -- (-3.7, -4.3); % Barra horizontal del 3.3V
-            \node[above, font=\small\sffamily\bfseries] at (-4.2, -4.3) {3.3V};
-
-            % GND a Tierra (Cable Verde como en la imagen)
-            \draw[green!70!black, thick] (TGND) -- (-4.2, -6.75) -- (-4.2, -7.2);
-            \node[ground] at (-4.2, -7.2) {}; % Símbolo de tierra estándar
-
-        \end{tikzpicture}
+        % Pines del lado Izquierdo del TMP102
+        \foreach \y/\pin/\num in {-4.95/VCC/5, -6.75/GND/2} {
+            \draw[red, thick] (-3.0, \y) -- (-3.4, \y) coordinate (T\pin);
+            \node[right, font=\tiny\sffamily] at (-3.0, \y) {\pin};
+            \node[above right, font=\tiny\sffamily, inner sep=1pt] at (T\pin) {\num};
         }
-    \end{center}
 
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-14. Código de ejemplo; actividad 7}]
+        % Pines del lado Derecho del TMP102
+        \foreach \y/\pin/\num in {-4.95/SDA/6, -5.40/SCL/1, -6.30/ALERT/3, -6.75/ADD0/4} {
+            \draw[red, thick] (0, \y) -- (0.4, \y) coordinate (T\pin);
+            \node[left, font=\tiny\sffamily] at (0, \y) {\pin};
+            \node[above left, font=\tiny\sffamily, inner sep=1pt] at (T\pin) {\num};
+        }
+
+        % -------------------------------------------------------------
+        % RUTEOS CORREGIDOS
+        % -------------------------------------------------------------
+
+        % Conexiones I2C directas a los pines de la Pico
+        % SDA al pin GP8 (P11 en la macro de la Pico)
+        \draw[blue, thick] (TSDA) -- ++(1.0, 0) |- (P11); 
+
+        % SCL al pin GP9 (P12 en la macro de la Pico)
+        \draw[green!70!black, thick] (TSCL) -- ++(0.7, 0) |- (P12); 
+
+        % Dirección I2C: Para que sea 0x48, ADD0 debe ir a GND
+        \draw[thick] (TADD0) -- ++(0.2, 0) -- ++(0, -0.2) node[ground, scale=0.5]{};
+
+        % Alimentación
+        \draw[red, thick] (TVCC) -- (-4.2, -4.95) node[vcc]{3.3V};
+        \draw[thick] (TGND) -- (-4.2, -6.75) node[ground]{};
+
+    \end{tikzpicture}
+    }
+\end{center}
+
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 10-14. C\'odigo de ejemplo; actividad 7}]
     from machine import Pin, I2C
     import time
 
@@ -1045,16 +1209,93 @@
         time.sleep(1)
     \end{lstlisting}
 
-    \section*{Propuesta de solución}
+    \section*{Propuesta de soluci\'on}
 
+    El programa proporcionado inicializa el bus I2C en los pines GPIO 8 (SDA) y GPIO 9 (SCL) con una frecuencia de 100 kHz, adecuada para el sensor TMP102. En un bucle de 100 iteraciones, lee 2 bytes desde la direcci\'on 0x48 (direcci\'on fija del TMP102 cuando ADD0 est\'a a GND). Los 2 bytes contienen la temperatura codificada en formato de 12 bits justificados a la izquierda. Se convierten los bytes a entero big-endian, se desplazan 4 bits a la derecha para obtener el valor de 12 bits, y se multiplica por 0.0625 (resoluci\'on de 0.0625°C por bit) y finalmente, se imprime la temperatura en grados Celsius y se espera 1 segundo antes de la siguiente lectura.
+
+    \subsection*{Investigaci\'on del sensor TMP102}
+
+    El TMP102 es un sensor de temperatura digital de alta precisi\'on de Texas Instruments que utiliza el bus I2C. Sus principales caracter\'isticas son:
+
+    \begin{itemize}
+        \item \textbf{Rango de medici\'on}: -40°C a +125°C
+        \item \textbf{Precisi\'on}: ±0.5°C t\'ipica en el rango de -25°C a +85°C
+        \item \textbf{Resoluci\'on}: 12 bits (0.0625°C por bit), configurable a 9, 10, 11 o 12 bits
+        \item \textbf{Direcci\'on I2C}: 0x48 (con ADD0 a GND), 0x49 (ADD0 a VCC), 0x4A (ADD0 a SDA), 0x4B (ADD0 a SCL)
+        \item \textbf{Formato de datos}: Los 12 bits de temperatura est\'an justificados a la izquierda en los 2 bytes de lectura. El bit 15 es el signo, los bits 14-4 son el valor entero, y los bits 3-0 son la parte fraccionaria (0.0625°C por bit). F\'ormula: Temperatura = (valor\_12bits) × 0.0625
+        \item \textbf{Consumo}: 10 µA en modo activo, 1 µA en modo shutdown
+    \end{itemize}
+
+    % Diagrama de flujo compacto para TMP102
+\begin{center}
+    \scalebox{0.75}{ % Reducido un poco más para asegurar espacio
+    \begin{tikzpicture}[node distance=0.6cm, every node/.style={font=\scriptsize}]
+        \node (start) [startstop, text width=2.2cm] {Inicio};
+        \node (init) [process, below=of start, text width=7.0cm] {Importar librerías: \texttt{Pin}, \texttt{I2C}, \texttt{time}.};
+        \node (config) [process, below=of init, text width=7.0cm] {Configurar I2C(0) con SDA=GP8, SCL=GP9, freq=100kHz.};
+        \node (scan) [process, below=of config, text width=6.0cm] {Ejecutar \texttt{i2c.scan()} para detectar dispositivos.};
+        
+        % Decisión con más espacio respecto a los bloques inferiores
+        \node (decision) [decision, below=0.8cm of scan, text width=3.0cm, aspect=2] {¿Hay dispositivos?};
+        
+        % Bloque SI (Abajo)
+        \node (print_addr) [process, below=0.8cm of decision, text width=6.0cm] {Imprimir dirección del dispositivo encontrado.};
+        
+        % Bloque NO (Derecha)
+        \node (nofound) [process, right=1.2cm of decision, text width=4.0cm] {Imprimir "No se encontraron dispositivos".};
+        
+        % Bucle For
+        \node (loop) [process, below=of print_addr, text width=5.0cm] {\texttt{for i in range(100)}: Iniciar bucle.};
+        \node (read) [process, below=of loop, text width=6.0cm] {Leer 2 bytes desde dirección \texttt{0x48} con \texttt{i2c.readfrom()}.};
+        \node (calc) [process, below=of read, text width=7.0cm] {Convertir bytes a entero, desplazar 4 bits y multiplicar por 0.0625.};
+        \node (print_temp) [process, below=of calc, text width=5.0cm] {Imprimir temperatura calculada.};
+        \node (sleep) [process, below=of print_temp, text width=4.0cm] {Esperar 1 segundo con \texttt{time.sleep(1)}.};
+        
+        \node (end) [startstop, below=0.8cm of sleep, text width=2.0cm] {Fin};
+
+        % Flechas principales
+        \draw [arrow] (start) -- (init);
+        \draw [arrow] (init) -- (config);
+        \draw [arrow] (config) -- (scan);
+        \draw [arrow] (scan) -- (decision);
+        
+        % Lógica condicional
+        \draw [arrow] (decision) -- node[right] {Si} (print_addr);
+        \draw [arrow] (decision) -- node[above] {No} (nofound);
+        
+        % El camino "No" baja hacia el fin
+        \draw [arrow] (nofound) |- (end.east);
+        
+        % Flujo del bucle
+        \draw [arrow] (print_addr) -- (loop);
+        \draw [arrow] (loop) -- (read);
+        \draw [arrow] (read) -- (calc);
+        \draw [arrow] (calc) -- (print_temp);
+        \draw [arrow] (print_temp) -- (sleep);
+        
+        % Retorno del bucle (sale de sleep y entra a loop)
+        \draw [arrow] (sleep.west) -- ++(-2.5,0) |- (loop.west);
+        
+        % Salida del bucle tras 100 iteraciones
+        \draw [arrow] (sleep) -- (end);
+
+    \end{tikzpicture}
+    }
+\end{center}
 
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 7, basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
+    \lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 7, basicstyle=\ttfamily\scriptsize]{Code/Act7.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad7/Act7_1.jpg}
+        \caption{Lecturas del sensor TMP102.}
+    \end{figure}
 
+    \subsection*{An\'alisis de resultados}
 
-    \subsection*{Análisis de resultados}
+    El programa logra inicializar correctamente el bus I2C a 100 kHz y detectar el sensor TMP102 en la direcci\'on 0x48. Las lecturas de temperatura obtenidas (aproximadamente 28.9°C a 30.9°C) son coherentes con la temperatura ambiente del laboratorio donde las variaciones corresponden a una prueba de funcionamiento del sensor donde le traspasamos nuestro calor y vimos un aumento de temperatura consistente. El c\'alculo de temperatura mediante desplazamiento de bits (tmp = intdata >> 4) y multiplicaci\'on por 0.0625 demuestra una correcta interpretaci\'on del formato de 12 bits justificados a la izquierda del TMP102. Las lecturas muestran una resoluci\'on de 0.0625°C (evidente en valores como 28.9375, 30.0625, 30.5625), validando la precisi\'on del m\'etodo de conversi\'on. 
 
     \newpage
     \section*{Actividad 8}
@@ -1256,6 +1497,11 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
         \item \textbf{Flores Colin Victor Jaziel:} 
+        
+        En esta practica número 10 he comprendido el funcionamiento y la versatilidad del protocolo de comunicacion I2C en combinación con el manejo de la Raspberry Pi Pico. A traves del desarrollo de las diferentes actividades, comprobe como un bus de comunicacion de solo dos lineas (SDA y SCL) permite conectar y controlar multiples perifericos simultaneamente, simplificando drasticamente el diseno del hardware. La funcion \texttt{scan()} resulto fundamental en cada actividad para identificar las direcciones hexadecimales de los dispositivos conectados al bus, confirmando la presencia del expansor PCF8574 (0x39), del display OLED SSD1306 (0x3C) y del sensor TMP102 (0x48) antes de proceder con su configuracion y uso.
+
+        Al trabajar con distintos dispositivos como el expansor de entradas y salidas PCF8574 (actividad 2), la pantalla OLED SSD1306 (actividad 6), y el sensor de temperatura TMP102 (actividad 7), pude poner a prueba la flexibilidad de este protocolo. Observar como cada componente mantiene su propia direccion hexadecimal para ser identificado dentro del bus por el bus master de la Pico, me dejo muchisimo mas claro el flujo de este protocolo maestro-esclavo en aplicaciones del mundo real.
+
         \item \textbf{Lara Hernandez Angel Husiel:} 
         
         En esta práctica el funcionamiento y la versatilidad del protocolo de comunicación I2C integrado con la Raspberry Pi Pico. A través del desarrollo de las diferentes actividades, comprendí cómo un bus de comunicación de solo dos líneas (SDA y SCL) permite conectar y controlar múltiples periféricos simultáneamente, simplificando drásticamente el diseño del hardware y liberando pines GPIO.
@@ -1270,4 +1516,4 @@
     \nocite{*} 
     \printbibliography[heading=bibintoc, title={Referencias}]
 
-\end{document}
+\end{document}Z
