@@ -17,27 +17,41 @@ OFF = (0, 0, 0)
 tm = tm1637.TM1637(clk=Pin(10), dio=Pin(11))
 tm.brightness(3)
 
+tm_s2 = tm1637.TM1637(clk=Pin(0), dio=Pin(1))  # Display para S1 # Display para S2
+tm_s2.brightness(3)
+
 # Botón Peatonal (GPIO 12)
 boton_peaton = Pin(12, Pin.IN, Pin.PULL_UP)
 
+boton_coche = Pin(13, Pin.IN, Pin.PULL_UP)
+
 # Zumbador Peatonal (Asumiendo GPIO 22, salida común en prácticas previas)
-buzzer = PWM(Pin(22))
+buzzer = PWM(Pin(17))
 buzzer.duty_u16(0)
 
 # --- VARIABLES DE ESTADO ---
 # Semáforo (Lock) para sincronizar los dos núcleos
 lock_semaforo = _thread.allocate_lock()
 peticion_peaton = False
+peticion_coche = False
+
 estado_autos_rojo = False
+estado_petado_rojo = True
 
 # --- RUTINA DE INTERRUPCIÓN (Botón Peatonal) ---
 def isr_boton(pin):
     global peticion_peaton
     peticion_peaton = True # Activa la bandera de petición
     print("¡Botón presionado! Esperando ciclo en rojo...")
+    
+def isr_boton_coche(pin):
+    global peticion_coche
+    peticion_coche = True # Activa la bandera de petición
+    print("¡Botón presionado coche! Esperando ciclo en rojo...")
 
 # Configura interrupción
 boton_peaton.irq(trigger=Pin.IRQ_FALLING, handler=isr_boton)
+boton_coche.irq(trigger=Pin.IRQ_FALLING, handler=isr_boton_coche)
 
 def limpiar_neopixel():
     for i in range(6): pixels.set_pixel(i, OFF)
@@ -46,7 +60,44 @@ def limpiar_neopixel():
 # --- HILO SECUNDARIO (Core 1): Rutina Peatonal ---
 def rutina_peaton():
     global peticion_peaton
+    global peticion_coche
     while True:
+        if peticion_coche and estado_petado_rojo:
+            # Bloquea el núcleo 1 para que no cambie el semáforo a verde
+            lock_semaforo.acquire()
+
+            print("Iniciando paso coche...")
+            pixels.set_pixel(3, OFF) # Apaga rojo peatón
+            pixels.set_pixel(5, V_P) # Enciende verde peatón
+            pixels.show()
+
+            # Cuenta regresiva de 10 segundos
+            for i in range(10, 0, -1):
+                tm_s2.number(i)
+                # Sonido intermitente
+                buzzer.freq(1000); buzzer.duty_u16(32768)
+                utime.sleep_ms(200)
+                buzzer.duty_u16(0)
+                utime.sleep_ms(800)
+                
+            # Parpadeo amarillo peatón indicando que se acaba el tiempo
+            pixels.set_pixel(5, OFF)
+            for _ in range(3):
+                pixels.set_pixel(4, AM_P); pixels.show()
+                utime.sleep(0.3)
+                pixels.set_pixel(4, OFF); pixels.show()
+                utime.sleep(0.3)
+                
+            pixels.set_pixel(3, R_P) # Rojo peatón
+            pixels.show()
+            tm_s2.write([0,0,0,0]) # Limpia display
+
+            # Reinicia variables y libera el semáforo para el Núcleo 1
+            peticion_coche = False
+            lock_semaforo.release() 
+
+            utime.sleep_ms(100) # Previene saturación del núcleo   
+            
         # Espera a que haya una petición Y que los autos estén en rojo
         if peticion_peaton and estado_autos_rojo:
             # Bloquea el núcleo 1 para que no cambie el semáforo a verde
@@ -93,6 +144,7 @@ while True:
     lock_semaforo.acquire() 
     
     estado_autos_rojo = False
+    estado_petado_rojo= True
     pixels.set_pixel(0, OFF) # Apaga rojo autos
     pixels.set_pixel(3, R_P) # Asegura rojo peatón
     pixels.set_pixel(2, V_A) # Verde autos
@@ -109,7 +161,8 @@ while True:
     pixels.set_pixel(1, OFF)
     pixels.set_pixel(0, R_A)
     pixels.show()
-    estado_autos_rojo = True 
+    estado_autos_rojo = True
+    estado_petado_rojo =False
     
     # Libera el candado y espera un instante para que el Núcleo 2 pueda tomar el control si hay petición
     lock_semaforo.release()
