@@ -1364,15 +1364,72 @@ El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2
     \end{lstlisting}
     \section*{Propuesta de solución}
 
+    Dado que en esta aplicación se hace uso del módulo \texttt{AHT10} es necesario usar la biblioteca \texttt{ahtx0}.
+
+    Sin embargo en el programa lo primero que se realiza es importar la biblioteca \texttt{utime} esto para poder realizar un retraso de entre lecturas, posteriormente se importan las clases \texttt{Pin} e \texttt{I2C} de la biblioteca \texttt{machine} para configurar la comunicación I2C, y finalmente se importa la clase \texttt{AHT10} de la biblioteca \texttt{ahtx0} para interactuar con el sensor.
+
+    Una vez que ya se realizan las importaciones necesarias, se configura el bus I2C utilizando el puerto 0 de la Raspberry Pi Pico, con SDA en el pin GPIO 8 y SCL en el pin GPIO 9, a una frecuencia de 400 kHz. 
+
+    Ya con el canal de comunicación configurado, se crea una instancia del sensor AHT10 pasando el objeto I2C como argumento, cuando se crea esta instancia, la biblioteca \texttt{ahtx0} se encarga de inicializar el sensor y prepararlo para las lecturas. De forma que \texttt{ahtx0} envía un comadno de inicialización al sensor AHT10, el cual realiza una calibración interna y se pone listo para medir temperatura y humedad. En caso de que no se pueda inicializar correctamente, la biblioteca lanzará una excepción que se puede manejar para detectar problemas de conexión o hardware.
+
+    Mediante un bucle infinito, se imprimen en la consola los valores de temperatura y humedad obtenidos del sensor utilizando las propiedades \texttt{temperature} y \texttt{relative\_humidity} respectivamente. La biblioteca \texttt{ahtx0} se encarga de convertir registros complejos en propeidades simples, de forma que cuiando se llama al método \texttt{temperature}, la biblioteca envía el comando de medición, donde lee 6 bytes de datros, extrae los bits correspondientes a la temperatura y aplica la fórmula matemática. Para la propiedad \texttt{relative\_humidity}, la biblioteca realiza un proceso similar, pero extrayendo los bits correspondientes a la humedad y aplicando su fórmula de conversión escalando el valor a un porcentaje. Finalmente, se imprimen los valores que sew recuperaron y se realiza un retraso de 5 segundos antes de la siguiente lectura utilizando \texttt{utime.sleep(5)}.
+    
+    \newpage
+
+    \begin{figure}[H]
+        \begin{tikzpicture}[
+            node distance=0.6cm, 
+            every node/.style={font=\scriptsize},
+            startstop/.style={rectangle, rounded corners, minimum width=2.2cm, minimum height=0.8cm, text centered, draw=black, fill=red!30},
+            process/.style={rectangle, minimum width=3cm, minimum height=0.8cm, text centered, draw=black, fill=orange!20},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!20},
+            arrow/.style={thick, ->, >=Stealth}
+        ]
+
+            % Nodos iniciales y de configuración
+            \node (start) [startstop, text width=2.2cm] {Inicio};
+            \node (init) [process, below=of start, text width=7.0cm] {Importar librerías: \texttt{utime}, \texttt{Pin}, \texttt{I2C}, \texttt{ahtx0}.};
+            \node (config) [process, below=of init, text width=7.0cm] {Inicializar I2C(0) con SDA=Pin(8), SCL=Pin(9), freq=400kHz.};
+            \node (sensor) [process, below=of config, text width=6.0cm] {Crear objeto sensor \texttt{ahtx0.AHT10(i2c)}.};
+            
+            % Bucle infinito
+            \node (loop) [process, below=of sensor, text width=5.0cm] {Bucle infinito: \texttt{while True}};
+            \node (print_temp) [process, below=of loop, text width=6.0cm] {Imprimir temperatura en $^\circ$C.};
+            \node (print_hum) [process, below=of print_temp, text width=6.0cm] {Imprimir humedad relativa en \%.};
+            \node (sleep) [process, below=of print_hum, text width=5.0cm] {Esperar 5 segundos con \texttt{utime.sleep(5)}.};
+
+            % Flechas de flujo principal
+            \draw [arrow] (start) -- (init);
+            \draw [arrow] (init) -- (config);
+            \draw [arrow] (config) -- (sensor);
+            \draw [arrow] (sensor) -- (loop);
+            \draw [arrow] (loop) -- (print_temp);
+            \draw [arrow] (print_temp) -- (print_hum);
+            \draw [arrow] (print_hum) -- (sleep);
+            
+            % Retorno del bucle infinito (sale del sleep y entra de nuevo al loop)
+            \draw [arrow] (sleep.west) -- ++(-2.5,0) |- (loop.west);
+
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama de flujo del programa para el sensor AHT10.}        
+    \end{figure}
+
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 8, basicstyle=\ttfamily\scriptsize]{Code/Act8.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad8/Act8_1.jpg}
+        \caption{Lecturas del sensor AHT10.}
+    \end{figure}
+
 
     \subsection*{Análisis de resultados}
 
-    \newpage
+    A partir de cargar el código en la Raspberry Pi Pico, se observa que el programa logra inicializar correctamente el bus I2C a 400 kHz y crear una instancia del sensor AHT10 sin errores, lo que indica que la comunicación con el sensor es exitosa. Las lecturas de temperatura son correctas ya que en un inicio son de aproximadamente 29.71$^\circ C$, y al colocar la mano sobre el sensor, la temperatura aumenta a alrededor de 30.86$^\circ C$, lo que es consistente con el aumento de temperatura esperado debido al calor corporal. Las lecturas de humedad relativa también son coherentes, mostrando un valor inicial de aproximadamente 32.62\% y aumentando a cerca de 36.75\% al colocar la mano, lo que refleja el aumento de humedad debido al contacto directo con el sensor. 
 
     \section*{Actividad 9}
 
@@ -1450,14 +1507,71 @@ El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2
     \end{lstlisting}
     \section*{Propuesta de solución}
 
+    El codigo que se proporciona es un programa básico para leer los datos del acelerómetro del sensor MPU6050 utilizando la comunicación I2C. 
+
+    El programa comienza importando la clase \texttt{MPU6050} de la biblioteca \texttt{imu}, así como las clases \texttt{Pin} e \texttt{I2C} de la biblioteca \texttt{machine} para configurar la comunicación I2C, y la biblioteca \texttt{utime} para manejar los retrasos entre lecturas.
+
+    De igual mane4ra que en la actividad anterior, se configura el bus I2C utilizando el puerto 0 de la Raspberry Pi Pico, con SDA en el pin GPIO 8 y SCL en el pin GPIO 9, a una frecuencia de 400 kHz. Luego, se crea una instancia del sensor MPU6050 pasando el objeto I2C como argumento, lo que inicializa el sensor y lo prepara para las lecturas.
+
+    Cuadno se crea la instancia del sensor, la biblioteca \texttt{imu} se encarga de mapear los registros internos del sensor. Cuando se crea el objeto, la biblioteca configura el sensor para qu esté en modo activo y define el rango de sensibilidad del acelerómetro. Esto implica escribir en los registros de configuración del MPU6050 para habilitar el acelerómetro y establecer su rango de medición (por ejemplo, $\pm 2g$, $\pm 4g$, etc.).
+
+    Por medio de un bucle infinito, el programa lee el valor del eje X del acelerómetro utilizando la propiedad \texttt{imu.accel.x}, que devuelve la aceleración en g's. La propiedad \texttt{accel} es un objeto que contiene las lecturas de los tres ejes del acelerómetro (X, Y, Z), y al acceder a \texttt{imu.accel.x}, la biblioteca ejecuta internamente una lectura de I2C, donde toma los dos bytes crudos del sensor, los combina y los dividfe por un factor de escala para convertirlos a unidades de g's. Por medio de la función \texttt{round()}, se redondea el valor a dos decimales para facilitar su lectura, y luego se imprime en la consola. Finalmente, se realiza un retraso de 200 milisegundos antes de la siguiente lectura utilizando \texttt{utime.sleep\_ms(200)}.
+
+    \newpage
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[
+            node distance=0.8cm and 0cm, 
+            every node/.style={font=\small},
+            % Estilos proporcionados
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!30},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+
+            % Definición de los nodos
+            \node (start) [startstop] {Inicio};
+            \node (import) [process, below=of start, text width=6cm] {Importar librerías:\\ \texttt{MPU6050}, \texttt{Pin}, \texttt{I2C}, \texttt{utime}};
+            \node (i2c) [process, below=of import, text width=6cm] {Inicializar I2C(0) a 400kHz\\ SDA=Pin(8), SCL=Pin(9)};
+            \node (imu) [process, below=of i2c, text width=6cm] {Crear objeto sensor IMU\\ \texttt{imu = MPU6050(i2c)}};
+            
+            % Nodos dentro del bucle
+            \node (read) [process, below=of imu, text width=6cm] {Leer aceleración en X ($a_x$)\\ y redondear a 2 decimales};
+            \node (print) [io, below=of read, text width=5cm] {Imprimir Fuerza G en X};
+            \node (sleep) [process, below=of print, text width=6cm] {Esperar 200 ms\\ (\texttt{utime.sleep\_ms(200)})};
+
+            % Conexiones principales (Flujo lineal)
+            \draw [arrow] (start) -- (import);
+            \draw [arrow] (import) -- (i2c);
+            \draw [arrow] (i2c) -- (imu);
+            \draw [arrow] (imu) -- (read);
+            \draw [arrow] (read) -- (print);
+            \draw [arrow] (print) -- (sleep);
+            
+            % Retorno del bucle infinito (while True)
+            % Sale por el oeste del sleep, sube y entra por el oeste de read
+            \draw [arrow] (sleep.west) -- ++(-2.5,0) |- (read.west);
+        \end{tikzpicture}
+        \caption{Diagrama de flujo lectura del acelerómetro.}
+    \end{figure}
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 9, basicstyle=\ttfamily\scriptsize]{Code/Act9.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad9/Act9_1.jpg}
+        \caption{Lecturas del sensor acelerómetro.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
-    \newpage
+    Al ejecutar el programa, se observa que la Raspberry Pi Pico logra inicializar correctamente el bus I2C a 400 kHz y crear una instancia del sensor MPU6050 sin errores, lo que indica que la comunicación con el sensor es exitosa. Las lecturas del acelerómetro en el eje X ($a_x$) muestran valores cercanos a 0 g cuando el sensor está en reposo sobre una superficie plana, lo cual es coherente con la ausencia de movimiento. Al inclinar o mover la Pico, los valores de $a_x$ varían en función de la dirección y magnitud del movimiento, mostrando tanto valores positivos como negativos que reflejan la aceleración en ese eje. La capacidad de redondear a dos decimales facilita la interpretación de las lecturas, permitiendo observar cambios sutiles en la aceleración. 
+
     \section*{Actividad 10}
 
     \noindent Realizar un programa, que genere las acciones mostradas en la tabla 10-2.
@@ -1483,12 +1597,95 @@ El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2
 
     \section*{Propuesta de solución}
 
+    Para implementar el programa que controle un LED y un buzzer en función de la aceleración medida por el sensor MPU6050, el primer paso en realizar la importación de las bibliotecas necesarias, para la conversión de radianes y grados se hace uso de la biblioteca \texttt{math}, para controlar los pines GPIO se importa la clase \texttt{Pin} y \texttt{I2C} para la comunicación con el sensor, y la clase \texttt{MPU6050} de la biblioteca \texttt{imu} para interactuar con el sensor. La últma biblioteca que se importa es \texttt{utime} para manejar los retrasos entre lecturas.
+
+    Una vez que se definieron las bibliotecas, lo primero que se hace es configurar el bus I2C utilizando el puerto 0 de la Raspberry Pi Pico, con SDA en el pin GPIO 8 y SCL en el pin GPIO 9, a una frecuencia de 400 kHz. Luego, se crea una instancia del sensor MPU6050 pasando el objeto I2C como argumento, lo que inicializa el sensor y lo prepara para las lecturas.
+
+    Posteriormente, se configuran los pines GPIO 17 y GPIO 18 como salidas para controlar el buzzer y el LED respectivamente.
+
+    Por medio de un bucle infinito, se lee los valoresa de aceleración en los ejes X, Y y Z utilizando las propiedades \texttt{imu.accel.x}, \texttt{imu.accel.y} y \texttt{imu.accel.z}. Luego, se calcula el ángulo de inclinación en el eje X utilizando la función \texttt{atan2} de la biblioteca \texttt{math}, que devuelve el ángulo en radianes. Este ángulo se convierte a grados usando la función \texttt{degrees} de la misma biblioteca. Se imrpime el valor en grados para su monitoreo. Finalmente, se evalúa la condición de control: si el ángulo de inclinación en el eje X está entre -45° y 45°, se apaga el LED y el buzzer; de lo contrario, si el ángulo es menor o igual a -46° o mayor o igual a 46°, se enciende el LED y el buzzer. Se realiza un retraso de 200 milisegundos antes de la siguiente lectura utilizando \texttt{utime.sleep\_ms(200)}.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[
+            % Escalado global (puedes ajustar este parámetro)
+            scale=1.0, transform shape,
+            node distance=0.8cm and 0.8cm,
+            every node/.style={font=\small},
+            % Estilos para diagramas de flujo solicitados
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!30},
+            process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+            decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+            arrow/.style={thick, ->, >=stealth}
+        ]
+            % Nodos principales (Inicialización)
+            \node (start) [startstop] {Inicio};
+            \node (init) [process, below=of start, text width=6cm] {Importar librerías, inicializar I2C, IMU MPU6050 y pines (LED 18, Buzzer 17)};
+
+            % Nodos dentro del bucle infinito
+            \node (read) [process, below=of init, text width=5cm] {Leer aceleraciones\\ $a_x, a_y, a_z$};
+            \node (calc) [process, below=of read, text width=5.5cm] {Calcular inclinación $X$ usando\\ trigonometría (\texttt{atan2})};
+            \node (print) [io, below=of calc, text width=5cm] {Imprimir inclinación actual};
+
+            % Nodo de decisión (Rango -45 a 45)
+            \node (dec) [decision, below=of print, text width=3.5cm] {¿$-45^\circ \le X \le 45^\circ$?};
+
+            % Ramas condicionales
+            \node (off) [process, right=of dec, text width=3.5cm] {LED = OFF\\ Buzzer = OFF};
+            \node (on) [process, left=of dec, text width=3.5cm] {LED = ON\\ Buzzer = ON};
+
+            % Nodo de espera
+            \node (sleep) [process, below=2cm of dec, text width=4cm] {Esperar 200 ms};
+
+            % Conexiones lineales
+            \draw [arrow] (start) -- (init);
+            \draw [arrow] (init) -- (read);
+            \draw [arrow] (read) -- (calc);
+            \draw [arrow] (calc) -- (print);
+            \draw [arrow] (print) -- (dec);
+
+            % Conexiones de las decisiones
+            \draw [arrow] (dec) -- node[above] {Sí} (off);
+            \draw [arrow] (dec) -- node[above] {No (elif)} (on);
+
+            % Convergencia hacia el final del ciclo
+            \draw [arrow] (off) |- (sleep);
+            \draw [arrow] (on) |- (sleep);
+
+            % Retorno del bucle infinito (while True)
+            % Sale del sur del nodo sleep, baja un poco, rodea el nodo "on" por la izquierda y sube al nodo "read"
+            \draw [arrow] (sleep.south) -- ++(0,-0.5) -| ([xshift=-1.5cm]on.west) |- (read.west);
+
+        \end{tikzpicture}
+    \end{figure}
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 10, basicstyle=\ttfamily\scriptsize]{Code/Act10.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad10/Act10_3.jpg}
+        \caption{Lecturas del sensor acelerómetro - Actividad 10.}
+    \end{figure}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad10/Act10_1.jpg}
+        \caption{Inclinación del sensor acelerómetro mayor a 46$^\circ$ y menor a -46$^\circ$ - Actividad 10.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad10/Act10_2.jpg}
+        \caption{Inclinación del sensor acelerómetro entre -45$^\circ$ y 45$^\circ$ - Actividad 10.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Al ejecutar el programa, se observa que la Raspberry Pi Pico logra inicializar correctamente el bus I2C a 400 kHz, crear una instancia del sensor MPU6050 y configurar los pines para el LED y el buzzer sin errores, lo que indica que la comunicación con el sensor y la configuración de los GPIO es exitosa. Las lecturas del acelerómetro permiten calcular la inclinación en el eje X, mostrando valores en grados que varían según la posición del sensor. Cuando la inclinación supera los 46° o es menor a -46°, el LED se enciende y el buzzer suena, indicando que se ha detectado una inclinación fuera del rango permitido. Por otro lado, cuando la inclinación está entre -45° y 45°, el LED permanece apagado y el buzzer está silenciado, lo que confirma que el sistema de control responde correctamente a las condiciones establecidas. El retraso de 200 ms entre lecturas permite un monitoreo continuo sin saturar la consola con demasiada información.
 
 
     \newpage
@@ -1496,6 +1693,11 @@ El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2
 
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        
+        Por medio de la realización de esta práctica, he logrado comprender a fondo el funcionamiento del protocolo de comunicación I2C y su integración con la Raspberry Pi Pico. Ya que a travez del protocolo de comunicación se pueden conectar múltiples dispositivos utilizando solo dos líneas de comunicación (SDA y SCL), lo que simplifica el diseño del hardware y permite una mayor flexibilidad en la conexión de periféricos. La función \texttt{scan()} fue esencial para identificar las direcciones hexadecimales de los dispositivos conectados al bus, lo que facilitó la configuración y uso de componentes como el expansor PCF8574, el display OLED SSD1306 y el sensor TMP102. 
+
+        Trabajar con diferentes dispositivos me permitió apreciar la versatilidad del protocolo I2C, ya que cada componente mantiene su propia dirección hexadecimal para ser identificado dentro del bus por el bus master de la Pico. De igual forma es importante destacar que el usar MicroPython en la Raspberry Pi Pico hizo que el proceso de desarrollo fuera más sencillo y accesible, permitiendo una rápida implementación y prueba de los diferentes periféricos conectados al bus I2C, ya que para instanciar los objetos correspondientes a los sensores, en la mayoría de los casos, solo se requiere pasar el objeto I2C como argumento, lo que simplifica la interacción con los dispositivos y acelera el proceso de desarrollo.
+
         \item \textbf{Flores Colin Victor Jaziel:} 
         
         En esta practica número 10 he comprendido el funcionamiento y la versatilidad del protocolo de comunicacion I2C en combinación con el manejo de la Raspberry Pi Pico. A traves del desarrollo de las diferentes actividades, comprobe como un bus de comunicacion de solo dos lineas (SDA y SCL) permite conectar y controlar multiples perifericos simultaneamente, simplificando drasticamente el diseno del hardware. La funcion \texttt{scan()} resulto fundamental en cada actividad para identificar las direcciones hexadecimales de los dispositivos conectados al bus, confirmando la presencia del expansor PCF8574 (0x39), del display OLED SSD1306 (0x3C) y del sensor TMP102 (0x48) antes de proceder con su configuracion y uso.
@@ -1516,4 +1718,4 @@ El programa logra controlar los 8 pines del PCF8574 mediante la comunicación I2
     \nocite{*} 
     \printbibliography[heading=bibintoc, title={Referencias}]
 
-\end{document}Z
+\end{document}
