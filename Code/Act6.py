@@ -67,8 +67,8 @@ def rutina_peaton():
             lock_semaforo.acquire()
 
             print("Iniciando paso coche...")
-            pixels.set_pixel(3, OFF) # Apaga rojo peatón
-            pixels.set_pixel(5, V_P) # Enciende verde peatón
+            pixels.set_pixel(3, OFF) # Apaga rojo auto
+            pixels.set_pixel(5, V_A) # Enciende verde auto
             pixels.show()
 
             # Cuenta regresiva de 10 segundos
@@ -83,12 +83,12 @@ def rutina_peaton():
             # Parpadeo amarillo peatón indicando que se acaba el tiempo
             pixels.set_pixel(5, OFF)
             for _ in range(3):
-                pixels.set_pixel(4, AM_P); pixels.show()
+                pixels.set_pixel(4, AM_A); pixels.show()
                 utime.sleep(0.3)
                 pixels.set_pixel(4, OFF); pixels.show()
                 utime.sleep(0.3)
                 
-            pixels.set_pixel(3, R_P) # Rojo peatón
+            pixels.set_pixel(3, R_A) # Rojo auto
             pixels.show()
             tm_s2.write([0,0,0,0]) # Limpia display
 

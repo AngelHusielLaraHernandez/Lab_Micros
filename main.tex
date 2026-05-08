@@ -169,10 +169,10 @@
 
 % --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
 \tikzset{
-  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
-  process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
-  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
-  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30},
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=blue!30},
   arrow/.style={thick,->,>=stealth}
 }
 
@@ -413,15 +413,120 @@
 
     \section*{Propuesta de solución}
 
+    La solución propuesta para esta actividad consiste en configurar dos interrupciones externas por flanco de bajada, una para cada botón (S1 en GPIO12 y S2 en GPIO13), de manera que cada vez que se presione un botón se ejecute su respectiva rutina de servicio de interrupción (ISR). Dentro de cada ISR se enciende momentáneamente el LED asociado (GPIO18 para S1 y GPIO19 para S2), se incrementa un contador independiente y se actualiza el valor en su display TM1637 correspondiente (GP0/GP1 para S1 y GP10/GP11 para S2). Para evitar múltiples activaciones por rebote mecánico del botón, se incorpora un retardo de 300 ms dentro de cada ISR antes de apagar el LED. El programa principal permanece en un bucle infinito vacío, delegando toda la lógica de respuesta a las interrupciones de hardware.
+
+    \begin{center}
+    \scalebox{0.82}{
+    \begin{tikzpicture}[node distance=1.1cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        % Columna central - Programa principal
+        \node (start) [startstop] {Inicio};
+        \node (conf) [process, below=of start] {Configurar S1, S2\\como entrada PULL\_UP};
+        \node (confleds) [process, below=of conf] {Configurar LED1 (GP18)\\LED2 (GP19) como salida};
+        \node (conftm) [process, below=of confleds] {Inicializar displays\\TM1637 en 0};
+        \node (irqconf) [process, below=of conftm] {Configurar IRQ\\S1 y S2 flanco bajada};
+        \node (loop) [decision, below=of irqconf] {Bucle infinito\\(espera interrupciones)};
+        \draw [arrow] (start) -- (conf);
+        \draw [arrow] (conf) -- (confleds);
+        \draw [arrow] (confleds) -- (conftm);
+        \draw [arrow] (conftm) -- (irqconf);
+        \draw [arrow] (irqconf) -- (loop);
+        \draw [arrow] (loop.east) -- ++(0.8,0) |- (loop.north east);
+
+        % Columna izquierda - ISR S1
+        \node (isrs1) [startstop, left=3.5cm of conf] {ISR\_S1};
+        \node (led1on) [process, below=of isrs1] {LED1 ON};
+        \node (inc1) [process, below=of led1on] {contador\_s1 += 1};
+        \node (disp1) [io, below=of inc1] {Mostrar contador\_s1\\en TM1637 (GP0)};
+        \node (delay1) [process, below=of disp1] {Retardo 300 ms};
+        \node (led1off) [process, below=of delay1] {LED1 OFF};
+        \node (ret1) [startstop, below=of led1off] {Retorno};
+        \draw [arrow] (isrs1) -- (led1on);
+        \draw [arrow] (led1on) -- (inc1);
+        \draw [arrow] (inc1) -- (disp1);
+        \draw [arrow] (disp1) -- (delay1);
+        \draw [arrow] (delay1) -- (led1off);
+        \draw [arrow] (led1off) -- (ret1);
+
+        % Columna derecha - ISR S2
+        \node (isrs2) [startstop, right=3.5cm of conf] {ISR\_S2};
+        \node (led2on) [process, below=of isrs2] {LED2 ON};
+        \node (inc2) [process, below=of led2on] {contador\_s2 += 1};
+        \node (disp2) [io, below=of inc2] {Mostrar contador\_s2\\en TM1637 (GP10)};
+        \node (delay2) [process, below=of disp2] {Retardo 300 ms};
+        \node (led2off) [process, below=of delay2] {LED2 OFF};
+        \node (ret2) [startstop, below=of led2off] {Retorno};
+        \draw [arrow] (isrs2) -- (led2on);
+        \draw [arrow] (led2on) -- (inc2);
+        \draw [arrow] (inc2) -- (disp2);
+        \draw [arrow] (disp2) -- (delay2);
+        \draw [arrow] (delay2) -- (led2off);
+        \draw [arrow] (led2off) -- (ret2);
+
+        % Flechas de interrupción
+        \draw [arrow, dashed, red] (loop.west) -- ++(-1.2,0) node[midway, above, font=\tiny]{Interrupción S1} |- (isrs1.east);
+        \draw [arrow, dashed, blue] (loop.east) -- ++(2.0,0) node[midway, above, font=\tiny]{Interrupción S2} |- (isrs2.west);
+
+    \end{tikzpicture}
+    }
+    \end{center}
+
+    En el diagrama de flujo se observan tres bloques: el programa principal (centro), que configura los pines de entrada con resistencia pull-up interna, los LEDs como salida, inicializa ambos displays TM1637 en cero y registra las interrupciones por flanco de bajada para S1 y S2; la ISR de S1 (izquierda), que al detectar la pulsación enciende el LED1, incrementa su contador, lo muestra en el display correspondiente, espera 300 ms como antirrebote y apaga el LED; y la ISR de S2 (derecha), que realiza el mismo procedimiento con el LED2 y su propio contador y display. El bucle principal permanece en espera pasiva, permitiendo que las interrupciones manejen toda la lógica de conteo y visualización.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_1.jpg}
+        \caption{Actividad 3: Estado inicial, primera pulsación de S2 con display S1 mostrando ``2'' y LED1 encendido.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_5.jpg}
+        \caption{Actividad 3: Display S1 muestra ``12'' y display S2 muestra ``4'' tras múltiples pulsaciones.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_7.jpg}
+        \caption{Actividad 3: Display S1 muestra ``5'' y display S2 en ``0'', LED1 encendido al presionar S1.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_8.jpg}
+        \caption{Actividad 3: Display S1 muestra ``6'' y display S2 en ``0'', conteo ascendente de S1.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_12.jpg}
+        \caption{Actividad 3: Display S1 muestra ``9'' y display S2 en ``0'', LED1 encendido tras pulsación.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_13.jpg}
+        \caption{Actividad 3: Display S1 alcanza ``10'' y display S2 permanece en ``0'', verificando conteo de dos dígitos.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad3/Act3_15.jpg}
+        \caption{Actividad 3: Salida en consola mostrando las interrupciones S1 (cuenta 1--12) y S2 (cuenta 1--10).}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
+    Los resultados obtenidos en la Actividad 3 confirman el correcto funcionamiento del sistema de interrupciones externas implementado en la Raspberry Pi Pico. Como se observa en las Figuras 7 a 13, cada pulsación del botón S1 genera una interrupción por flanco de bajada que ejecuta la ISR correspondiente, incrementando el contador y actualizándolo en el display TM1637 conectado a los pines GP0 y GP1; de manera análoga, el botón S2 activa su propia ISR que actualiza el segundo display (GP10/GP11). En la Figura 7 se aprecia el estado tras la primera pulsación de S2 con el LED1 encendido y el display S1 mostrando el valor ``2'', lo cual demuestra que ambas interrupciones operan de forma independiente sin interferirse mutuamente. La Figura 8 evidencia que tras múltiples pulsaciones el display S1 alcanzó el valor 12 mientras que S2 llegó a 4, confirmando que los contadores son independientes y no se reinician entre pulsaciones. Las Figuras 9 a 12 muestran el conteo progresivo de S1 desde 5 hasta 9, verificando la consistencia del incremento unitario por cada pulsación y el encendido momentáneo del LED durante la ejecución de la ISR. La Figura 13 demuestra que el display TM1637 maneja correctamente valores de dos dígitos al mostrar ``10'', lo cual valida la función \texttt{tm\_s1.number()} de la librería. Finalmente, la Figura 14 muestra la salida en la consola serial, donde se imprime cada interrupción con su respectivo identificador (S1 o S2) y el valor acumulado del contador, alcanzando 12 pulsaciones para S1 y 10 para S2. El retardo de 300 ms implementado como antirrebote resultó efectivo, ya que no se observaron incrementos dobles o espurios en los contadores. La solución cumple con los objetivos planteados en la Tabla 11-2, demostrando el uso adecuado de interrupciones por hardware, la configuración de resistencias pull-up internas, la comunicación con periféricos TM1637 y el manejo de LEDs indicadores dentro de las rutinas de servicio de interrupción.
 
     \newpage
 
@@ -705,8 +810,97 @@
     {\Large \textsf{Figura 11-5. Circuito; actividad 6}}
 
     \end{center}
+    \newpage
     \section*{Propuesta de solución}
 
+    La solución propuesta para esta actividad implementa un sistema de semáforo inteligente para automóviles y peatones utilizando los dos núcleos del RP2040. El Núcleo 0 (hilo principal) controla el ciclo normal del semáforo de automóviles mediante LEDs Neopixel: verde (4 s), amarillo (2 s) y rojo (3 s). El Núcleo 1 (hilo secundario) gestiona las peticiones de cruce peatonal y de paso de coches mediante dos botones con interrupciones por flanco de bajada: S1 (GPIO12) para peatones y S2 (GPIO13) para coches. La sincronización entre ambos núcleos se realiza mediante un \texttt{lock} (semáforo binario) que impide que el hilo principal cambie el semáforo a verde mientras un peatón o coche está cruzando. Cuando se presiona el botón peatonal y el semáforo de autos está en rojo, el Núcleo 1 adquiere el lock, enciende el verde peatonal, activa una cuenta regresiva de 10 s en el display TM1637 con señal acústica del buzzer, realiza un parpadeo de advertencia en amarillo y finalmente regresa al rojo peatonal liberando el lock. El botón de coches funciona de manera análoga. Se utilizan banderas globales (\texttt{peticion\_peaton} y \texttt{peticion\_coche}) activadas por las ISR para comunicar las peticiones al hilo secundario.
+
+    En el diagrama de flujo se distinguen tres bloques principales. A la izquierda, el Núcleo 0 ejecuta el ciclo normal del semáforo de automóviles: adquiere el lock, enciende la secuencia verde-amarillo-rojo en los LEDs Neopixel y al llegar a rojo libera el lock brevemente para que el Núcleo 1 pueda tomar el control si existe una petición pendiente; si no hay petición peatonal, mantiene el rojo durante 3 s adicionales antes de reiniciar el ciclo. A la derecha, el Núcleo 1 monitorea continuamente las banderas de petición: si hay petición de coche y el peatón está en rojo, adquiere el lock, enciende verde para coches con cuenta regresiva de 10 s en el display TM1637 acompañada de señal acústica del buzzer, ejecuta un parpadeo de advertencia en amarillo y regresa a rojo liberando el lock; de forma análoga, si hay petición de peatón y los autos están en rojo, realiza el mismo procedimiento para el cruce peatonal. En el centro se muestran las dos ISR que simplemente activan las banderas globales al detectar el flanco de bajada en los botones S1 y S2, manteniendo las rutinas de interrupción lo más breves posible.
+
+    \begin{center}
+    \scalebox{0.62}{
+    \begin{tikzpicture}[node distance=1.0cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=0.6cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=2.8cm, minimum height=0.6cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.2cm, minimum height=0.6cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.2},
+        io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.2cm, minimum height=0.6cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        % === COLUMNA IZQUIERDA: Núcleo 0 (Hilo principal) ===
+        \node (start0) [startstop] {Inicio Núcleo 0};
+        \node (init0) [process, below=of start0] {Inicializar Neopixel,\\TM1637, Buzzer, Botones};
+        \node (irq0) [process, below=of init0] {Configurar IRQ S1, S2\\flanco bajada};
+        \node (thread) [process, below=of irq0] {Iniciar hilo Núcleo 1};
+        \node (acqlock) [process, below=of thread] {Adquirir Lock};
+        \node (verde) [process, below=of acqlock] {Verde autos (4 s)\\Rojo peatón};
+        \node (amarillo) [process, below=of verde] {Amarillo autos (2 s)};
+        \node (rojo) [process, below=of amarillo] {Rojo autos};
+        \node (release) [process, below=of rojo] {Liberar Lock\\sleep 50 ms};
+        \node (checkp) [decision, below=of release] {¿Petición\\peatón?};
+        \node (wait3) [process, below=of checkp] {Esperar 3 s\\en rojo};
+
+        \draw [arrow] (start0) -- (init0);
+        \draw [arrow] (init0) -- (irq0);
+        \draw [arrow] (irq0) -- (thread);
+        \draw [arrow] (thread) -- (acqlock);
+        \draw [arrow] (acqlock) -- (verde);
+        \draw [arrow] (verde) -- (amarillo);
+        \draw [arrow] (amarillo) -- (rojo);
+        \draw [arrow] (rojo) -- (release);
+        \draw [arrow] (release) -- (checkp);
+        \draw [arrow] (checkp) -- node[right, font=\tiny]{No} (wait3);
+        \draw [arrow] (checkp.west) -- ++(-1.8,0) node[midway, above, font=\tiny]{Sí} |- (acqlock.west);
+        \draw [arrow] (wait3.west) -- ++(-2.8,0) |- (acqlock.west);
+
+        % === COLUMNA DERECHA: Núcleo 1 (Hilo secundario) ===
+        \node (start1) [startstop, right=13cm of start0] {Inicio Núcleo 1};
+        \node (checkc) [decision, below=of start1] {¿Petición coche\\y peatón rojo?};
+        \node (acqlockc) [process, below=1.2cm of checkc] {Adquirir Lock};
+        \node (verdec) [process, below=of acqlockc] {Verde coches\\en Neopixel};
+        \node (cuentac) [io, below=of verdec] {Cuenta regresiva 10 s\\Buzzer + Display};
+        \node (amarilloc) [process, below=of cuentac] {Parpadeo amarillo (3x)};
+        \node (rojoc) [process, below=of amarilloc] {Rojo coches\\Limpiar display};
+        \node (releasec) [process, below=of rojoc] {Liberar Lock\\Reset bandera};
+
+        \node (checkp1) [decision, below=1.2cm of releasec] {¿Petición peatón\\y autos rojo?};
+        \node (acqlockp) [process, below=1.2cm of checkp1] {Adquirir Lock};
+        \node (verdep) [process, below=of acqlockp] {Verde peatón\\en Neopixel};
+        \node (cuentap) [io, below=of verdep] {Cuenta regresiva 10 s\\Buzzer + Display};
+        \node (amarillop) [process, below=of cuentap] {Parpadeo amarillo (3x)};
+        \node (rojop) [process, below=of amarillop] {Rojo peatón\\Limpiar display};
+        \node (releasep) [process, below=of rojop] {Liberar Lock\\Reset bandera};
+
+        \draw [arrow] (start1) -- (checkc);
+        \draw [arrow] (checkc) -- node[right, font=\tiny]{Sí} (acqlockc);
+        \draw [arrow] (acqlockc) -- (verdec);
+        \draw [arrow] (verdec) -- (cuentac);
+        \draw [arrow] (cuentac) -- (amarilloc);
+        \draw [arrow] (amarilloc) -- (rojoc);
+        \draw [arrow] (rojoc) -- (releasec);
+        \draw [arrow] (releasec) -- (checkp1);
+        \draw [arrow] (checkc.east) -- ++(2.0,0) node[midway, above, font=\tiny]{No} |- (checkp1.east);
+
+        \draw [arrow] (checkp1) -- node[right, font=\tiny]{Sí} (acqlockp);
+        \draw [arrow] (acqlockp) -- (verdep);
+        \draw [arrow] (verdep) -- (cuentap);
+        \draw [arrow] (cuentap) -- (amarillop);
+        \draw [arrow] (amarillop) -- (rojop);
+        \draw [arrow] (rojop) -- (releasep);
+        \draw [arrow] (releasep.west) -- ++(-3.2,0) |- (checkc.west);
+        \draw [arrow] (checkp1.east) -- ++(3.0,0) node[midway, above, font=\tiny]{No} |- (checkc.east);
+
+        % === ISR (centro-arriba) ===
+        \node (isr1) [startstop, right=4.5cm of init0] {ISR Botón Peatón};
+        \node (flag1) [process, below=0.6cm of isr1] {peticion\_peaton = True};
+        \node (isr2) [startstop, below=0.8cm of flag1] {ISR Botón Coche};
+        \node (flag2) [process, below=0.6cm of isr2] {peticion\_coche = True};
+
+        \draw [arrow] (isr1) -- (flag1);
+        \draw [arrow] (isr2) -- (flag2);
+
+    \end{tikzpicture}
+    }
+    \end{center}
 
     \newpage
 
@@ -714,12 +908,74 @@
 
     \lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_0.jpg}
+        \caption{Salida en consola mostrando las peticiones de botón peatonal y de coche, con los mensajes de inicio de paso.}
+    \end{figure}
 
+    \textbf{Primera interrupcion peaton:}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_1.jpg}
+        \caption{Semáforo de autos en verde y peatón en rojo, display mostrando cuenta regresiva ``10'' durante paso de coches.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_9.jpg}
+        \caption{Display TM1637 mostrando ``6'' durante la cuenta regresiva del paso peatonal con buzzer activo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_3.jpg}
+        \caption{Semáforo de autos en amarillo, transición antes de cambiar a rojo, peatón en rojo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_4.jpg}
+        \caption{Semáforo de autos en rojo y peatón con verde encendido, indicando cruce peatonal activo.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_5.jpg}
+        \caption{Parpadeo de advertencia en amarillo para peatón, indicando que el tiempo de cruce está por terminar.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_14.jpg}
+        \caption{Ambos semáforos en rojo, estado de transición entre ciclos del semáforo.}
+    \end{figure}
+
+    \textbf{Segunda interrupción coche:}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/imagen10.png}
+        \caption{Semáforo de peaton en verde y auto en rojo, display mostrando cuenta regresiva ``10'' durante paso de peaton.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/image6.png}
+        \caption{Display TM1637 mostrando ``6'' durante la cuenta regresiva del paso de los coches.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/image1.png}
+        \caption{Semaforo en amarillo, a un segundo de cambiar el semaforo de peatones a verde.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
+    Los resultados obtenidos en la Actividad 6 demuestran el correcto funcionamiento de un sistema de semáforo inteligente que integra múltiples periféricos y aprovecha la arquitectura de doble núcleo del RP2040. Como se observa en la Figura 15, la consola serial registra adecuadamente los eventos de pulsación de botones y el inicio de los pasos peatonal y de coches, confirmando que las interrupciones por flanco de bajada configuradas en los pines GPIO12 y GPIO13 detectan correctamente las pulsaciones. En la Figura 16 se aprecia el semáforo de automóviles en verde (LED Neopixel índice 2) con el display TM1637 mostrando el valor ``10'' al inicio de la cuenta regresiva durante el paso de coches, mientras que el semáforo peatonal permanece en rojo (LED Neopixel índice 3), validando la correcta asignación de los índices de LEDs en la tira Neopixel. La Figura 17 muestra la transición a amarillo en el semáforo de autos, fase que dura 2 segundos según la programación, lo cual coincide con el comportamiento esperado del ciclo normal controlado por el Núcleo 0. La Figura 18 evidencia el momento en que se activa el cruce peatonal: el semáforo de autos muestra rojo y el peatonal enciende en verde, confirmando que el mecanismo de sincronización mediante el lock funciona correctamente, ya que el Núcleo 1 adquiere el lock e impide que el Núcleo 0 cambie el estado del semáforo de autos durante el cruce. En la Figura 19 se observa el parpadeo de advertencia en amarillo para el peatón, secuencia que se ejecuta tres veces antes de regresar a rojo peatonal, alertando al peatón de que el tiempo de cruce está por finalizar. La Figura 20 muestra el display TM1637 durante la cuenta regresiva con el valor ``8'', acompañada de la señal acústica del buzzer que emite un tono de 1000 Hz durante 200 ms por cada segundo, proporcionando retroalimentación auditiva al peatón. La Figura 21 confirma que la cuenta regresiva se despliega correctamente mostrando ``9'' al inicio del paso de coches. Finalmente, la Figura 22 muestra ambos semáforos en rojo durante el estado de transición, momento en el que el Núcleo 0 libera el lock y espera 50 ms para dar oportunidad al Núcleo 1 de adquirirlo si existe una petición pendiente. La implementación demuestra un uso efectivo de las interrupciones de hardware para mantener las ISR breves (solo activan banderas), la sincronización entre núcleos mediante locks para evitar condiciones de carrera, y la coordinación de múltiples periféricos (Neopixel, TM1637, PWM para buzzer) en un sistema embebido de tiempo real.
 
-    \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
@@ -729,9 +985,8 @@
         \item \textbf{Flores Colin Victor Jaziel:} 
         
 
-        \item \textbf{Lara Hernandez Angel Husiel:} 
-        
-
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré comprender de forma más clara cómo empezar a utilizar la Raspberry Pi Pico programando desde cero en MicroPython. Al trabajar con los diferentes componentes, como el display TM1637, la tira de LEDs NeoPixel y el buzzer, entendí mejor cómo manejar las entradas y salidas, así como la forma de generar señales PWM para los sonidos.
+        También me quedó mucho más claro el uso de las interrupciones para los botones, ya que gracias a ellas el programa puede responder al instante cuando alguien presiona un botón, sin necesidad de trabar o frenar todo el código. Por otro lado, usar los dos núcleos de la tarjeta al mismo tiempo fue algo nuevo; aprendí que usando hilos y los "locks" puedo hacer que el semáforo normal siga funcionando y al mismo tiempo escuchar las peticiones de los peatones sin que haya problemas. 
     \end{itemize}
 
     \newpage
