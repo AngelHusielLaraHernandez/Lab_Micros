@@ -1,24 +1,22 @@
+from machine import Pin
+import utime
 
-# Importa las clases Pin e I2C del módulo machine
-from machine import Pin, I2C
+# Configura S1 en el GPIO 12 como entrada con resistencia Pull-Up interna
+S1 = Pin(12, Pin.IN, Pin.PULL_UP)
 
+# Función de Manejo de Interrupción (Interrupt Service Routine - ISR)
+# Se ejecuta automáticamente cuando ocurre el evento
+def FuncISR_S1(pin):
+    print("Interrupción detectada en S1") #
+    # Pequeño retardo dentro de la ISR para evitar rebotes (bouncing) mecánicos del botón
+    utime.sleep_ms(200) # (Reducido a 200ms, 1 segundo es mucho para una ISR)
 
-# Configura el pin 8 como SDA (Serial Data Line)
-sda = Pin(8)
-# Configura el pin 9 como SCL (Serial Clock Line)
-scl = Pin(9)
-# Inicializa el bus I2C número 0 con los pines definidos
-i2c = I2C(0, scl=scl, sda=sda)
+# Vincula la función ISR al pin S1. 
+# trigger=Pin.IRQ_FALLING significa que se activa al presionar el botón (pasar de 1 a 0)
+S1.irq(trigger=Pin.IRQ_FALLING, handler=FuncISR_S1)
 
+print("! ... Esperando Interrupción !") #
 
-# Escanea los dispositivos conectados al bus I2C
-devices = i2c.scan()
-
-if devices:
-    # Si se encontraron dispositivos I2C
-    for d in devices:
-        # Imprime la dirección de cada dispositivo en formato hexadecimal
-        print("Dispositivo I2C en dirección:", hex(d))
-else:
-    # Si no se encontró ningún dispositivo I2C
-    print("No se encontraron dispositivos")
+# Bucle principal infinito. El procesador se queda aquí hasta que ocurre una interrupción.
+while True: #
+    pass # No hace nada, solo espera

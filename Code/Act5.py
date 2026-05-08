@@ -1,41 +1,50 @@
+from machine import Pin
+import utime
+import _thread
 
-# Importa las clases I2C y Pin del módulo machine
-from machine import I2C, Pin
-# Importa la librería time para retardos
-import time
-# Importa la clase I2cLcd para controlar la pantalla LCD por I2C
-from esp8266_i2c_lcd import I2cLcd
+# --- Entradas y Salidas ---
+S1 = Pin(12, Pin.IN, Pin.PULL_UP) #
+S2 = Pin(13, Pin.IN, Pin.PULL_UP) #
 
+led_s1 = Pin(18, Pin.OUT) #
+led_s2 = Pin(19, Pin.OUT) #
 
-# Dirección I2C por defecto del LCD
-DEFAULT_I2C_ADDR = 0x27
+# Bandera para comunicar la ISR de S2 con el segundo núcleo
+flag_s2_presionado = False
 
-# Inicializa el bus I2C en los pines 9 (SCL) y 8 (SDA) a 200kHz
-i2c = I2C(0, scl=Pin(9), sda=Pin(8), freq=200000)
+# --- HILO SECUNDARIO (Core 1) ---
+def nucleo_dos():
+    global flag_s2_presionado
+    while True:
+        # El núcleo 2 está monitoreando si la bandera se activó
+        if flag_s2_presionado:
+            led_s2.toggle() # Toggle en GPIO19
+            print("Núcleo 2: Toggle LED 2")
+            flag_s2_presionado = False # Reinicia la bandera
+            utime.sleep_ms(300) # Antirrebote
+        utime.sleep_ms(10)
 
-# Crea el objeto lcd para controlar la pantalla (2 filas, 16 columnas)
-lcd = I2cLcd(i2c, DEFAULT_I2C_ADDR, 2, 16)
+# Inicia el Hilo 2
+_thread.start_new_thread(nucleo_dos, ())
 
+# --- RUTINAS DE INTERRUPCIÓN ---
+def isr_s1(pin):
+    # Esta ISR se ejecuta en el Núcleo 1 (Core 0)
+    led_s1.toggle() # Toggle en GPIO18
+    print("Núcleo 1: Toggle LED 1")
+    utime.sleep_ms(300)
 
-# Muestra el texto "UNAM!" en la primera línea y "FI" en la segunda
-lcd.putstr("UNAM!\nFI")
-# Espera 3 segundos
-time.sleep(3)
+def isr_s2(pin):
+    # Activa la bandera para que el Núcleo 2 haga el trabajo
+    global flag_s2_presionado
+    flag_s2_presionado = True
 
+# --- CONFIGURACIÓN DE INTERRUPCIONES ---
+S1.irq(trigger=Pin.IRQ_FALLING, handler=isr_s1) #
+S2.irq(trigger=Pin.IRQ_FALLING, handler=isr_s2) #
 
-# Limpia la pantalla LCD
-lcd.clear()
+print("Multinúcleo listo. Presione S1 o S2.")
 
-
-# Mueve el cursor a la columna 3, fila 0 y escribe "Laboratorio"
-lcd.move_to(3, 0)
-lcd.putstr("Laboratorio")
-
-
-# Mueve el cursor a la columna 0, fila 1 y escribe "* MICROS*"
-lcd.move_to(0, 1)
-lcd.putstr("* MICROS*")
-
-
-# Espera 1 segundo antes de finalizar
-time.sleep(1)
+# --- BUCLE DEL HILO PRINCIPAL (Core 0) ---
+while True:
+    pass

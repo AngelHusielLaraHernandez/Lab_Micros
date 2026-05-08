@@ -1,24 +1,32 @@
-# Importa la librería para manejar el expansor PCF8574
-import pcf8574
-# Importa las clases I2C y Pin del módulo machine
-from machine import I2C, Pin
-# Importa la librería time para retardos
-import time
+from machine import Pin
+import utime
 
-# Inicializa el bus I2C en los pines 9 (SCL) y 8 (SDA)
-i2c = I2C(0, scl=Pin(9), sda=Pin(8)) 
-# Crea el objeto pcf para controlar el expansor en la dirección 0x21
-pcf = pcf8574.PCF8574(i2c, 0x21) 
+S1 = Pin(12, Pin.IN, Pin.PULL_UP)
+# Salida para la señal cuadrada en GPIO 20 (LED)
+salida_senal = Pin(20, Pin.OUT)
 
-while True: # [cite: 819]
-    pcf.port = 0x3F
-    # Pone todos los pines en alto (0x3F = 111111)
-    print("Puerto:", pcf.port)
-    # Espera 0.8 segundos
-    time.sleep(0.8)
+# Variable global para comunicar la ISR con el bucle principal
+generar_senal = False
 
-    pcf.port = 0x3E
-    # Pone el pin P0 en bajo (0x3E = 111110)
-    print("Puerto:", pcf.port)
-    # Espera 0.8 segundos
-    time.sleep(0.8)
+def FuncISR_S1(pin):
+    global generar_senal
+    generar_senal = not generar_senal # Alterna el estado (Activa/Desactiva la señal)
+    print("Estado de señal cambiado")
+    utime.sleep_ms(200) # Antirrebote
+
+# Configura la interrupción por flanco de bajada
+S1.irq(trigger=Pin.IRQ_FALLING, handler=FuncISR_S1)
+
+print("Presiona S1 para iniciar/detener la señal de 1Hz")
+
+while True:
+    if generar_senal:
+        # Genera una señal de 1 Hz (1 ciclo por segundo = 0.5s en Alto y 0.5s en Bajo)
+        salida_senal.value(1)
+        utime.sleep(0.5)
+        salida_senal.value(0)
+        utime.sleep(0.5)
+    else:
+        # Si no debe generar señal, asegura que la salida esté apagada
+        salida_senal.value(0)
+        utime.sleep(0.1) # Pequeña pausa para no saturar el procesador
