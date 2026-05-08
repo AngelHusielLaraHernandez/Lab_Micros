@@ -17,14 +17,14 @@ Entender y aplicar la programación mediante interrupciones, así como la realiz
 |:-:|-------------|:------:|
 | 1 | Interrupción básica con S1 (GPIO12) | Pendiente |
 | 2 | Generar señal cuadrada en GPIO20 tras interrupción S1 | Pendiente |
-| 3 | Dos interrupciones: S1 y S2, control de LEDs y contador TM1637 | Pendiente |
+| 3 | Dos interrupciones: S1 y S2, control de LEDs y contador TM1637 | Completa |
 | 4 | Uso de hilos (multinúcleo) para parpadeo de LEDs | Pendiente |
 | 5 | Interrupciones en diferentes núcleos, control de LEDs | Pendiente |
-| 6 | Semáforo peatonal con interrupciones, hilos y display TM1637 | Pendiente |
+| 6 | Semáforo peatonal con interrupciones, hilos y display TM1637 | Completa |
 
 ### Progreso general
 
-Completadas: 0 / 6
+Completadas: 2 / 6
 
 ---
 
