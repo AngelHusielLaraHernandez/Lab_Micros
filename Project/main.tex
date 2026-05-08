@@ -206,56 +206,11 @@
     % ============================================================
     \section{Objetivos}
 
-    \begin{itemize}
-        \item Diseñar, programar y ensamblar un sistema de multímetro digital utilizando el microcontrolador Raspberry Pi Pico 2W (RP2350), implementando la lectura de tres magnitudes físicas: temperatura, voltaje DC y corriente DC.
-        \item Aplicar los conocimientos de los periféricos del RP2350 (ADC, I2C, GPIO) para la adquisición y despliegue de datos en una pantalla OLED SSD1306 de 128$\times$64 píxeles.
-        \item Diseñar los circuitos de acondicionamiento de señal (divisor de voltaje y resistencia shunt) de manera que las tensiones en los pines ADC no excedan el límite seguro de 3.3V especificado en el \textit{datasheet}.
-        \item Implementar un menú interactivo con 4 botones físicos (arriba, abajo, enter, back) utilizando resistencias de \textit{pull-up} externas de 10\,k$\Omega$ y una máquina de estados en MicroPython.
-        \item Investigar y documentar el uso de cada componente a partir de los \textit{datasheets} oficiales.
-    \end{itemize}
 
     % ============================================================
     % SECCIÓN 2: MARCO TEÓRICO Y JUSTIFICACIÓN DE COMPONENTES
     % ============================================================
     \section{Marco teórico y justificación de componentes}
-
-    \subsection{Raspberry Pi Pico 2W}
-
-    La Raspberry Pi Pico 2W es una tarjeta de desarrollo basada en el microcontrolador RP2350, que integra un procesador dual-core Cortex-M33 / RISC-V Hazard3 a 150\,MHz, 520\,kB de SRAM y 4\,MB de flash. Según la sección 1 del \textit{datasheet} \cite{pico2w-datasheet}, sus características principales relevantes para este proyecto son:
-
-    \begin{itemize}
-        \item \textbf{ADC de 12 bits} (500\,ksps): Cuatro canales disponibles; tres son de usuario (GPIO26--28, es decir ADC0--ADC2). La lectura se realiza en 16 bits (0--65535) mediante la función \texttt{read\_u16()} de MicroPython.
-        \item \textbf{Voltaje de I/O fijo a 3.3V}: Según la nota de la Sec.~3.2 del \textit{datasheet}, el voltaje de I/O de la Pico 2W está fijado a 3.3V. El voltaje máximo en los pines ADC no debe exceder IOVDD + 300\,mV = 3.6V (absoluto).
-        \item \textbf{2 controladores I2C}: I2C0 e I2C1, con pines asignables por software. Utilizamos I2C0 en GP0 (SDA) y GP1 (SCL), que son los pines por defecto según la Figura~2 del \textit{datasheet}.
-        \item \textbf{26 pines GPIO multifunción}: GP0--GP22 son digitales puros; GP26--GP28 pueden usarse como GPIO digital o entrada ADC (seleccionable por software).
-    \end{itemize}
-
-    \subsection{Pantalla OLED SSD1306 (128$\times$64)}
-
-    Se utiliza una pantalla OLED monocromática de 128$\times$64 píxeles con controlador SSD1306, comunicada por protocolo I2C. La dirección I2C por defecto es \texttt{0x3C}. Esta pantalla ofrece mayor resolución y contraste que el LCD 16x2 originalmente propuesto, permitiendo crear interfaces gráficas con marcos, barras de progreso y animaciones.
-
-    La conexión se realiza a través del bus I2C0 de la Pico 2W:
-
-    \begin{itemize}
-        \item \textbf{SDA} $\rightarrow$ GP0 (Pin físico 1): Dato I2C0. Confirmado en la Figura~2 del \textit{datasheet}, donde el Pin~1 tiene la función \texttt{I2C0 SDA}.
-        \item \textbf{SCL} $\rightarrow$ GP1 (Pin físico 2): Reloj I2C0. Confirmado en la Figura~2, donde el Pin~2 tiene la función \texttt{I2C0 SCL}.
-        \item \textbf{VCC} $\rightarrow$ 3V3 (Pin físico 36): Alimentación de 3.3V desde el regulador SMPS de la Pico 2W.
-        \item \textbf{GND} $\rightarrow$ GND (Pins 3, 8, 13, 18, 23, 28 o 38).
-    \end{itemize}
-
-    La frecuencia de comunicación se configura a 400\,kHz (\textit{Fast Mode}), que es la frecuencia máxima soportada por el SSD1306 y está dentro de las capacidades del I2C de la Pico 2W.
-
-    \subsection{Sensor de temperatura LM35}
-
-    El LM35 es un sensor de temperatura analógico de precisión que produce una salida lineal proporcional a la temperatura en grados Celsius. Su factor de conversión es de 10\,mV/°C, es decir:
-
-    \begin{equation}
-        T\;[\text{°C}] = \frac{V_{\text{out}}}{0.010\;\text{V/°C}}
-    \end{equation}
-
-    El LM35 se conecta al pin GP28 (Pin físico 34), que corresponde a ADC2. Según la Sección~3.2 del \textit{datasheet}, GP26--GP28 son los tres pines con capacidad ADC de usuario. Se elige GP28/ADC2 para la temperatura, dejando ADC0 y ADC1 para voltaje y corriente respectivamente.
-
-    A una temperatura de 100°C, la salida del LM35 es de 1.0V, valor muy por debajo del límite de 3.3V del ADC, por lo que no se requiere circuito de acondicionamiento adicional.
 
     % ============================================================
     % SECCIÓN 3: CÁLCULOS Y DISEÑO DEL CIRCUITO
@@ -505,45 +460,13 @@
     % ============================================================
     \section{Diagrama de flujo del programa}
 
-    El programa sigue una arquitectura de \textbf{máquina de estados} con tres estados principales: \texttt{INTRO}, \texttt{MENU} y \texttt{MEDICION}.
 
-    \begin{center}
-    \begin{tikzpicture}[node distance=1.5cm]
-        % Nodos
-        \node (inicio) [startstop] {Inicio};
-        \node (init) [process, below of=inicio] {Inicializar I2C, OLED, ADC, Botones};
-        \node (anim) [process, below of=init] {Animación de entrada\\(nombres del equipo)};
-        \node (menu) [process, below of=anim] {Dibujar Menú};
-        \node (leer) [io, below of=menu, yshift=-0.5cm] {Leer botones};
-        \node (dec1) [decision, below of=leer, yshift=-1cm] {¿Arriba o\\Abajo?};
-        \node (navegar) [process, right of=dec1, xshift=3.5cm] {Cambiar índice\\Redibujar menú};
-        \node (dec2) [decision, below of=dec1, yshift=-1cm] {¿Enter?};
-        \node (medir) [process, below of=dec2, yshift=-1cm] {Leer ADC\\Mostrar medición};
-        \node (dec3) [decision, right of=medir, xshift=3.5cm] {¿Back?};
-
-        % Flechas
-        \draw [arrow] (inicio) -- (init);
-        \draw [arrow] (init) -- (anim);
-        \draw [arrow] (anim) -- (menu);
-        \draw [arrow] (menu) -- (leer);
-        \draw [arrow] (leer) -- (dec1);
-        \draw [arrow] (dec1) -- node[anchor=south] {Sí} (navegar);
-        \draw [arrow] (navegar) |- (leer);
-        \draw [arrow] (dec1) -- node[anchor=east] {No} (dec2);
-        \draw [arrow] (dec2) -- node[anchor=east] {Sí} (medir);
-        \draw [arrow] (dec2.west) -- ++(-2,0) |- node[near start, anchor=south] {No} (leer);
-        \draw [arrow] (medir) -- (dec3);
-        \draw [arrow] (dec3) |- node[near start, anchor=south] {Sí} (menu);
-        \draw [arrow] (dec3.south) -- ++(0,-0.8) -| node[near start, anchor=west] {No} (medir.south);
-    \end{tikzpicture}
-    \end{center}
 
     % ============================================================
     % SECCIÓN 6: CÓDIGO FUENTE DOCUMENTADO
     % ============================================================
     \section{Código fuente en MicroPython}
 
-    A continuación se presenta el código completo del multímetro, programado en MicroPython para la Raspberry Pi Pico 2W. El código implementa la máquina de estados descrita en el diagrama de flujo anterior.
 
     \subsection{Dependencias}
 
@@ -574,10 +497,6 @@
     \subsubsection{Anti-rebote de botones}
 
     Se implementa un sistema de anti-rebote (\textit{debounce}) por software con un tiempo mínimo de 200\,ms entre pulsaciones consecutivas. La función \texttt{debounce()} utiliza \texttt{time.ticks\_ms()} para medir el intervalo desde la última pulsación registrada.
-
-    \subsubsection{Máquina de estados}
-
-    El bucle principal implementa tres estados: \texttt{INTRO} (animación de entrada), \texttt{MENU} (selección de función) y \texttt{MEDICION} (lectura continua del sensor seleccionado). Las transiciones están controladas por los botones Enter y Back.
 
     % ============================================================
     % SECCIÓN 7: ANÁLISIS DE RESULTADOS
@@ -614,36 +533,16 @@
 
     La precisión del LM35 es de $\pm$0.5°C típica, por lo que la resolución del ADC no es el factor limitante.
 
-    \subsection{Flujo interno de datos en el microcontrolador}
-
-    El flujo de datos del sistema sigue la siguiente secuencia:
-
-    \begin{enumerate}
-        \item La señal analógica entra por el pin GPIO correspondiente (GP26, GP27 o GP28).
-        \item El módulo ADC del RP2350 muestrea la señal y la convierte a un valor digital de 12 bits (expandido a 16 bits por MicroPython).
-        \item El procesador Cortex-M33 ejecuta el código MicroPython que aplica el factor de conversión correspondiente.
-        \item El resultado se formatea como texto y se envía por el bus I2C0 al controlador SSD1306 de la pantalla OLED.
-        \item El SSD1306 actualiza la memoria de video (GDDRAM) y la pantalla muestra el valor.
-    \end{enumerate}
-
-    Los periféricos del RP2350 utilizados son: ADC (conversión analógica-digital), I2C (comunicación con OLED), y GPIO (lectura de botones). El modo de direccionamiento I2C utiliza la dirección de 7 bits \texttt{0x3C} del SSD1306.
-
     % ============================================================
     % SECCIÓN 8: CONCLUSIONES
     % ============================================================
     \section{Conclusiones}
 
     \subsection{Espinoza Matamoros Percival Ulises}
-    % El estudiante debe agregar su conclusión personal aquí.
-    El proyecto permitió aplicar de manera práctica los conceptos de conversión analógica-digital, divisores de voltaje y comunicación I2C estudiados en el curso de Laboratorio de Microcomputadoras. La selección adecuada de las resistencias del divisor de voltaje fue crucial para proteger el ADC de la Pico 2W, demostrando la importancia de consultar el \textit{datasheet} antes de realizar cualquier conexión.
 
     \subsection{Flores Colin Victor Jaziel}
-    % El estudiante debe agregar su conclusión personal aquí.
-    La implementación del multímetro con la Raspberry Pi Pico 2W demostró la versatilidad de los microcontroladores modernos para crear instrumentos de medición funcionales. El uso de MicroPython facilitó el desarrollo rápido del software, mientras que la pantalla OLED proporcionó una interfaz mucho más rica visualmente que un LCD de caracteres. El principal reto fue la calibración del ADC y la reducción del ruido en las mediciones.
 
     \subsection{Lara Hernandez Angel Husiel}
-    % El estudiante debe agregar su conclusión personal aquí.
-    Este proyecto integró conocimientos de electrónica analógica (divisores de voltaje, resistencias shunt), electrónica digital (comunicación I2C, GPIO) y programación (MicroPython), lo que refleja la naturaleza multidisciplinaria del diseño de sistemas embebidos. La documentación basada en los \textit{datasheets} oficiales resultó fundamental para garantizar que las conexiones no dañaran los componentes y que las mediciones fueran correctas.
 
     % ============================================================
     % BIBLIOGRAFÍA
