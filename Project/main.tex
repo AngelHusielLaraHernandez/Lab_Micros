@@ -1,0 +1,655 @@
+\documentclass[letterpaper,12pt]{article}
+
+% --- PAQUETES DE IDIOMA
+\usepackage[spanish,mexico]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% --- PAQUETES MATEMÁTICOS --
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cancel}
+\usepackage{mathrsfs}
+
+% --- PAQUETES GRÁFICOS Y DE DISEÑO ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage[table]{xcolor}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.pathmorphing}
+\usepackage{circuitikz}
+\usetikzlibrary{shapes.geometric, shapes.multipart, shapes.symbols, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
+
+% --- LISTAS ---
+\usepackage{enumitem}
+
+% --- PAQUETES DE CÓDIGO ---
+\usepackage{listings}
+
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+\definecolor{keywords}{RGB}{128,0,128}
+\definecolor{numbers}{RGB}{205,92,92}
+\definecolor{strings}{RGB}{34,139,34}
+\definecolor{comments}{RGB}{169,169,169}
+\definecolor{background}{RGB}{252,252,252}
+
+\lstset{
+  language=Python,
+  backgroundcolor=\color{backcolour},
+  basicstyle=\ttfamily\small,
+  inputencoding=utf8,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codepurple},
+  commentstyle=\color{codegray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false,
+  extendedchars=true,
+  literate={á}{{\'a}}1
+           {é}{{\'e}}1
+           {í}{{\'i}}1
+           {ó}{{\'o}}1
+           {ú}{{\'u}}1
+           {Á}{{\'A}}1
+           {É}{{\'E}}1
+           {Í}{{\'I}}1
+           {Ó}{{\'O}}1
+           {Ú}{{\'U}}1
+           {ñ}{{\~n}}1
+           {Ñ}{{\~N}}1
+           {¿}{{\textquestiondown}}1
+           {¡}{{\textexclamdown}}1
+           {°}{{\textdegree}}1
+           {ø}{{\o}}1
+}
+
+% Definición del lenguaje Python para listings
+\lstdefinelanguage[LAB]{Python}{
+    morekeywords={False, None, True, and, as, assert, async, await, break,
+                                class, continue, def, del, elif, else, except, finally,
+                                for, from, global, if, import, in, is, lambda, nonlocal,
+                                not, or, pass, raise, return, try, while, with, yield,
+                                machine, Pin, PWM, ADC, Timer, sleep_ms, sleep_us},
+    morecomment=[l]{\#},
+    morestring=[b]",
+    morestring=[b]',
+    sensitive=true
+}
+
+% --- ESTILOS PARA DIAGRAMAS DE FLUJO (TIKZ) ---
+\tikzset{
+  startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=red!30},
+  process/.style={rectangle, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=orange!30},
+  decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=green!30},
+  io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=blue!30},
+  arrow/.style={thick,->,>=stealth}
+}
+
+% Definimos el color dorado/naranja para el cuadro de texto
+\definecolor{goldbox}{RGB}{218, 140, 15}
+
+% Macro para dibujar la Raspberry Pi Pico y sus nodos
+\newcommand{\picoboard}{
+    \draw[thick] (0,0.5) rectangle (4,-9.5);
+    \node[align=center, font=\small\sffamily] at (2, -1.5) {Raspberry PI\\[0.1cm]Pico\\[0.1cm] 2W};
+
+    % Pines Superiores
+    \draw[red, thick] (0.8, 0.5) -- (0.8, 0.8) coordinate (P41); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P41) {41};
+    \draw[red, thick] (2.0, 0.5) -- (2.0, 0.8) coordinate (P42); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P42) {42};
+    \draw[red, thick] (3.2, 0.5) -- (3.2, 0.8) coordinate (P43); \node[above, font=\tiny\sffamily, inner sep=1pt] at (P43) {43};
+    \node[below, font=\tiny\sffamily] at (0.8, 0.5) {SW CLK};
+    \node[below, font=\tiny\sffamily] at (2.0, 0.5) {SW GND};
+    \node[below, font=\tiny\sffamily] at (3.2, 0.5) {SW DIO};
+
+    % GND Inferior
+    \draw[red, thick] (2, -9.5) -- (2, -10.2) coordinate (PGND);
+    \node[above, font=\tiny\sffamily] at (2, -9.5) {GND};
+    \node[below, font=\tiny\sffamily] at (2, -10.2) {3,8,13,18 \quad 23,28,38};
+
+    % Pines del lado Izquierdo
+    \foreach \i/\pin/\num in {
+        1/GP0/1, 2/GP1/2,
+        4/GP2/4, 5/GP3/5, 6/GP4/6, 7/GP5/7,
+        9/GP6/9, 10/GP7/10, 11/GP8/11, 12/GP9/12,
+        14/GP10/14, 15/GP11/15, 16/GP12/16, 17/GP13/17,
+        19/GP14/19, 20/GP15/20
+    } {
+        \draw[red, thick] (0, -\i*0.45) -- (-0.4, -\i*0.45) coordinate (P\num);
+        \node[right, font=\tiny\sffamily] at (0, -\i*0.45) {\pin};
+        \node[above left, font=\tiny\sffamily, inner sep=1pt] at (P\num) {\num};
+    }
+
+    % Pines del lado Derecho
+    \foreach \i/\pin/\num in {
+        1/VBUS/40, 2/VSS/39,
+        4/3V3\_EN/37, 5/3V3/36, 6/ADC\_VREF/35, 7/GP28\_A2/34, 8/AGND/33,
+        9/GP27\_A1/32, 10/GP26\_A0/31, 11/RUN/30, 12/GP22/29,
+        14/GP21/27, 15/GP20/26, 16/GP19/25, 17/GP18/24,
+        19/GP17/22, 20/GP16/21
+    } {
+        \draw[red, thick] (4, -\i*0.45) -- (4.4, -\i*0.45) coordinate (P\num);
+        \node[left, font=\tiny\sffamily] at (4, -\i*0.45) {\pin};
+        \node[above right, font=\tiny\sffamily, inner sep=1pt] at (P\num) {\num};
+    }
+}
+
+% --- RUTAS DE IMÁGENES ---
+\graphicspath{{img/}{portada_img/}}
+
+% --- CONFIGURACIÓN DE PÁGINA (GEOMETRÍA) ---
+\usepackage[
+    left=25mm,
+    right=25mm,
+    top=35mm,
+    bottom=30mm,
+    headheight=77pt,
+    papersize={21.59cm,27.94cm}
+]{geometry}
+
+% --- FORMATO DE TEXTO ---
+\renewcommand{\baselinestretch}{1.25}
+\usepackage{parskip}
+\usepackage{lipsum}
+
+% --- VARIABLES GLOBALES ---
+\newcommand{\materia}{}
+
+% --- ENCABEZADOS Y PIES DE PÁGINA ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=1.5cm]{portada_img/der.png}}
+\fancyhead[R]{\includegraphics[height=1.5cm]{portada_img/izq.png}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% --- BIBLIOGRAFÍA ---
+\usepackage[backend=biber, style=numeric, sorting=none, url=true]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- HIPERVÍNCULOS ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan
+}
+
+\begin{document}
+    \input{portada.tex}
+
+    \newpage
+    \setcounter{page}{1}
+    \tableofcontents
+    \newpage
+
+    % ============================================================
+    % SECCIÓN 1: OBJETIVOS
+    % ============================================================
+    \section{Objetivos}
+
+    \begin{itemize}
+        \item Diseñar, programar y ensamblar un sistema de multímetro digital utilizando el microcontrolador Raspberry Pi Pico 2W (RP2350), implementando la lectura de tres magnitudes físicas: temperatura, voltaje DC y corriente DC.
+        \item Aplicar los conocimientos de los periféricos del RP2350 (ADC, I2C, GPIO) para la adquisición y despliegue de datos en una pantalla OLED SSD1306 de 128$\times$64 píxeles.
+        \item Diseñar los circuitos de acondicionamiento de señal (divisor de voltaje y resistencia shunt) de manera que las tensiones en los pines ADC no excedan el límite seguro de 3.3V especificado en el \textit{datasheet}.
+        \item Implementar un menú interactivo con 4 botones físicos (arriba, abajo, enter, back) utilizando resistencias de \textit{pull-up} externas de 10\,k$\Omega$ y una máquina de estados en MicroPython.
+        \item Investigar y documentar el uso de cada componente a partir de los \textit{datasheets} oficiales.
+    \end{itemize}
+
+    % ============================================================
+    % SECCIÓN 2: MARCO TEÓRICO Y JUSTIFICACIÓN DE COMPONENTES
+    % ============================================================
+    \section{Marco teórico y justificación de componentes}
+
+    \subsection{Raspberry Pi Pico 2W}
+
+    La Raspberry Pi Pico 2W es una tarjeta de desarrollo basada en el microcontrolador RP2350, que integra un procesador dual-core Cortex-M33 / RISC-V Hazard3 a 150\,MHz, 520\,kB de SRAM y 4\,MB de flash. Según la sección 1 del \textit{datasheet} \cite{pico2w-datasheet}, sus características principales relevantes para este proyecto son:
+
+    \begin{itemize}
+        \item \textbf{ADC de 12 bits} (500\,ksps): Cuatro canales disponibles; tres son de usuario (GPIO26--28, es decir ADC0--ADC2). La lectura se realiza en 16 bits (0--65535) mediante la función \texttt{read\_u16()} de MicroPython.
+        \item \textbf{Voltaje de I/O fijo a 3.3V}: Según la nota de la Sec.~3.2 del \textit{datasheet}, el voltaje de I/O de la Pico 2W está fijado a 3.3V. El voltaje máximo en los pines ADC no debe exceder IOVDD + 300\,mV = 3.6V (absoluto).
+        \item \textbf{2 controladores I2C}: I2C0 e I2C1, con pines asignables por software. Utilizamos I2C0 en GP0 (SDA) y GP1 (SCL), que son los pines por defecto según la Figura~2 del \textit{datasheet}.
+        \item \textbf{26 pines GPIO multifunción}: GP0--GP22 son digitales puros; GP26--GP28 pueden usarse como GPIO digital o entrada ADC (seleccionable por software).
+    \end{itemize}
+
+    \subsection{Pantalla OLED SSD1306 (128$\times$64)}
+
+    Se utiliza una pantalla OLED monocromática de 128$\times$64 píxeles con controlador SSD1306, comunicada por protocolo I2C. La dirección I2C por defecto es \texttt{0x3C}. Esta pantalla ofrece mayor resolución y contraste que el LCD 16x2 originalmente propuesto, permitiendo crear interfaces gráficas con marcos, barras de progreso y animaciones.
+
+    La conexión se realiza a través del bus I2C0 de la Pico 2W:
+
+    \begin{itemize}
+        \item \textbf{SDA} $\rightarrow$ GP0 (Pin físico 1): Dato I2C0. Confirmado en la Figura~2 del \textit{datasheet}, donde el Pin~1 tiene la función \texttt{I2C0 SDA}.
+        \item \textbf{SCL} $\rightarrow$ GP1 (Pin físico 2): Reloj I2C0. Confirmado en la Figura~2, donde el Pin~2 tiene la función \texttt{I2C0 SCL}.
+        \item \textbf{VCC} $\rightarrow$ 3V3 (Pin físico 36): Alimentación de 3.3V desde el regulador SMPS de la Pico 2W.
+        \item \textbf{GND} $\rightarrow$ GND (Pins 3, 8, 13, 18, 23, 28 o 38).
+    \end{itemize}
+
+    La frecuencia de comunicación se configura a 400\,kHz (\textit{Fast Mode}), que es la frecuencia máxima soportada por el SSD1306 y está dentro de las capacidades del I2C de la Pico 2W.
+
+    \subsection{Sensor de temperatura LM35}
+
+    El LM35 es un sensor de temperatura analógico de precisión que produce una salida lineal proporcional a la temperatura en grados Celsius. Su factor de conversión es de 10\,mV/°C, es decir:
+
+    \begin{equation}
+        T\;[\text{°C}] = \frac{V_{\text{out}}}{0.010\;\text{V/°C}}
+    \end{equation}
+
+    El LM35 se conecta al pin GP28 (Pin físico 34), que corresponde a ADC2. Según la Sección~3.2 del \textit{datasheet}, GP26--GP28 son los tres pines con capacidad ADC de usuario. Se elige GP28/ADC2 para la temperatura, dejando ADC0 y ADC1 para voltaje y corriente respectivamente.
+
+    A una temperatura de 100°C, la salida del LM35 es de 1.0V, valor muy por debajo del límite de 3.3V del ADC, por lo que no se requiere circuito de acondicionamiento adicional.
+
+    % ============================================================
+    % SECCIÓN 3: CÁLCULOS Y DISEÑO DEL CIRCUITO
+    % ============================================================
+    \section{Cálculos y diseño del circuito de acondicionamiento}
+
+    \subsection{Divisor de voltaje para el voltímetro (0--20V DC)}
+
+    Para medir voltajes de hasta 20V en un pin ADC cuyo rango es 0--3.3V, se emplea un divisor de voltaje resistivo. El circuito consiste en dos resistencias en serie: $R_1$ (superior, conectada a la punta de medición) y $R_2$ (inferior, conectada a GND). El punto medio se conecta al pin ADC.
+
+    \subsubsection{Ecuación del divisor de voltaje}
+
+    La tensión en el punto medio (que lee el ADC) es:
+
+    \begin{equation}
+        V_{\text{ADC}} = V_{\text{in}} \cdot \frac{R_2}{R_1 + R_2}
+        \label{eq:divisor}
+    \end{equation}
+
+    Y el voltaje de entrada se reconstruye como:
+
+    \begin{equation}
+        V_{\text{in}} = V_{\text{ADC}} \cdot \frac{R_1 + R_2}{R_2}
+        \label{eq:vin}
+    \end{equation}
+
+    \subsubsection{Selección de resistencias}
+
+    \textbf{Restricción de diseño:} cuando $V_{\text{in}} = 20\;\text{V}$, se requiere que $V_{\text{ADC}} < 3.3\;\text{V}$ para proteger el pin. Adicionalmente, queremos un margen de seguridad.
+
+    Eligiendo $R_2 = 2.2\;\text{k}\Omega$ y despejando $R_1$ de la ecuación~\eqref{eq:divisor}:
+
+    \begin{equation}
+        \frac{R_2}{R_1 + R_2} = \frac{V_{\text{ADC\_max}}}{V_{\text{in\_max}}}
+    \end{equation}
+
+    Si deseamos $V_{\text{ADC\_max}} = 3.1\;\text{V}$ (con margen respecto a 3.3V):
+
+    \begin{equation}
+        \frac{2200}{R_1 + 2200} = \frac{3.1}{20} = 0.155
+    \end{equation}
+
+    \begin{equation}
+        R_1 + 2200 = \frac{2200}{0.155} = 14\,193.5\;\Omega
+    \end{equation}
+
+    \begin{equation}
+        R_1 = 14\,193.5 - 2200 = 11\,993.5\;\Omega \approx 12\;\text{k}\Omega
+    \end{equation}
+
+    \subsubsection{Verificación con $R_1 = 12\;\text{k}\Omega$, $R_2 = 2.2\;\text{k}\Omega$}
+
+    \begin{equation}
+        V_{\text{ADC}}\big|_{20\text{V}} = 20 \times \frac{2200}{12000 + 2200} = 20 \times \frac{2200}{14200} = 20 \times 0.1549 = \boxed{3.098\;\text{V}}
+    \end{equation}
+
+    Este valor es \textbf{menor a 3.3V}, cumpliendo la restricción del \textit{datasheet}. Incluso con un sobreimpulso de 22V:
+
+    \begin{equation}
+        V_{\text{ADC}}\big|_{22\text{V}} = 22 \times 0.1549 = 3.408\;\text{V} < 3.6\;\text{V (máx.\ absoluto)}
+    \end{equation}
+
+    \textbf{Factor de escala para el software:}
+
+    \begin{equation}
+        \text{Factor} = \frac{R_1 + R_2}{R_2} = \frac{14200}{2200} = \boxed{6.4545}
+    \end{equation}
+
+    La corriente que circula por el divisor a 20V es $I = 20/14200 = 1.41\;\text{mA}$, lo cual es despreciable y no afecta la medición.
+
+    El pin utilizado es GP26 (Pin 31), correspondiente a ADC0, confirmado en la Figura~2 del \textit{datasheet}.
+
+    \subsection{Resistencia shunt para el amperímetro (0--300 mA DC)}
+
+    Para medir corriente se utiliza una resistencia shunt de valor bajo ($R_{\text{shunt}} = 1\;\Omega$, 1W) en serie con el circuito bajo prueba. La caída de tensión a través del shunt es proporcional a la corriente:
+
+    \begin{equation}
+        V_{\text{shunt}} = I \cdot R_{\text{shunt}}
+    \end{equation}
+
+    \begin{equation}
+        I = \frac{V_{\text{shunt}}}{R_{\text{shunt}}} = \frac{V_{\text{ADC}}}{1\;\Omega} = V_{\text{ADC}}\;\;[\text{A}]
+    \end{equation}
+
+    \subsubsection{Verificación de seguridad}
+
+    A la corriente máxima de diseño de 300\,mA:
+
+    \begin{equation}
+        V_{\text{shunt}} = 0.3\;\text{A} \times 1\;\Omega = 0.3\;\text{V} \ll 3.3\;\text{V}\;\;\checkmark
+    \end{equation}
+
+    La potencia disipada en el shunt:
+
+    \begin{equation}
+        P = I^2 \cdot R = (0.3)^2 \times 1 = 0.09\;\text{W} \ll 1\;\text{W (nominal)}\;\;\checkmark
+    \end{equation}
+
+    El límite teórico del ADC permite medir hasta $I_{\max} = 3.3\;\text{V}/1\;\Omega = 3.3\;\text{A}$, pero la potencia del shunt limita la corriente práctica a:
+
+    \begin{equation}
+        I_{\text{máx\_potencia}} = \sqrt{\frac{P_{\max}}{R}} = \sqrt{\frac{1\;\text{W}}{1\;\Omega}} = 1\;\text{A}
+    \end{equation}
+
+    Para el rango de diseño (0--300\,mA), ambos límites se cumplen holgadamente.
+
+    El pin utilizado es GP27 (Pin 32), correspondiente a ADC1, confirmado en la Figura~2 del \textit{datasheet}.
+
+    \textbf{Nota importante:} La corriente se mide en serie y el voltaje en paralelo. No se deben medir ambas magnitudes simultáneamente en este circuito, como se indica en la especificación del proyecto.
+
+    \subsection{Botones con resistencias pull-up}
+
+    Se utilizan 4 botones pulsadores (\textit{push buttons}) conectados entre los pines GPIO y GND. Cada botón cuenta con una resistencia de \textit{pull-up} externa de 10\,k$\Omega$ conectada a 3.3V:
+
+    \begin{itemize}
+        \item Cuando el botón \textbf{no} está presionado: el pin lee HIGH (3.3V a través de la resistencia).
+        \item Cuando el botón \textbf{sí} está presionado: el pin se conecta directamente a GND, leyendo LOW (0V).
+    \end{itemize}
+
+    La corriente cuando se presiona el botón es: $I = 3.3\;\text{V} / 10\;\text{k}\Omega = 0.33\;\text{mA}$, valor seguro para el GPIO.
+
+    Los pines utilizados son GP2--GP5 (Pins 4--7), que según la Sección~3.2 del \textit{datasheet} son pines GPIO digitales puros (GP0--GP22), sin función analógica, ideales para entradas digitales.
+
+    \begin{center}
+    \begin{tabular}{|c|c|c|l|}
+        \hline
+        \textbf{Botón} & \textbf{GPIO} & \textbf{Pin físico} & \textbf{Función} \\
+        \hline
+        Arriba & GP2 & 4 & Navegar hacia arriba en el menú \\
+        Abajo & GP3 & 5 & Navegar hacia abajo en el menú \\
+        Enter & GP4 & 6 & Seleccionar opción / Entrar \\
+        Back & GP5 & 7 & Regresar al menú principal \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    % ============================================================
+    % SECCIÓN 4: DIAGRAMA DE CONEXIONES
+    % ============================================================
+    \section{Diagrama de conexiones}
+
+    A continuación se presenta el diagrama esquemático completo del multímetro, mostrando todas las conexiones entre la Raspberry Pi Pico 2W, la pantalla OLED SSD1306, los botones, el sensor LM35, el divisor de voltaje y la resistencia shunt.
+
+    \begin{center}
+    \resizebox{\linewidth}{!}{
+    \begin{tikzpicture}[>=latex]
+
+        % Cargar la Raspberry Pi Pico
+        \picoboard
+
+        % ==========================================
+        % LADO IZQUIERDO: Pantalla OLED y Botones
+        % ==========================================
+
+        % Pantalla OLED SSD1306 128x64 I2C
+        \node[draw, thick, fill=blue!5!white, minimum width=3.5cm, minimum height=1.8cm, align=center] (oled) at (-8.5, -0.5) {OLED SSD1306\\128$\times$64 (I2C)};
+
+        % Nodos explícitos para VCC y GND de la OLED
+        \node[vcc, font=\tiny\sffamily] (vcc_oled) at (-6.5, 0.8) {3.3V};
+        \node[ground, scale=0.8, rotate=180] (gnd_oled) at (-5.0, 0.8) {};
+
+        % Conexiones del OLED
+        \draw (oled.east) ++(0, 0.4) node[left, font=\tiny\sffamily]{VCC} -| (vcc_oled.south);
+        \draw (oled.east) ++(0, 0.1) node[left, font=\tiny\sffamily]{GND} -| (gnd_oled.north);
+
+        % SDA y SCL: GP0 (Pin 1) y GP1 (Pin 2)
+        \draw (oled.east) ++(0, -0.2) node[left, font=\tiny\sffamily]{SDA} -- ++(2.0,0) |- (P1);
+        \draw (oled.east) ++(0, -0.5) node[left, font=\tiny\sffamily]{SCL} -- ++(1.5,0) |- (P2);
+
+        % Nodos de intersección para las resistencias Pull-Up
+        \coordinate (n4) at (-1.5, -1.8);
+        \coordinate (n5) at (-3.0, -2.25);
+        \coordinate (n6) at (-4.5, -2.7);
+        \coordinate (n7) at (-6.0, -3.15);
+
+        % Botones con Pull-Up (GP2=Arriba, GP3=Abajo, GP4=Enter, GP5=Back)
+        \draw (P4) -- (n4) -- (-8.0, -1.8) node[above, font=\scriptsize\sffamily]{Arriba} to[nopb] ++(-1.5,0) node[ground, scale=0.6]{};
+        \draw (P5) -- (n5) -- (-8.0, -2.25) node[above, font=\scriptsize\sffamily]{Abajo}  to[nopb] ++(-1.5,0) node[ground, scale=0.6]{};
+        \draw (P6) -- (n6) -- (-8.0, -2.7) node[above, font=\scriptsize\sffamily]{Enter}  to[nopb] ++(-1.5,0) node[ground, scale=0.6]{};
+        \draw (P7) -- (n7) -- (-8.0, -3.15) node[above, font=\scriptsize\sffamily]{Back}   to[nopb] ++(-1.5,0) node[ground, scale=0.6]{};
+
+        % Riel de VCC para las resistencias pull-up
+        \draw (-1.5, -5.0) -- (-7.5, -5.0);
+        \draw[-latex] (-7.5, -5.0) -- ++(0, -0.8) node[below, font=\tiny\sffamily]{3.3V};
+
+        % Resistencias Pull-Up de 10k
+        \draw (n4) to[R, l=$10\text{k}\Omega$, *-*] (-1.5, -5.0);
+        \draw (n5) to[R, l=$10\text{k}\Omega$, *-*] (-3.0, -5.0);
+        \draw (n6) to[R, l=$10\text{k}\Omega$, *-*] (-4.5, -5.0);
+        \draw (n7) to[R, l=$10\text{k}\Omega$, *-*] (-6.0, -5.0);
+
+
+        % ==========================================
+        % LADO DERECHO: Sensores y Divisor
+        % ==========================================
+
+        % 1. Sensor de Temperatura (LM35) en P34 (GP28/ADC2)
+        \node[draw, thick, minimum width=2.5cm, minimum height=1.5cm, align=center] (lm35) at (8.5, -1.5) {LM35};
+        \draw (lm35.west) ++(0, 0.4) node[right, font=\tiny\sffamily]{VCC} -- ++(-0.8,0) node[vcc, font=\tiny\sffamily]{3.3V};
+        \draw (lm35.west) ++(0, 0) node[right, font=\tiny\sffamily]{OUT} -- ++(-1.5,0) |- (P34);
+        \draw (lm35.west) ++(0, -0.4) node[right, font=\tiny\sffamily]{GND} -- ++(-0.8,0) node[ground]{};
+
+        % 2. Sensor de Corriente (Amperímetro) en P32 (GP27/ADC1)
+        \draw (P32) -- ++(1.5,0) coordinate(c_top);
+        \draw (c_top) to[R, l=$1\Omega$ (1W), *-] ++(0,-2) coordinate(c_bot) node[ground]{};
+
+        % Puntas de entrada de corriente
+        \draw (c_top) to[short, -o] ++(1.5,0) node[right, font=\sffamily]{Corriente (+)};
+        \draw (c_bot) to[short, *-o] ++(1.5,0) node[right, font=\sffamily]{Común (-) GND};
+
+        % 3. Divisor de Voltaje (Voltímetro) en P31 (GP26/ADC0)
+        \draw (P31) -- ++(0.5,0) |- (11, -7.5) coordinate(v_div);
+        \draw (v_div) to[R, l=$2.2\text{k}\Omega$, *-] ++(0, -2) coordinate(v_bot) node[ground]{};
+        \draw (v_div) to[R, l_=$12\text{k}\Omega$, -o] ++(0, 2) node[above, font=\sffamily]{Punta Roja (+ 0-20V)};
+
+        % Punta de entrada negativa para el voltaje
+        \draw (v_bot) to[short, *-o] ++(1.5,0) node[right, font=\sffamily]{Punta Negra (-) GND};
+
+        \end{tikzpicture}
+    }
+    \end{center}
+
+    \subsection{Tabla resumen de asignación de pines}
+
+    \begin{center}
+    \begin{tabular}{|c|c|c|c|l|}
+        \hline
+        \textbf{GPIO} & \textbf{Pin} & \textbf{Función RP2350} & \textbf{Uso} & \textbf{Justificación} \\
+        \hline
+        GP0 & 1 & I2C0 SDA & OLED SDA & Pin por defecto I2C0 datos \\
+        GP1 & 2 & I2C0 SCL & OLED SCL & Pin por defecto I2C0 reloj \\
+        GP2 & 4 & GPIO & Botón Arriba & Digital puro, pull-up ext.\ 10k \\
+        GP3 & 5 & GPIO & Botón Abajo  & Digital puro, pull-up ext.\ 10k \\
+        GP4 & 6 & GPIO & Botón Enter  & Digital puro, pull-up ext.\ 10k \\
+        GP5 & 7 & GPIO & Botón Back   & Digital puro, pull-up ext.\ 10k \\
+        GP26 & 31 & ADC0 & Voltímetro & Canal ADC0, divisor 12k/2.2k \\
+        GP27 & 32 & ADC1 & Amperímetro & Canal ADC1, shunt 1$\Omega$ \\
+        GP28 & 34 & ADC2 & Temperatura & Canal ADC2, sensor LM35 \\
+        3V3 & 36 & Alimentación & VCC componentes & Regulador SMPS 3.3V \\
+        GND & 3,8... & Tierra & Referencia & Tierra común del sistema \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    % ============================================================
+    % SECCIÓN 5: DIAGRAMA DE FLUJO
+    % ============================================================
+    \section{Diagrama de flujo del programa}
+
+    El programa sigue una arquitectura de \textbf{máquina de estados} con tres estados principales: \texttt{INTRO}, \texttt{MENU} y \texttt{MEDICION}.
+
+    \begin{center}
+    \begin{tikzpicture}[node distance=1.5cm]
+        % Nodos
+        \node (inicio) [startstop] {Inicio};
+        \node (init) [process, below of=inicio] {Inicializar I2C, OLED, ADC, Botones};
+        \node (anim) [process, below of=init] {Animación de entrada\\(nombres del equipo)};
+        \node (menu) [process, below of=anim] {Dibujar Menú};
+        \node (leer) [io, below of=menu, yshift=-0.5cm] {Leer botones};
+        \node (dec1) [decision, below of=leer, yshift=-1cm] {¿Arriba o\\Abajo?};
+        \node (navegar) [process, right of=dec1, xshift=3.5cm] {Cambiar índice\\Redibujar menú};
+        \node (dec2) [decision, below of=dec1, yshift=-1cm] {¿Enter?};
+        \node (medir) [process, below of=dec2, yshift=-1cm] {Leer ADC\\Mostrar medición};
+        \node (dec3) [decision, right of=medir, xshift=3.5cm] {¿Back?};
+
+        % Flechas
+        \draw [arrow] (inicio) -- (init);
+        \draw [arrow] (init) -- (anim);
+        \draw [arrow] (anim) -- (menu);
+        \draw [arrow] (menu) -- (leer);
+        \draw [arrow] (leer) -- (dec1);
+        \draw [arrow] (dec1) -- node[anchor=south] {Sí} (navegar);
+        \draw [arrow] (navegar) |- (leer);
+        \draw [arrow] (dec1) -- node[anchor=east] {No} (dec2);
+        \draw [arrow] (dec2) -- node[anchor=east] {Sí} (medir);
+        \draw [arrow] (dec2.west) -- ++(-2,0) |- node[near start, anchor=south] {No} (leer);
+        \draw [arrow] (medir) -- (dec3);
+        \draw [arrow] (dec3) |- node[near start, anchor=south] {Sí} (menu);
+        \draw [arrow] (dec3.south) -- ++(0,-0.8) -| node[near start, anchor=west] {No} (medir.south);
+    \end{tikzpicture}
+    \end{center}
+
+    % ============================================================
+    % SECCIÓN 6: CÓDIGO FUENTE DOCUMENTADO
+    % ============================================================
+    \section{Código fuente en MicroPython}
+
+    A continuación se presenta el código completo del multímetro, programado en MicroPython para la Raspberry Pi Pico 2W. El código implementa la máquina de estados descrita en el diagrama de flujo anterior.
+
+    \subsection{Dependencias}
+
+    El código requiere la biblioteca \texttt{ssd1306.py} para el controlador de la pantalla OLED, que debe copiarse al sistema de archivos de la Pico 2W. Esta biblioteca es estándar en el ecosistema MicroPython y está disponible en el repositorio oficial de MicroPython.
+
+    Los módulos de la biblioteca estándar utilizados son: \texttt{machine} (acceso a hardware), \texttt{time} (temporizadores) y \texttt{math}.
+
+    \subsection{Código completo}
+
+    \lstinputlisting[language=Python, caption={Proyecto.py --- Multímetro digital con Pico 2W}]{code/Proyecto.py}
+
+    \subsection{Documentación del código}
+
+    \subsubsection{Configuración de hardware}
+
+    La configuración de hardware se realiza en las primeras líneas del código:
+
+    \begin{itemize}
+        \item \textbf{I2C0} se inicializa con \texttt{I2C(0, scl=Pin(1), sda=Pin(0), freq=400000)}, configurando el bus I2C0 en sus pines por defecto (GP0/SDA, GP1/SCL) a 400\,kHz.
+        \item \textbf{Botones} se configuran como entradas con \texttt{Pin.PULL\_UP}, proporcionando un segundo nivel de \textit{pull-up} (interno) además de las resistencias externas de 10\,k$\Omega$.
+        \item \textbf{ADCs} se inicializan con \texttt{ADC(Pin(26/27/28))}, asignando cada canal a su magnitud física correspondiente.
+    \end{itemize}
+
+    \subsubsection{Reducción de ruido del ADC}
+
+    El ADC del RP2350 tiene un ruido inherente de aproximadamente $\pm$30\,mV según la Sección~3.3 del \textit{datasheet}. Para mitigar esto, cada medición realiza un promedio de 16 muestras mediante la función \texttt{leer\_adc\_promedio()}, lo cual reduce el ruido por un factor de $\sqrt{16} = 4$, resultando en un ruido efectivo de $\pm$7.5\,mV.
+
+    \subsubsection{Anti-rebote de botones}
+
+    Se implementa un sistema de anti-rebote (\textit{debounce}) por software con un tiempo mínimo de 200\,ms entre pulsaciones consecutivas. La función \texttt{debounce()} utiliza \texttt{time.ticks\_ms()} para medir el intervalo desde la última pulsación registrada.
+
+    \subsubsection{Máquina de estados}
+
+    El bucle principal implementa tres estados: \texttt{INTRO} (animación de entrada), \texttt{MENU} (selección de función) y \texttt{MEDICION} (lectura continua del sensor seleccionado). Las transiciones están controladas por los botones Enter y Back.
+
+    % ============================================================
+    % SECCIÓN 7: ANÁLISIS DE RESULTADOS
+    % ============================================================
+    \section{Análisis de resultados}
+
+    \subsection{Verificación del voltímetro}
+
+    El divisor de voltaje con $R_1 = 12\;\text{k}\Omega$ y $R_2 = 2.2\;\text{k}\Omega$ produce un factor de escala de 6.4545. Para verificar la precisión, se pueden comparar las lecturas del multímetro digital diseñado contra un multímetro comercial de referencia.
+
+    La resolución teórica del voltímetro es:
+
+    \begin{equation}
+        \Delta V = \frac{3.3\;\text{V}}{65535} \times 6.4545 = 0.325\;\text{mV por bit}
+    \end{equation}
+
+    \subsection{Verificación del amperímetro}
+
+    Con la resistencia shunt de 1\,$\Omega$, la resolución teórica es:
+
+    \begin{equation}
+        \Delta I = \frac{3.3\;\text{V}}{65535} \times \frac{1}{1\;\Omega} \times 1000 = 0.0503\;\text{mA por bit}
+    \end{equation}
+
+    Se puede verificar utilizando las fuentes de corriente del laboratorio y comparando con un multímetro configurado para medir corriente continua.
+
+    \subsection{Verificación del termómetro}
+
+    La resolución teórica del termómetro es:
+
+    \begin{equation}
+        \Delta T = \frac{3.3\;\text{V}}{65535} \times \frac{1}{0.010\;\text{V/°C}} = 5.03 \times 10^{-3}\;\text{°C por bit}
+    \end{equation}
+
+    La precisión del LM35 es de $\pm$0.5°C típica, por lo que la resolución del ADC no es el factor limitante.
+
+    \subsection{Flujo interno de datos en el microcontrolador}
+
+    El flujo de datos del sistema sigue la siguiente secuencia:
+
+    \begin{enumerate}
+        \item La señal analógica entra por el pin GPIO correspondiente (GP26, GP27 o GP28).
+        \item El módulo ADC del RP2350 muestrea la señal y la convierte a un valor digital de 12 bits (expandido a 16 bits por MicroPython).
+        \item El procesador Cortex-M33 ejecuta el código MicroPython que aplica el factor de conversión correspondiente.
+        \item El resultado se formatea como texto y se envía por el bus I2C0 al controlador SSD1306 de la pantalla OLED.
+        \item El SSD1306 actualiza la memoria de video (GDDRAM) y la pantalla muestra el valor.
+    \end{enumerate}
+
+    Los periféricos del RP2350 utilizados son: ADC (conversión analógica-digital), I2C (comunicación con OLED), y GPIO (lectura de botones). El modo de direccionamiento I2C utiliza la dirección de 7 bits \texttt{0x3C} del SSD1306.
+
+    % ============================================================
+    % SECCIÓN 8: CONCLUSIONES
+    % ============================================================
+    \section{Conclusiones}
+
+    \subsection{Espinoza Matamoros Percival Ulises}
+    % El estudiante debe agregar su conclusión personal aquí.
+    El proyecto permitió aplicar de manera práctica los conceptos de conversión analógica-digital, divisores de voltaje y comunicación I2C estudiados en el curso de Laboratorio de Microcomputadoras. La selección adecuada de las resistencias del divisor de voltaje fue crucial para proteger el ADC de la Pico 2W, demostrando la importancia de consultar el \textit{datasheet} antes de realizar cualquier conexión.
+
+    \subsection{Flores Colin Victor Jaziel}
+    % El estudiante debe agregar su conclusión personal aquí.
+    La implementación del multímetro con la Raspberry Pi Pico 2W demostró la versatilidad de los microcontroladores modernos para crear instrumentos de medición funcionales. El uso de MicroPython facilitó el desarrollo rápido del software, mientras que la pantalla OLED proporcionó una interfaz mucho más rica visualmente que un LCD de caracteres. El principal reto fue la calibración del ADC y la reducción del ruido en las mediciones.
+
+    \subsection{Lara Hernandez Angel Husiel}
+    % El estudiante debe agregar su conclusión personal aquí.
+    Este proyecto integró conocimientos de electrónica analógica (divisores de voltaje, resistencias shunt), electrónica digital (comunicación I2C, GPIO) y programación (MicroPython), lo que refleja la naturaleza multidisciplinaria del diseño de sistemas embebidos. La documentación basada en los \textit{datasheets} oficiales resultó fundamental para garantizar que las conexiones no dañaran los componentes y que las mediciones fueran correctas.
+
+    % ============================================================
+    % BIBLIOGRAFÍA
+    % ============================================================
+    \newpage
+    \nocite{*}
+    \printbibliography[heading=bibintoc, title={Referencias}]
+
+\end{document}
