@@ -327,7 +327,6 @@
     \lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
 
-
     \subsection*{Análisis de resultados}
 
 
@@ -557,12 +556,93 @@
     \section*{Propuesta de solución}
 
 
+    En el código que se proporciona, lo primero que se realiza es la configuración de las bibliotecas necesarias, donde el módulo \texttt{machine} se utiliza para controlar los pines GPIO de la Raspberry Pi Pico, el módulo \texttt{utime} para manejar retardos y el módulo \texttt{\_thread} para crear hilos de ejecución en paralelo. 
+
+    Ya con las bibliotecas importadas, se configuran dos pines como salida: el GPIO18 para controlar el LED1 y el GPIO20 para el LED2. Posteriormente en el programa se define una función llamada \texttt{led2\_thread()}, que contiene un bucle infinito donde se imprime un mensaje en la consola, se alterna el estado del LED2 y se introduce un retardo de 200 ms. Esta función es lanzada como un nuevo hilo de ejecución utilizando \texttt{\_thread.start\_new\_thread()}, lo que permite que el código dentro de esta función se ejecute concurrentemente con el resto del programa.
+
+    Con la sentencia \texttt{\_thread.start\_new\_thread(led2\_thread, ())} se inicia el hilo que ejecutará la función \texttt{led2\_thread}, permitiendo que el mensaje y el parpadeo del LED2 ocurran de manera independiente al flujo principal del programa. Mientras tanto, el programa principal entra en un bucle infinito donde alterna el estado del LED1 cada 250 ms. Esto resulta en que ambos LEDs parpadeen a diferentes frecuencias (LED1 cada 250 ms y LED2 cada 200 ms) y que el mensaje del segundo núcleo se imprima continuamente en la consola sin bloquear la ejecución del programa principal.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=1.1cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        % Columna Izquierda - Hilo Principal (Core 0)
+        \node (start0) [startstop] {Inicio (Main)};
+        \node (init) [process, below=of start0] {Configurar LED1 (GP18)\\LED2 (GP20) como salida};
+        \node (startthread) [process, below=of init] {Iniciar hilo secundario\\(led2\_thread)};
+        \node (loop0) [decision, below=of startthread] {Bucle infinito\\(Core 0)};
+        \node (toggle1) [process, below=of loop0] {Cambiar estado\\LED1 (toggle)};
+        \node (sleep1) [process, below=of toggle1] {Retardo 250 ms};
+
+        % Conexiones Hilo Principal
+        \draw [arrow] (start0) -- (init);
+        \draw [arrow] (init) -- (startthread);
+        \draw [arrow] (startthread) -- (loop0);
+        \draw [arrow] (loop0) -- (toggle1);
+        \draw [arrow] (toggle1) -- (sleep1);
+        % Retorno del bucle principal
+        \draw [arrow] (sleep1.west) -- ++(-1.2,0) |- (loop0.west);
+
+
+        % Columna Derecha - Segundo Hilo (Core 1)
+        \node (start1) [startstop, right=3.5cm of startthread] {Inicio Hilo\\(led2\_thread)};
+        \node (loop1) [decision, below=of start1] {Bucle infinito\\(Core 1)};
+        \node (print) [io, below=of loop1] {Este es un mensaje del \\ segundo nucleo};
+        \node (toggle2) [process, below=of print] {Cambiar estado\\LED2 (toggle)};
+        \node (sleep2) [process, below=of toggle2] {Retardo 200 ms};
+
+        % Conexiones Segundo Hilo
+        \draw [arrow] (start1) -- (loop1);
+        \draw [arrow] (loop1) -- (print);
+        \draw [arrow] (print) -- (toggle2);
+        \draw [arrow] (toggle2) -- (sleep2);
+        % Retorno del bucle secundario
+        \draw [arrow] (sleep2.east) -- ++(1.2,0) |- (loop1.east);
+
+        % Flecha indicadora de creación de hilo (Lógica concurrente)
+        \draw [arrow, dashed, blue] (startthread.east) -- node[midway, above, font=\tiny]{\_thread.start\_new\_thread} (start1.west);
+
+        \end{tikzpicture}
+    \end{figure}
+
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_3.jpg}
+        \caption{Ambos LEDS apagados.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_4.jpg}
+        \caption{Ambos LEDS encendidos.}
+    \end{figure}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_5.jpg}
+        \caption{Led 1 encendido, Led 2 apagado}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_5.jpg}
+        \caption{Mensajes del segundo núcleo visibles en la consola}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    A partir de las imagenes obtenidas en la Actividad 4, se puede concluir que el programa implementa correctamente la ejecución concurrente utilizando hilos en la Raspberry Pi Pico. En las Figuras se observa el estado inicial del sistema, donde ambos LEDs (LED1 en GPIO18 y LED2 en GPIO20) están apagados, lo cual es consistente con la configuración inicial del programa. En la siguiente figura se muestran ambos LEDs encendidos simultáneamente, lo que indica que el hilo principal (Core 0) y el hilo secundario (Core 1) están ejecutándose correctamente y alternando el estado de sus respectivos LEDs. En la tercera figura se muestra el LED1 encendido mientras el LED2 está apagado, lo que confirma que cada hilo controla su propio LED de manera independiente sin interferencias. Finalmente, en la última figura se pueden observar los mensajes impresos por el segundo núcleo en la consola, lo que demuestra que el hilo secundario está activo y ejecutando su función de impresión y parpadeo del LED2. De forma que el programa muestra un comportamiento esperado de concurrencia, con ambos hilos operando de manera simultánea y sin bloqueos, validando el uso de la librería \texttt{\_thread} para la creación de hilos en la Raspberry Pi Pico.
 
 
     \newpage
@@ -597,15 +677,116 @@
 
     \section*{Propuesta de solución}
 
+    De acuerdo a los requerimientos de la Actividad 5, es necesario controlar los interruptores S1 y S2 mediante interrupciones externas por flanco de bajada, es por esto que primero se deben de realizar la importación de las bibliotecas necesarias para el manejo de pines, interrupciones y hilos. 
+    
+    Posteriormente se configuran los pines GPIO18 y GPIO19 como salidas para controlar los LEDs asociados a cada interruptor y como entradas con resistencia pull-up para los interruptores S1 (GPIO12) y S2 (GPIO13). Despúes se declara una bandera con la finalidad de comunicar el estado de la interrupción entre los hilos, y se inicializan dos contadores para llevar el registro de las interrupciones de cada botón.
 
+    A continuación, se definen dos funciones para las rutinas de servicio de interrupción (ISR) de S1 y S2, donde para la rutina de interrupción que se ejecuta en el Núcleo 1 (Core 0) se maneja la interrupción de S1, encendiendo el LED en GPIO18 e imprimiendo un mensaje en la consola, mientras que para la rutina de interrupción que se ejecuta en el Núcleo 2 (Core 1) se maneja la interrupción de S2 modificando la bandera para indicar que se ha detectado la interrupción.
+
+    En el programa se tiene la función \texttt{nucleo\_dos()} que se ejecuta en el segundo núcleo, donde se monitorea continuamente la bandera para detectar si se ha producido una interrupción en S2. Si la bandera indica que se ha detectado una interrupción, se enciende el LED en GPIO19, se imprime un mensaje en la consola y se restablece la bandera para esperar la siguiente interrupción.
+
+    Por otro lado el bucle principal del programa se mantiene en espera pasiva, permitiendo que las interrupciones manejen toda la lógica de respuesta a los eventos de los botones. De esta manera, se logra que cada botón controle su propio LED y que las acciones asociadas a cada interrupción se ejecuten en diferentes núcleos, cumpliendo con los requerimientos establecidos en la Tabla.
+
+    \begin{figure}[H]
+        \centering
+        \scalebox{0.62}{
+        \begin{tikzpicture}[node distance=1.1cm and 0.6cm,
+            startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+            process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+            decision/.style={diamond, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+            arrow/.style={thick,->,>=stealth}]
+
+            % --- Columna Central: Hilo Principal (Core 0) ---
+            \node (start) [startstop] {Inicio (Main)};
+            \node (conf) [process, below=of start] {Configurar Entradas/Salidas\\S1, S2, LED1, LED2};
+            \node (flag) [process, below=of conf] {flag\_s2\_presionado = False};
+            \node (thread) [process, below=of flag] {\_thread.start\_new\_thread\\(nucleo\_dos)};
+            \node (irq) [process, below=of thread] {Configurar IRQ\\(S1 $\to$ isr\_s1, S2 $\to$ isr\_s2)};
+            \node (printm) [io, below=of irq] {Multinucleo listo \\ Presione S1 o S2...};
+            \node (loop0) [decision, below=of printm] {Bucle infinito\\(while True: pass)};
+
+            \draw [arrow] (start) -- (conf);
+            \draw [arrow] (conf) -- (flag);
+            \draw [arrow] (flag) -- (thread);
+            \draw [arrow] (thread) -- (irq);
+            \draw [arrow] (irq) -- (printm);
+            \draw [arrow] (printm) -- (loop0);
+            \draw [arrow] (loop0.east) -- ++(0.8,0) |- (loop0.north east);
+
+            % --- Columna Derecha: Hilo Secundario (Core 1) ---
+            \node (start1) [startstop, right=3.5cm of conf] {Inicio Hilo\\(nucleo\_dos)};
+            \node (loop1) [decision, below=of start1] {Bucle infinito};
+            \node (check) [decision, below=of loop1] {¿flag\_s2\_presionado\\== True?};
+            \node (act1) [process, right=0.4cm of check] {Toggle LED2\\flag\_s2\_presionado = False};
+            \node (print2) [io, below=of act1] {Núcleo 2: Toggle LED 2};
+            \node (act2) [process, below=of print2] {Retardo 300 ms};
+            \node (sleep10) [process, below=of check] {Retardo 10 ms};
+
+            \draw [arrow] (start1) -- (loop1);
+            \draw [arrow] (loop1) -- (check);
+            \draw [arrow] (check) -- node[above, font=\footnotesize] {Sí} (act1);
+            \draw [arrow] (act1) -- (print2);
+            \draw [arrow] (print2) -- (act2);
+            \draw [arrow] (act2) -| (sleep10);
+            \draw [arrow] (check) -- node[right, font=\footnotesize] {No} (sleep10);
+            \draw [arrow] (sleep10.west) -- ++(-0.8,0) |- (loop1.west);
+
+            % --- Columna Izquierda: Rutinas de Interrupción (ISRs) ---
+            % ISR 1
+            \node (isrs1) [startstop, left=3.5cm of conf] {ISR\_S1};
+            \node (togs1) [process, below=of isrs1] {Toggle LED1};
+            \node (prts1) [io, below=of togs1] {Nucleo 1: Toogle LED 1};
+            \node (dels1) [process, below=of prts1] {Retardo 300 ms};
+            \node (rets1) [startstop, below=of dels1] {Retorno};
+
+            \draw [arrow] (isrs1) -- (togs1);
+            \draw [arrow] (togs1) -- (prts1);
+            \draw [arrow] (prts1) -- (dels1);
+            \draw [arrow] (dels1) -- (rets1);
+
+            % ISR 2
+            \node (isrs2) [startstop, below=0.8cm of rets1] {ISR\_S2};
+            \node (setf) [process, below=of isrs2] {flag\_s2\_presionado\\= True};
+            \node (rets2) [startstop, below=of setf] {Retorno};
+
+            \draw [arrow] (isrs2) -- (setf);
+            \draw [arrow] (setf) -- (rets2);
+
+            % --- Flechas de Interacción Lógica (Punteadas) ---
+            \draw [arrow, dashed, black] (thread.east) -- node[midway, above, font=\tiny]{Crea hilo} (start1.west);
+            \draw [arrow, dashed, red] (loop0.west) -- ++(-0.8,0) node[pos=0.3, above, font=\tiny]{Hardware S1} |- (isrs1.east);
+            \draw [arrow, dashed, blue] (loop0.west) -- ++(-1.2,0) node[pos=0.3, below, font=\tiny]{Hardware S2} |- (isrs2.east);
+
+        \end{tikzpicture}
+        }  
+    \end{figure}
+    
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Led 1 encendido tras pulsar S1 y retardo de 300 ms.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_2.jpg}
+        \caption{Led 2 encendido tras pulsar S2 y retardo de 300 ms.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_3.jpg}
+        \caption{Mensajes en consola indicando la activación de cada interrupción}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
+    Las imágenes obtenidas en la Actividad 5 demuestran que el programa implementa correctamente el control de interrupciones externas para los botones S1 y S2, con cada interrupción manejada en diferentes núcleos. En la primera imagen se observa que al pulsar el botón S1, el LED conectado al GPIO18 se enciende momentáneamente durante 300 ms, lo cual confirma que la ISR de S1 se ejecuta correctamente y realiza la acción de toggle del LED. En la segunda imagen, al pulsar el botón S2, el LED conectado al GPIO19 se enciende también durante 300 ms, lo que indica que la ISR de S2 se activa adecuadamente y modifica la bandera para que el hilo del segundo núcleo responda encendiendo el LED correspondiente. La tercera imagen muestra los mensajes impresos en la consola, donde se puede ver claramente la indicación de cada interrupción (S1 o S2) y la acción realizada (toggle del LED), lo que valida que las rutinas de servicio de interrupción están funcionando como se esperaba. En conjunto, estos resultados confirman que el programa cumple con los requisitos establecidos en la Tabla 11-4.
 
     \newpage
     \section*{Actividad 6}
@@ -979,8 +1160,7 @@
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
-        
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la implementación de esta práctica, logré comprender de manera más extensa el funcionamiento de las interrupciones e hilos en los programas para la Raspberry Pi Pico. De forma que por medio de las interrupciones, el programa puede responder de manera inmediata a eventos externos, como la pulsación de un botón, sin necesidad de detener o bloquear el flujo principal del programa. Por otro lado el uso de hilos permite ejecutar tareas concurrentes en ambos núcleos de la tarjeta, de forma que se pueden implementar programas con múltiples funcionalidades que se ejecutan al mismo tiempo sin interferir entre sí, por lo que esto ofrece una perspectiva más amplia sobre las aplicaciones y posibilidades de programación microcontroladores. Por lo que a partir de la realización de esta práctica pude comprender dos conceptos fundamentales para el desarrollo de programas más complejos y eficientes en la Raspberry Pi Pico.
 
         \item \textbf{Flores Colin Victor Jaziel:} 
         
