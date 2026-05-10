@@ -295,93 +295,202 @@
 
     Entender y aplicar la programación mediante interrupciones; así como la realización de programas en los que se utilicen diferentes núcleos, optimizar la ejecución de programación en paralelo.
 
-    \section*{Actividad 1}
+   \section*{Actividad 1}
 
-    \noindent Escribir el siguiente código, comentar, indicar que hace y explicar su funcionamiento.
+    \noindent Escribir el siguiente c\'odigo, comentar, indicar que hace y explicar su funcionamiento.
 
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 11-2. Código de ejemplo; actividad 1}]
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 11-2. C\'odigo de ejemplo; actividad 1}]
     from machine import Pin
     import utime
 
     S1 = Pin(12, Pin.IN, Pin.PULL_UP)
 
     def FuncISR_S1(pin):
-        print("Interrupción detectada en S1") #
-
-        utime.sleep_ms(200) 
+        print("Interrupci\'on detectada en S1")
+        utime.sleep_ms(200)
 
     S1.irq(trigger=Pin.IRQ_FALLING, handler=FuncISR_S1)
 
-    print("! ... Esperando Interrupción !") 
+    print("! ... Esperando Interrupci\'on !")
 
-    while True: 
-        pass 
+    while True:
+        pass
     \end{lstlisting}
 
     \section*{Propuesta de solución}
 
+    El programa proporcionado implementa un sistema de interrupciones externas en la Raspberry Pi Pico utilizando un push-buttom conectado al GPIO 12, el programa configura el pin como entrada con resistencia pull-up interna, lo que mantiene el pin en nivel alto (1 l\'ogico) en reposo y cuando se presiona el bot\'on (S1), el pin cambia a nivel bajo (0 l\'ogico), generando un flanco de bajada (\texttt{IRQ\_FALLING}) y este flanco dispara autom\'aticamente la funci\'on \texttt{FuncISR\_S1()}, conocida como ISR (\textit{Interrupt Service Routine}), que imprime un mensaje en consola y aplica un retardo de 200 ms para filtrar los rebotes mec\'anicos del pulsador. El programa principal muestra un mensaje de espera y entra en un bucle infinito vac\'io (\texttt{while True: pass}), por lo que la CPU se enceuntra disponible para responder a las interrupciones.
 
+
+    % Diagrama de flujo
+    \begin{center}
+        \scalebox{0.85}{
+        \begin{tikzpicture}[node distance=1.4cm, every node/.style={font=\scriptsize}]
+            \node (start1) [startstop, text width=2.6cm] {Inicio};
+            \node (init1) [process, below=of start1, text width=7.5cm] {Importar librerias: \texttt{Pin} y \texttt{utime}.};
+            \node (config1) [process, below=of init1, text width=7.8cm] {Configurar S1 en GPIO 12 como entrada con resistencia pull-up.};
+            \node (isr1) [process, below=of config1, text width=7.5cm] {Definir ISR: \texttt{FuncISR\_S1()} que imprime mensaje y espera 200 ms.};
+            \node (irq1) [process, below=of isr1, text width=7.8cm] {Configurar interrupci\'on por flanco de bajada (\texttt{IRQ\_FALLING}) en GPIO 12.};
+            \node (print1) [process, below=of irq1, text width=5.5cm] {Imprimir "Esperando Interrupci\'on".};
+            \node (loop1) [process, below=of print1, text width=4.5cm] {\texttt{while True}: Bucle principal vac\'io.};
+            
+            % Nodo para la interrupci\'on (evento externo)
+            \node (event1) [decision, right=3cm of loop1, text width=3.5cm, aspect=2.2] {¿Bot\'on presionado? (flanco de bajada)};
+            \node (exec1) [process, below=of event1, text width=5.5cm] {Ejecutar ISR: Imprimir mensaje y esperar 200 ms.};
+            
+           % Flujo principal
+            \draw [arrow] (start1) -- (init1);
+            \draw [arrow] (init1) -- (config1);
+            \draw [arrow] (config1) -- (isr1);
+            \draw [arrow] (isr1) -- (irq1);
+            \draw [arrow] (irq1) -- (print1);
+            \draw [arrow] (print1) -- (loop1);
+
+            % Del bucle al evento
+            \draw [arrow] (loop1.east) -- node[above, font=\scriptsize] {\texttt{pass}} (event1.west);
+
+            % Rama "Si"
+            \draw [arrow] (event1.south) -- node[right, font=\scriptsize] {Si} (exec1);
+
+            % Retorno desde ISR al bucle (por abajo)
+            \draw [arrow] (exec1.west) -| (loop1.south);
+
+            \draw [arrow] (event1.east) -- node[above, font=\scriptsize] {No} ++(2.5,0)
+        |- ([yshift=-5.5cm]loop1.north)
+        -| (loop1.south);
+        \end{tikzpicture}
+        }
+    \end{center}
+
+\newpage
 
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+    \lstinputlisting[language={[LAB]Python}, caption=C\'odigo comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_1.jpg}
+        \caption{Salida en consola mostrando la detecci\'on de interrupciones al presionar el push-buttom S1 conectado al GPIO 12.}
+    \end{figure}
 
-    \subsection*{Análisis de resultados}
+    \subsection*{An\'alisis de resultados}
 
+    El programa logra detectar correctamente las pulsaciones del bot\'on S1 conectado al GPIO 12 mediante el mecanismo de interrupciones por flanco de bajada ya que al presionar el bot\'on, la consola muestra el mensaje "Interrupci\'on detectada en S1" de manera inmediata tal y como se observa en la Figura 1 y cabe mencionar que el retardo de 200 ms dentro de la ISR esta para eliminar los rebotes mec\'anicos del pulsador, evitando m\'ultiples detecciones por una sola presi\'on y el bucle principal vac\'io (\texttt{while True: pass}) permite que la CPU permanezca en un estado de bajo consumo mientras espera eventos, a diferencia de un sondeo continuo que consumir\'ia recursos innecesariamente. La configuraci\'on con resistencia pull-up interna simplifica el circuito externo, ya que no requiere componentes adicionales.
 
     \newpage
     \section*{Actividad 2}
 
-    \noindent Realizar las modificaciones necesarias al programa de la actividad 1, de manera que, al
-    reconocer la interrupción, provocada por un flanco de bajada ocurrida en S1 (GPIO12); el programa
-    principal genere una señal cuadrada con frecuencia de 1 Hz cada que sea detectada y sea visible en
-    la terminal GPIO20.
+\noindent Realizar las modificaciones necesarias al programa de la actividad 1, de manera que, al reconocer la interrupci\'on, provocada por un flanco de bajada ocurrida en S1 (GPIO12); el programa principal genere una se\~nal cuadrada con frecuencia de 1 Hz cada que sea detectada y sea visible en la terminal GPIO20.
 
-    \begin{table}[h]
-        \centering
-        \renewcommand{\arraystretch}{2}
-        \arrayrulecolor{borderBlueB}
-        \begin{tabular}{|m{6.5cm}|m{6.5cm}|}
-            \hline
-            \rowcolor{headerBlueB}
-            \multicolumn{1}{|c|}{\textcolor{white}{\textbf{Evento}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acción (GPIO20)}}} \\
-            \hline
-            \rowcolor{rowBlueB}
-            \textbf{S1 (GPIO12)} \hfill
-            \begin{tikzpicture}[baseline=-0.5ex]
-                \draw[->, >=stealth, line width=2.5pt, color=headerBlueB] (0,0.3) -- (0.7,0.3) -- (0.7,-0.4);
+\begin{table}[h]
+    \centering
+    \renewcommand{\arraystretch}{2}
+    \arrayrulecolor{borderBlueB}
+    \begin{tabular}{|m{6.5cm}|m{6.5cm}|}
+        \hline
+        \rowcolor{headerBlueB}
+        \multicolumn{1}{|c|}{\textcolor{white}{\textbf{Evento}}} & \multicolumn{1}{c|}{\textcolor{white}{\textbf{Acci\'on (GPIO20)}}} \\
+        \hline
+        \rowcolor{rowBlueB}
+        \textbf{S1 (GPIO12)} \hfill
+        \begin{tikzpicture}[baseline=-0.5ex]
+            \draw[->, >=stealth, line width=2.5pt, color=headerBlueB] (0,0.3) -- (0.7,0.3) -- (0.7,-0.4);
+        \end{tikzpicture}
+        \hspace{0.5cm}
+        &
+        \begin{minipage}{\linewidth}
+            \centering
+            \begin{tikzpicture}[baseline=0.5ex]
+                \draw[thick] (0,0.2) -- (0,0.7) -- (1,0.7) -- (1,0.2) -- (2,0.2) -- (2,0.7);
+                \node[below, font=\sffamily] at (1,0.2) {1 Hz};
             \end{tikzpicture}
-            \hspace{0.5cm}
-            &
-            \begin{minipage}{\linewidth}
-                \centering
-                \begin{tikzpicture}[baseline=0.5ex]
-                    % Cuadrada
-                    \draw[thick] (0,0.2) -- (0,0.7) -- (1,0.7) -- (1,0.2) -- (2,0.2) -- (2,0.7);
-                    % Etiqueta
-                    \node[below, font=\sffamily] at (1,0.2) {1 Hz};
-                \end{tikzpicture}
-            \end{minipage} \\
-            \hline
-        \end{tabular}
-        \vspace{0.3cm}
-        \caption*{Tabla 11-1. Control; actividad 2}
-    \end{table}
+        \end{minipage} \\
+        \hline
+    \end{tabular}
+    \vspace{0.3cm}
+    \caption*{Tabla 11-1. Control; actividad 2}
+\end{table}
 
-    \section*{Propuesta de solución}
+\section*{Propuesta de soluci\'on}
+
+Este nuevo programa extiende la funcionalidad de la actividad 1 agregando una salida digital en el GPIO 20 que genera una se\~nal cuadrada de 1 Hz (50\% de ciclo de trabajo) que cuando la interrupci\'on del bot\'on S1 as\'i lo indica se utiliza una variable global \texttt{generar\_senal} que act\'ua como bandera de estado, alternando su valor cada vez que se presiona S1 (flanco de bajada). En la interrupci\'on, se invierte el estado de esta bandera y se imprime un mensaje de confirmaci\'on. En el bucle principal, si \texttt{generar\_senal} es \texttt{True}, se genera la se\~nal cuadrada, se enciende el led y se va alternando el pin GPIO 20 cada 0.5 segundos (0.5 s en alto, 0.5 s en bajo). Si la bandera es \texttt{False}, el pin de salida se mantiene en nivel bajo se apaga el led y el bucle realiza una peque\~na pausa para evitar saturar el procesador.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1cm, every node/.style={font=\small}]
+    
+    \node (start) [startstop] {Inicio};
+    \node (init) [process, below=of start] {Inicializar pines};
+    \node (config) [process, below=of init] {Configurar S1 y GPIO20};
+    \node (isr) [process, below=of config] {Definir ISR};
+    \node (irq) [process, below=of isr] {Configurar interrupcion};
+    \node (loop) [process, below=of irq] {Bucle principal};
+
+    \node (decision) [decision, below=1.2cm of loop] {Bandera activa?};
+
+    \node (high) [process, below left=1.2cm and 1.5cm of decision] {Encender LED};
+    \node (low) [process, below=of high] {Apagar LED};
+
+    \node (off) [process, below right=1.2cm and 1.5cm of decision] {LED apagado};
+
+    % Flujo principal
+    \draw [arrow] (start) -- (init);
+    \draw [arrow] (init) -- (config);
+    \draw [arrow] (config) -- (isr);
+    \draw [arrow] (isr) -- (irq);
+    \draw [arrow] (irq) -- (loop);
+    \draw [arrow] (loop) -- (decision);
+
+    % Decisión
+    \draw [arrow] (decision.west) -- ++(-0.8,0)
+        node[pos=0.25, above] {Si}
+        -| (high.north);
+
+    \draw [arrow] (decision.east) -- ++(0.8,0)
+        node[pos=0.25, above] {No}
+        -| (off.north);
+
+    % Rama izquierda
+    \draw [arrow] (high) -- (low);
+
+    % Retorno izquierda
+    \draw [arrow] (low.west) -- ++(-1,0)
+        |- ([xshift=-1.2cm]loop.west) -- (loop.west);
+
+    % Retorno derecha
+    \draw [arrow] (off.east) -- ++(1.0,0) |- ([xshift=1.2cm]loop.east) -- (loop.east);
+
+\end{tikzpicture}
+\end{center}
+
+\section*{Desarrollo}
+
+\lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/Actividad2/Act2_1.jpg}
+    \caption{Estado de pulsación de push-bottom, generación de una señal de 1 Hz, se enciende el LED.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/Actividad2/Act2_2.jpg}
+    \caption{Estado sin pulsación de push-buttom.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_3.jpg}
+    \caption{Salida en consola mostrando los mensajes cada vez que se presiona S1 para alternar el estado de la se\~nal.}
+\end{figure}
+
+\subsection*{An\'alisis de resultados}
+
+El programa logra alternar correctamente la generaci\'on de una se\~nal cuadrada de 1 Hz en el GPIO 20 cada vez que se presiona el bot\'on S1 conectado al GPIO 12. La variable global \texttt{generar\_senal} act\'ua eficazmente como mecanismo de comunicaci\'on entre la ISR (que se ejecuta en contexto de interrupci\'on) y el bucle principal. Al presionar S1 por primera vez, la bandera cambia a \texttt{True} y el LED comienza a parpadear con una frecuencia de 1 Hz (0.5 segundos encendido, 0.5 segundos apagado). Una segunda presi\'on desactiva la se\~nal, apagando el LED y deteniendo el parpadeo.
+La implementaci\'on demuestra c\'omo las interrupciones permiten controlar procesos en tiempo real sin necesidad de sondeo constante, liberando la CPU para otras tareas mientras espera eventos externos.
 
 
-    \section*{Desarrollo}
-
-    \lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
-
-
-    \subsection*{Análisis de resultados}
-
-
-
-    \newpage
     \section*{Actividad 3}
     \noindent Realizar un programa en el que se activen dos interrupciones, controladas por las
     entradas S1 y S2; en el momento de alguna de estas interrupciones sea requerida, genere las acciones
@@ -1162,8 +1271,9 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la implementación de esta práctica, logré comprender de manera más extensa el funcionamiento de las interrupciones e hilos en los programas para la Raspberry Pi Pico. De forma que por medio de las interrupciones, el programa puede responder de manera inmediata a eventos externos, como la pulsación de un botón, sin necesidad de detener o bloquear el flujo principal del programa. Por otro lado el uso de hilos permite ejecutar tareas concurrentes en ambos núcleos de la tarjeta, de forma que se pueden implementar programas con múltiples funcionalidades que se ejecutan al mismo tiempo sin interferir entre sí, por lo que esto ofrece una perspectiva más amplia sobre las aplicaciones y posibilidades de programación microcontroladores. Por lo que a partir de la realización de esta práctica pude comprender dos conceptos fundamentales para el desarrollo de programas más complejos y eficientes en la Raspberry Pi Pico.
 
-        \item \textbf{Flores Colin Victor Jaziel:} 
-        
+        \item \textbf{Flores Colin Victor Jaziel:} En esta práctica número once logre comprender de manera mas profunda el funcionamiento de las interrupciones y su aplicacion en sistemas de control en tiempo real con la Raspberry Pi Pico, ya que en las actividades en las que se implementó alguna especie de boton como S1, se usaba el disparador de interrupcion por flanco de bajada, pude observar como la pico responde de forma inmediata a un evento externo sin necesidad de estar revisando constantemente el estado del pin mediante sondeo, lo que optimiza el uso de recursos.
+
+        Además con ayuda de la Raspberry Pi Pico implementamos actividades con dos botones S1 y S2, cada uno dispara su propia interrupcion por flanco de bajada activando acciones especificas (LEDs y contadores en TM1637) sin interferencias y el uso de 2 botones sirvió para dejar en claro el uso de hilos para ejecutar tareas concurrentes en ambos nucleos, como el control independiente del semaforo para autos y peatones con sincronizacion mediante locks, integrando interrupciones y multitarea en sistemas de control robustos.
 
         \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica logré comprender de forma más clara cómo empezar a utilizar la Raspberry Pi Pico programando desde cero en MicroPython. Al trabajar con los diferentes componentes, como el display TM1637, la tira de LEDs NeoPixel y el buzzer, entendí mejor cómo manejar las entradas y salidas, así como la forma de generar señales PWM para los sonidos.
         También me quedó mucho más claro el uso de las interrupciones para los botones, ya que gracias a ellas el programa puede responder al instante cuando alguien presiona un botón, sin necesidad de trabar o frenar todo el código. Por otro lado, usar los dos núcleos de la tarjeta al mismo tiempo fue algo nuevo; aprendí que usando hilos y los "locks" puedo hacer que el semáforo normal siga funcionando y al mismo tiempo escuchar las peticiones de los peatones sin que haya problemas. 
