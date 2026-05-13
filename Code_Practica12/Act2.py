@@ -2,8 +2,8 @@ import network #
 from time import sleep #
 
 # --- DATOS DE TU RED ---
-ssid = 'PON_TU_RED_AQUI'        # Nombre de tu red Wi-Fi
-password = 'PON_TU_CONTRASEÑA'  # Contraseña de tu red
+ssid = 'S23+ de Angel'        # Nombre de tu red Wi-Fi
+password = 'angel280731'  # Contraseña de tu red
 
 wlan = network.WLAN(network.STA_IF) #
 wlan.active(True) #
