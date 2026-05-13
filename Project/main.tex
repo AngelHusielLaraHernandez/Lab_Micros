@@ -207,10 +207,26 @@
     \section{Objetivos}
 
 
+    Que el alumno aplique los conocimientos de la teoría y el funcionamiento de los microcontroladores para
+    diseñar e implementar un sistema de despliegue de datos, utilizando lo aprendido en el curso de laboratorio de
+    microcomputadoras, además de realizar investigación; lo que le dará la visión para utilizar cualquier
+    componente en el mercado con un sistema microcontrolador.
     % ============================================================
     % SECCIÓN 2: MARCO TEÓRICO Y JUSTIFICACIÓN DE COMPONENTES
     % ============================================================
     \section{Marco teórico y justificación de componentes}
+
+    \begin{itemize}
+        \item \textbf{RP2350 (Pico 2):} Este proyecto esta implementado en la Raspberry Pi Pico 2W (RP2350) por tres motivos fundamentales, el primer motivo se debe a su plataforma de desarrollo MicroPython que nos permitió implementar una máquina de estados y una interfaz gráfica de usuario en una pantalla OLED de una forma bastante comoda; el segundo motivo es porque, entres sus 26 pines GPIO multipropósito, incluyendo 4 que pueden usarse para ADC (convertidor analógico-digital) de uso general, estos ADC fueron fundamentales para el voltímetro, amperímetro y termómetro, sin necesidad de multiplexores externos adicionales y el último motivo se debe a su arquitectura ARM Cortex-M33 de doble núcleo y su riqueza de periféricos (como GPIO para los push-buttons), todos estos motivos convierten a la RP2350 en una gran elección para desarrollar ul multímetro, de una forma bastante sencilla y asequible por el bajo costo de este dispositivo y a que no hay que comprar tantos componentes adicionales.
+
+        \item \textbf{Sensor de temperatura LM35:} Se seleccionó el LM35 por su simplicidad de uso y precisión adecuada para este proyecto. A diferencia de otros sensores como los termistores (NTC/PTC) que requieren curvas de calibración no lineales o los sensores digitales que necesitan protocolos complejos, el LM35 es un sensor analógico de estado sólido con una salida lineal de exactamente 10 mV por cada grado Celsius, una característica que simplifica enormemente el código de medición. Además, su rango de operación (0 °C a 100 °C con la configuración básica) cubre perfectamente las necesidades de un multímetro de laboratorio, y su precisión típica de ±0.5 °C es más que suficiente para mediciones de propósito general. Al alimentarse directamente de los 3.3 V provistos por la propia Pico 2W y entregar una señal de voltaje analógica proporcional a la temperatura, se conecta directamente a un canal ADC sin necesidad de circuitos de acondicionamiento adicionales, lo que lo convierte en la opción más directa y efectiva para integrar la funcionalidad de termómetro en nuestro diseño con el menor costo y complejidad posibles.
+        
+        \item \textbf{Pantalla OLED con protocolo I2C:} La visualización de las mediciones se implementó con una pantalla OLED SSD1306 de 128×64 píxeles que se comunica a través del protocolo I2C (Inter-Integrated Circuit). Se eligió este tipo de pantalla sobre alternativas como los LCD de caracteres por varias razones: su naturaleza gráfica de píxeles permite diseñar una interfaz de usuario rica con animaciones, íconos y barras de progreso, lo cual mejora sustancialmente la experiencia del usuario frente a las pantallas alfanuméricas tradicionales. El protocolo I2C es particularmente conveniente porque utiliza solamente dos líneas de comunicación (SDA para datos y SCL para reloj), lo que libera pines GPIO para otros periféricos como los botones y los ADC. Adicionalmente, la tecnología OLED ofrece un alto contraste nativo, no requiere retroiluminación y posee un amplio ángulo de visión, haciéndola legible en diversas condiciones de iluminación.
+
+        \item \textbf{Conversión Analógica-Digital (ADC):} El corazón funcional del multímetro reside en el módulo ADC del RP2350, encargado de traducir el mundo físico analógico al dominio digital que puede procesar el microcontrolador. Un ADC toma una señal de voltaje continua y la cuantifica en un número finito de niveles discretos; en nuestro caso, el ADC de 12 bits del RP2350 divide el rango de 0 V a 3.3 V en $2^{12} = 4096$ niveles distintos, ofreciendo una resolución teórica de aproximadamente 0.8 mV por nivel. En la práctica, la función \texttt{read\_u16()} de MicroPython expande esta lectura a 16 bits (65535 niveles) para mantener compatibilidad en el ecosistema, resultando en una resolución de lectura de $3.3 / 65535 \approx 50\ \mu\text{V}$ por bit. Para mitigar el ruido inherente en cualquier ADC —especificado en aproximadamente ±30 mV en el \textit{datasheet} del RP2350— implementamos un filtro por software que promedia 16 lecturas consecutivas, reduciendo el ruido efectivo por un factor de $\sqrt{16} = 4$ y mejorando significativamente la estabilidad de las mediciones mostradas al usuario.
+
+        \item \textbf{Efecto Joule y Shunt:} La medición de corriente en nuestro amperímetro se fundamenta en el principio físico del shunt resistivo, que es una aplicación directa de la Ley de Ohm y el Efecto Joule. Un shunt es una resistencia de valor conocido y muy bajo (en nuestro caso, 1 $\Omega$) que se coloca en serie con el circuito bajo prueba; al circular corriente a través de ella, se genera una caída de voltaje proporcional según $V = I \cdot R$, y midiendo esa voltaje con el ADC se calcula indirectamente la corriente. La resistencia de 1 $\Omega$ fue seleccionada porque simplifica la conversión matemática ($I = V / 1 = V$) y mantiene la caída de voltaje lo suficientemente pequeña para no interferir con el circuito medido. El Efecto Joule ($P = I^2 \cdot R$) establece que esta resistencia disipará potencia en forma de calor.
+    \end{itemize}
 
     % ============================================================
     % SECCIÓN 3: CÁLCULOS Y DISEÑO DEL CIRCUITO
@@ -223,7 +239,7 @@
 
     \subsubsection{Ecuación del divisor de voltaje}
 
-    La tensión en el punto medio (que lee el ADC) es:
+    La voltaje en el punto medio (que lee el ADC) es:
 
     \begin{equation}
         V_{\text{ADC}} = V_{\text{in}} \cdot \frac{R_2}{R_1 + R_2}
@@ -285,7 +301,7 @@
 
     \subsection{Resistencia shunt para el amperímetro (0--300 mA DC)}
 
-    Para medir corriente se utiliza una resistencia shunt de valor bajo ($R_{\text{shunt}} = 1\;\Omega$, 1W) en serie con el circuito bajo prueba. La caída de tensión a través del shunt es proporcional a la corriente:
+    Para medir corriente se utiliza una resistencia shunt de valor bajo ($R_{\text{shunt}} = 1\;\Omega$, 1W) en serie con el circuito bajo prueba. La caída de voltaje a través del shunt es proporcional a la corriente:
 
     \begin{equation}
         V_{\text{shunt}} = I \cdot R_{\text{shunt}}
