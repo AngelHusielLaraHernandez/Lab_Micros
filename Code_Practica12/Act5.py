@@ -5,7 +5,7 @@ import time
 
 # --- 1. CONFIGURACIÓN DE SALIDAS ---
 # Definimos los 4 pines de salida solicitados (GPIO 0, 1, 2 y 3)
-leds = [machine.Pin(i, machine.Pin.OUT) for i in range(4)]
+leds = [machine.Pin(i, machine.Pin.OUT) for i in [18, 18, 19, 20]]
 
 # --- 2. DATOS DE RED ---
 ssid = 'S23+ de Angel'
@@ -37,7 +37,9 @@ def web_page():
     </head>
     <body>
         <h1>Panel de Control de 4 LEDs</h1>
-        <p>Equipo: Angel Lara y Percival</p>
+        <p>Equipo:Espinoza Matamoros Percival Ulises</p>
+        <p>Victor Jaziel Flores Colin</p>
+        <p>Angel Husiel Lara Hernandez</p>
         <hr>
     """
     # Genera dinámicamente los botones para los 4 LEDs

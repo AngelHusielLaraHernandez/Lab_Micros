@@ -5,7 +5,7 @@ import time
 
 # --- 1. CONFIGURACIÓN DE HARDWARE ---
 # Se utiliza el GPIO 2 para el control del LED según las instrucciones
-led1 = machine.Pin(2, machine.Pin.OUT)
+led1 = machine.Pin(18, machine.Pin.OUT)
 
 # --- 2. CONFIGURACIÓN DE RED ---
 # Datos obtenidos de tu escaneo previo
