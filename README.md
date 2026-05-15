@@ -1,26 +1,25 @@
-# Práctica 11 — Laboratorio de Microcomputadoras: Interrupciones y Programación Multinúcleo
+# Práctica 12 — Laboratorio de Microcomputadoras: Uso y Aplicaciones de WiFi
 
-> **Plataforma Raspberry Pi Pico (RP2040) — Programación en MicroPython con IDE Thonny**
+> **Plataforma Raspberry Pi Pico W (RP2040) — Programación en MicroPython con IDE Thonny**
 
 ---
 
 ## Objetivo
 
-Entender y aplicar la programación mediante interrupciones, así como la realización de programas que utilicen diferentes núcleos y optimicen la ejecución en paralelo.
+Comprender y aplicar la conectividad WiFi de la Raspberry Pi Pico W para implementar servidores web embebidos que permitan el control remoto de periféricos GPIO a través de interfaces HTML accesibles desde cualquier dispositivo en la red local.
 
 ---
-
 
 ## Actividades
 
 | # | Descripción | Estado |
 |:-:|-------------|:------:|
-| 1 | Interrupción básica con S1 (GPIO12) | Pendiente |
-| 2 | Generar señal cuadrada en GPIO20 tras interrupción S1 | Pendiente |
-| 3 | Dos interrupciones: S1 y S2, control de LEDs y contador TM1637 | Completa |
-| 4 | Uso de hilos (multinúcleo) para parpadeo de LEDs | Pendiente |
-| 5 | Interrupciones en diferentes núcleos, control de LEDs | Pendiente |
-| 6 | Semáforo peatonal con interrupciones, hilos y display TM1637 | Completa |
+| 1 | Escaneo de redes WiFi disponibles | Pendiente |
+| 2 | Conexión a una red WiFi existente | Pendiente |
+| 3 | Servidor web básico con página HTML personalizada | Pendiente |
+| 4 | Servidor web con control de 1 LED (GPIO18) via botones ON/OFF | Completa |
+| 5 | Servidor web con control de 4 salidas GPIO independientes | Completa |
+| 6 | Servidor web con control de 4 GPIO salida, 2 entrada digital, 1 analógica y PWM | Pendiente |
 
 ### Progreso general
 
@@ -28,20 +27,21 @@ Completadas: 2 / 6
 
 ---
 
-
 ## Contenido técnico
 
-### Actividades 1-2: Interrupciones básicas
-- Configuración de pines de entrada y salida.
-- Manejo de interrupciones por flanco de bajada.
+### Actividades 1-2: Conexión WiFi
+- Escaneo de redes disponibles con `wlan.scan()`.
+- Conexión en modo estación (STA_IF) a red existente.
 
-### Actividades 3-4: Múltiples interrupciones y multinúcleo
-- Control de múltiples entradas (S1, S2) y salidas (LEDs, TM1637).
-- Uso de hilos para ejecución en paralelo en la Raspberry Pi Pico.
+### Actividades 3-4: Servidor web básico y control de LED
+- Creación de socket TCP en puerto 80 (HTTP).
+- Generación de interfaz HTML con botones de control.
+- Análisis de peticiones HTTP GET para controlar GPIO.
 
-### Actividades 5-6: Semáforo peatonal y sincronización
-- Implementación de semáforo con barra Neopixel y display TM1637.
-- Sincronización de eventos entre núcleos y manejo de interrupciones para peatones.
+### Actividades 5-6: Control múltiple y avanzado
+- Control de 4 salidas GPIO desde interfaz web dinámica.
+- Generación de HTML con bucles para escalabilidad.
+- Integración de entradas digitales, analógicas y PWM.
 
 ---
 
@@ -50,25 +50,35 @@ Completadas: 2 / 6
 ```text
 Practica1/
 ├── Code/
-│   ├── Act1.py
-│   ├── Act2.py
-│   ├── Act3.py
-│   ├── Act4.py
-│   ├── Act5.py
-│   ├── Act6.py
-│   ├── Act7.py
-│   ├── Act8.py
-│   ├── Act9.py
-│   └── Act10.py
+│   ├── Act1.py          # Escaneo de redes WiFi
+│   ├── Act2.py          # Conexión a red WiFi
+│   ├── Act3.html        # Página HTML de la actividad 3
+│   ├── Act4.py          # Servidor web control 1 LED
+│   ├── Act5.py          # Servidor web control 4 LEDs
+│   └── Act6.py          # Servidor web control avanzado
 ├── img/
+│   ├── Actividad4/      # Evidencias actividad 4 (4 imágenes)
+│   └── Actividad5/      # Evidencias actividad 5 (9 imágenes)
 ├── document/
-├── portada_img/
-├── PracticasPasadas/
-├── main.tex
-├── portada.tex
-├── referencias.bib
-├── main.pdf
-└── README.md
+│   └── Reporte_12_RPi_UsoyAplicacionesDeWiFi.pdf  # Rúbrica de evaluación
+├── portada_img/         # Imágenes de la portada
+├── PracticasPasadas/    # Prácticas anteriores (1-11)
+│   ├── Practica1/
+│   ├── Practica2/
+│   ├── Practica3/
+│   ├── Practica4/
+│   ├── Practica5/
+│   ├── Practica6/
+│   ├── Practica7/
+│   ├── Practica8/
+│   ├── Practica9/
+│   ├── Practica10/
+│   └── Practica11/
+├── main.tex             # Documento principal LaTeX
+├── portada.tex          # Portada del reporte
+├── referencias.bib      # Referencias bibliográficas
+├── main.pdf             # Reporte compilado
+└── README.md            # Este archivo
 ```
 
 ---
@@ -101,10 +111,12 @@ pdflatex main.tex
 **Grupo:** 06  
 **Semestre:** 2026-2  
 **Profesor:** Ing. Moisés Meléndez Reyes  
-**Práctica:** 11 (Interrupciones y Multinúcleo)
+**Práctica:** 12 (Uso y Aplicaciones de WiFi)
 
 ---
 
 ## Notas importantes
 
-- Este README corresponde a la práctica 11: Interrupciones y Programación Multinúcleo.
+- Este README corresponde a la práctica 12: Uso y Aplicaciones de WiFi.
+- Las actividades 4 y 5 están completamente documentadas con propuesta de solución, diagramas de flujo TikZ, código comentado, evidencias fotográficas y análisis de resultados.
+- Las prácticas anteriores (1-11) se encuentran archivadas en la carpeta `PracticasPasadas/`.

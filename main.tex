@@ -118,12 +118,11 @@
     numbers=none,
     tabsize=4,
     belowcaptionskip=1em,
-    abovecaptionskip=1em
+        abovecaptionskip=1em
 }
 
 \lstset{
-  backgroundcolor=\color{backcolour},
-  basicstyle=\ttfamily\small,
+    backgroundcolor=\color{backcolour},
     inputencoding=utf8,
   keywordstyle=\color{blue}\bfseries,
   stringstyle=\color{codepurple},
@@ -463,14 +462,91 @@
 
     \section*{Propuesta de solución}
 
+    La solución propuesta para esta actividad consiste en implementar un servidor web embebido en la Raspberry Pi Pico W que permita controlar un LED conectado al pin GPIO18 desde cualquier dispositivo con navegador web dentro de la misma red local. Para lograr esto, primero se configura la interfaz WiFi de la Pico W en modo estación (STA\_IF), lo que permite conectarla a una red existente mediante el módulo \texttt{network}. Una vez establecida la conexión y obtenida una dirección IP por DHCP, se crea un socket TCP enlazado al puerto 80 (HTTP estándar) que escucha peticiones entrantes. La interfaz web se construye mediante una función que genera código HTML con dos botones: uno para encender y otro para apagar el LED. Cuando el usuario presiona un botón desde su navegador, se envía una petición HTTP GET con un parámetro en la URL (\texttt{/?led1=on} o \texttt{/?led1=off}), el cual es analizado por el servidor para cambiar el estado del pin GPIO18 mediante \texttt{led1.value(1)} o \texttt{led1.value(0)}. El servidor responde con las cabeceras HTTP apropiadas y el contenido HTML actualizado, cerrando la conexión después de cada respuesta. Se incluye manejo de excepciones para garantizar que el servidor permanezca activo ante errores de comunicación.
+
+    \begin{center}
+    \begin{tikzpicture}[scale=0.68, transform shape, node distance=1.0cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.2cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        \node (start) [startstop] {Inicio};
+        \node (confled) [process, below=of start] {Configurar GPIO18\\como salida (LED)};
+        \node (confwifi) [process, below=of confled] {Activar interfaz WiFi\\modo STA\_IF};
+        \node (connect) [process, below=of confwifi] {Conectar a red WiFi\\(SSID + password)};
+        \node (waitconn) [decision, below=of connect] {Conectado?};
+        \node (showip) [io, below=1.2cm of waitconn] {Mostrar IP asignada};
+        \node (socket) [process, below=of showip] {Crear socket TCP\\puerto 80};
+        \node (listen) [process, below=of socket] {socket.listen(5)};
+        \node (accept) [process, below=of listen] {Esperar conexion\\cl = s.accept()};
+        \node (recv) [process, below=of accept] {Recibir peticion HTTP\\request = cl.recv(1024)};
+        \node (chkon) [decision, below=of recv] {led1=on\\en URL?};
+        \node (ledon) [process, right=4cm of chkon] {LED ON\\led1.value(1)};
+        \node (chkoff) [decision, below=1.2cm of chkon] {led1=off\\en URL?};
+        \node (ledoff) [process, right=4cm of chkoff] {LED OFF\\led1.value(0)};
+        \node (response) [process, below=1.2cm of chkoff] {Generar HTML\\web\_page()};
+        \node (send) [io, below=of response] {Enviar cabeceras HTTP\\y contenido HTML};
+        \node (close) [process, below=of send] {Cerrar conexion\\cl.close()};
+
+        \draw [arrow] (start) -- (confled);
+        \draw [arrow] (confled) -- (confwifi);
+        \draw [arrow] (confwifi) -- (connect);
+        \draw [arrow] (connect) -- (waitconn);
+        \draw [arrow] (waitconn.west) -- ++(-3,0) node[midway, above, font=\tiny]{No} |- (connect.west);
+        \draw [arrow] (waitconn) -- node[right, font=\tiny]{Si} (showip);
+        \draw [arrow] (showip) -- (socket);
+        \draw [arrow] (socket) -- (listen);
+        \draw [arrow] (listen) -- (accept);
+        \draw [arrow] (accept) -- (recv);
+        \draw [arrow] (recv) -- (chkon);
+        \draw [arrow] (chkon) -- node[above, font=\tiny]{Si} (ledon);
+        \draw [arrow] (chkon) -- node[right, font=\tiny]{No} (chkoff);
+        \draw [arrow] (ledon.south) -- ++(0,-0.4) -| (chkoff.east);
+        \draw [arrow] (chkoff) -- node[above, font=\tiny]{Si} (ledoff);
+        \draw [arrow] (chkoff) -- node[right, font=\tiny]{No} (response);
+        \draw [arrow] (ledoff.south) -- ++(0,-0.4) -| (response.east);
+        \draw [arrow] (response) -- (send);
+        \draw [arrow] (send) -- (close);
+        \draw [arrow] (close.west) -- ++(-4.5,0) |- (accept.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    En el diagrama de flujo se observa que el programa inicia configurando el pin GPIO18 como salida, activa la interfaz WiFi en modo estación y se conecta a la red. Un bucle de espera verifica la conexión antes de continuar. Una vez conectado, se muestra la dirección IP y se crea un socket TCP en el puerto 80 que queda en modo escucha. El bucle principal del servidor espera conexiones, recibe la petición HTTP, analiza la URL para determinar si el usuario solicita encender o apagar el LED, genera la página HTML de respuesta y la envía al cliente junto con las cabeceras HTTP correspondientes, cerrando la conexión al finalizar y regresando a esperar una nueva petición.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 4, basicstyle=\ttfamily\scriptsize]{Code/Act4.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_1.jpg}
+        \caption{Actividad 4: Tarjeta Raspberry Pi Pico W con el LED1 (GPIO18) encendido tras recibir el comando desde la interfaz web.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_2.jpg}
+        \caption{Actividad 4: Tarjeta Raspberry Pi Pico W con todos los LEDs apagados, estado inicial o tras presionar el boton APAGAR.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad4/Act4_3.jpg}
+        \caption{Actividad 4: Consola de Thonny mostrando la conexion WiFi exitosa y la direccion IP asignada 192.168.79.233.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.45\textwidth]{img/Actividad4/Act4_4.jpg}
+        \caption{Actividad 4: Interfaz web del servidor Pico W mostrando los botones ENCENDER y APAGAR, accedida desde un dispositivo movil.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
+    Los resultados obtenidos en la Actividad 4 demuestran el correcto funcionamiento del servidor web embebido en la Raspberry Pi Pico W para el control remoto de un LED. Como se observa en la Figura 3, la consola de Thonny registra la secuencia de conexión WiFi con varios intentos antes de establecer la conexión exitosa, mostrando la dirección IP 192.168.79.233 asignada por el servidor DHCP de la red, lo cual confirma que el módulo \texttt{network} en modo STA\_IF opera correctamente y que la Pico W se integró a la red local. En la Figura 4 se aprecia la interfaz web accedida desde un dispositivo móvil conectado a la misma red, donde se muestran el título del servidor, los botones estilizados de ENCENDER (verde) y APAGAR (gris), y los nombres de los integrantes del equipo, validando que la función \texttt{web\_page()} genera correctamente el código HTML con los estilos CSS responsivos gracias a la etiqueta \texttt{meta viewport}. La Figura 1 muestra el LED1 en GPIO18 encendido tras presionar el botón ENCENDER desde el navegador, confirmando que la petición HTTP GET con el parámetro \texttt{/?led1=on} fue recibida y procesada correctamente por el servidor, ejecutando \texttt{led1.value(1)}. La Figura 2 muestra el estado con los LEDs apagados, correspondiente al estado tras presionar APAGAR o al estado inicial del sistema. El servidor maneja adecuadamente el protocolo HTTP enviando las cabeceras de respuesta (código 200 OK, Content-Type text/html) antes del contenido HTML, y cierra la conexión después de cada respuesta, permitiendo atender múltiples clientes de forma secuencial. 
 
     \newpage
     \section*{Actividad 5}
@@ -481,16 +557,110 @@
 
     \section*{Propuesta de solución}
 
+    La solución propuesta para esta actividad extiende el servidor web de la actividad anterior para controlar 4 salidas GPIO de manera independiente desde una interfaz web. Se define una lista de pines (\texttt{leds}) que agrupa los GPIO 18, 18, 19 y 20 como salidas digitales, permitiendo manejarlos de forma indexada. La interfaz HTML se genera dinámicamente mediante un bucle \texttt{for} que crea para cada LED un encabezado con su estado actual (ENCENDIDO/APAGADO) y dos botones con enlaces parametrizados (\texttt{/?led0=on}, \texttt{/?led1=off}, etc.). La lógica del servidor analiza la URL recibida iterando sobre los 4 índices y verificando la presencia de cada parámetro, lo que permite identificar cuál LED debe cambiar de estado. Esta arquitectura escalable evita duplicar código para cada salida y facilita la adición de más GPIOs en el futuro. El servidor mantiene la misma estructura de socket TCP en el puerto 80, con conexión WiFi en modo estación y respuesta HTTP estándar.
+
+    \begin{center}
+    \begin{tikzpicture}[scale=0.68, transform shape, node distance=1.0cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.2cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2.5cm, minimum height=0.7cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        \node (start) [startstop] {Inicio};
+        \node (confleds) [process, below=of start] {Configurar 4 GPIOs\\como salida (lista leds)};
+        \node (confwifi) [process, below=of confleds] {Activar WiFi STA\_IF\\Conectar a red};
+        \node (waitconn) [decision, below=of confwifi] {Conectado?};
+        \node (showip) [io, below=1.2cm of waitconn] {Mostrar IP asignada};
+        \node (socket) [process, below=of showip] {Crear socket TCP\\puerto 80, listen(5)};
+        \node (accept) [process, below=of socket] {Esperar conexion\\cl = s.accept()};
+        \node (recv) [process, below=of accept] {Recibir peticion HTTP};
+        \node (loopstart) [process, below=of recv] {Para i = 0 a 3:};
+        \node (chkon) [decision, below=of loopstart] {led(i)=on\\en URL?};
+        \node (ledon) [process, right=4cm of chkon] {leds{[}i{]}.value(1)};
+        \node (chkoff) [decision, below=1.2cm of chkon] {led(i)=off\\en URL?};
+        \node (ledoff) [process, right=6cm of chkoff] {leds{[}i{]}.value(0)};
+        \node (nextled) [decision, below=1.2cm of chkoff] {i $<$ 3?};
+        \node (genhtml) [process, below=1.2cm of nextled] {Generar HTML dinamico\\web\_page()};
+        \node (send) [io, below=of genhtml] {Enviar cabeceras HTTP\\y contenido HTML};
+        \node (close) [process, below=of send] {Cerrar conexion};
+
+        \draw [arrow] (start) -- (confleds);
+        \draw [arrow] (confleds) -- (confwifi);
+        \draw [arrow] (confwifi) -- (waitconn);
+        \draw [arrow] (waitconn.west) -- ++(-3,0) node[midway, above, font=\tiny]{No} |- (confwifi.west);
+        \draw [arrow] (waitconn) -- node[right, font=\tiny]{Si} (showip);
+        \draw [arrow] (showip) -- (socket);
+        \draw [arrow] (socket) -- (accept);
+        \draw [arrow] (accept) -- (recv);
+        \draw [arrow] (recv) -- (loopstart);
+        \draw [arrow] (loopstart) -- (chkon);
+        \draw [arrow] (chkon) -- node[above, font=\tiny]{Si} (ledon);
+        \draw [arrow] (chkon) -- node[right, font=\tiny]{No} (chkoff);
+        \draw [arrow] (ledon.south) |- (chkoff.east);
+        \draw [arrow] (chkoff) -- node[above, font=\tiny]{Si} (ledoff);
+        \draw [arrow] (chkoff) -- node[right, font=\tiny]{No} (nextled);
+        \draw [arrow] (ledoff.south) -- ++(0,-0.4) -| (nextled.east);
+        \draw [arrow] (nextled.west) -- ++(-3.5,0) node[midway, above, font=\tiny]{Si, i++} |- (chkon.west);
+        \draw [arrow] (nextled) -- node[right, font=\tiny]{No} (genhtml);
+        \draw [arrow] (genhtml) -- (send);
+        \draw [arrow] (send) -- (close);
+        \draw [arrow] (close.west) -- ++(-5,0) |- (accept.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    En el diagrama de flujo se muestra cómo el programa inicia configurando los 4 pines GPIO como salida en una lista, se conecta a la red WiFi y crea el socket del servidor. En el bucle principal, tras aceptar una conexión y recibir la petición HTTP, se ejecuta un bucle interno que itera sobre los índices 0 a 3 verificando para cada uno si la URL contiene el parámetro de encendido o apagado correspondiente. Una vez procesados los 4 LEDs, se genera la página HTML dinámicamente leyendo el estado actual de cada pin, se envía la respuesta al cliente y se cierra la conexión, regresando a esperar la siguiente petición.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 5, basicstyle=\ttfamily\scriptsize]{Code/Act5.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_1.jpg}
+        \caption{Actividad 5: Tarjeta Pico W con un LED encendido (GPIO18) controlado desde la interfaz web de 4 salidas.}
+    \end{figure}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_2.jpg}
+        \caption{Actividad 5: Tarjeta Pico W con LED1 encendido, vista del hardware durante el control remoto.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_3.jpg}
+        \caption{Actividad 5: Tres LEDs encendidos simultaneamente desde la interfaz web de control multiple.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad5/Act5_6.jpg}
+        \caption{Actividad 5: Consola de Thonny mostrando la conexion WiFi exitosa con IP 192.168.79.233.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.45\textwidth]{img/Actividad5/Act5_7.jpg}
+        \caption{Actividad 5: Interfaz web mostrando los 4 LEDs en estado ENCENDIDO con sus botones individuales.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.45\textwidth]{img/Actividad5/Act5_8.jpg}
+        \caption{Actividad 5: Interfaz web con solo el LED 3 ENCENDIDO y los demas APAGADO, demostrando el control individual.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\textwidth]{img/Actividad5/Act5_9.jpg}
+        \caption{Actividad 5: Interfaz web con todos los LEDs en estado APAGADO tras apagar cada uno individualmente.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
 
-
+    Los resultados obtenidos en la Actividad 5 confirman el correcto funcionamiento del servidor web para el control independiente de 4 salidas GPIO desde una interfaz web dinámica. En la Figura 4, la consola de Thonny muestra la conexión exitosa a la red WiFi con la misma dirección IP 192.168.79.233, lo que indica que el módulo WiFi opera de manera estable entre ejecuciones consecutivas. La Figura 5 presenta la interfaz web del panel de control accedida desde un dispositivo móvil, donde se visualizan los 4 LEDs con estado ENCENDIDO, cada uno con sus respectivos botones verdes (ENCENDER) y rojos (APAGAR), confirmando que la generación dinámica del HTML mediante el bucle \texttt{for} con f-strings produce correctamente el contenido para cada LED. La Figura 6 demuestra el control individual de las salidas, mostrando únicamente el LED 3 (GPIO 3) en estado ENCENDIDO mientras los demás permanecen APAGADO, lo que valida que el análisis de la URL con \texttt{f\textquotedbl/?led\{i\}=on\textquotedbl} identifica correctamente cuál LED debe cambiar de estado sin afectar a los demás. La Figura 7 muestra todos los LEDs en estado APAGADO tras apagarlos individualmente, confirmando que los comandos de apagado funcionan para cada salida de forma independiente. En las Figuras 1 a 3 se observa la tarjeta Pico W con diferentes combinaciones de LEDs encendidos, corroborando físicamente los estados mostrados en la interfaz web: la Figura 1 muestra un solo LED activo, la Figura 2 muestra otro LED encendido y la Figura 3 presenta tres LEDs encendidos simultáneamente. La correspondencia entre el estado reportado en la página web y el estado físico de los LEDs valida que la función \texttt{leds[i].value()} opera correctamente tanto para la lectura del estado como para la escritura. 
     \newpage
     \section*{Actividad 6}
     \noindent Realizar un control (Web Server), de manera que controle, el funcionamiento de 4 GPIO
@@ -508,6 +678,7 @@
     \subsection*{Análisis de resultados}
 
 
+    \newpage
     \section{Conclusiones:}
 
     \begin{itemize}
@@ -515,7 +686,7 @@
 
         \item \textbf{Flores Colin Victor Jaziel:} 
 
-        \item \textbf{Lara Hernandez Angel Husiel:} 
+        \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica pude entender de forma más clara cómo funciona la conectividad WiFi dentro de la Raspberry Pi Pico W y cómo aprovecharla para crear servidores web embebidos que permitan controlar hardware de forma remota. Al principio me costó un poco comprender el flujo completo de la comunicación, desde la conexión a la red hasta la creación del socket y el manejo de las peticiones HTTP, pero conforme fui avanzando con las actividades todo fue tomando sentido. Me pareció muy interesante ver cómo con unas pocas líneas de MicroPython se puede levantar un servidor funcional que responde a peticiones desde un celular o una computadora, y cómo los parámetros en la URL permiten controlar los pines GPIO de manera directa. También me quedó más claro el concepto de sockets y cómo el protocolo HTTP funciona por debajo, ya que tuve que construir manualmente las cabeceras de respuesta y gestionar cada conexión. Lo que más me llamó la atención fue la actividad de las 4 salidas, donde al generar la interfaz de forma dinámica con un bucle se logra un código mucho más limpio y escalable que escribir todo de forma manual para cada LED.
 
     \end{itemize}
 
