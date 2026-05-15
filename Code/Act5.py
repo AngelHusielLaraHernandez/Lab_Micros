@@ -1,50 +1,73 @@
-from machine import Pin
-import utime
-import _thread
+import network
+import socket
+import machine
+import time
 
-# --- Entradas y Salidas ---
-S1 = Pin(12, Pin.IN, Pin.PULL_UP) #
-S2 = Pin(13, Pin.IN, Pin.PULL_UP) #
+# --- 1. CONFIGURACIÓN DE SALIDAS ---
+# Definimos los 4 pines de salida solicitados (GPIO 0, 1, 2 y 3)
+leds = [machine.Pin(i, machine.Pin.OUT) for i in [18, 18, 19, 20]]
 
-led_s1 = Pin(18, Pin.OUT) #
-led_s2 = Pin(19, Pin.OUT) #
+# --- 2. DATOS DE RED ---
+ssid = 'S23+ de Angel'
+password = 'angel280731'
 
-# Bandera para comunicar la ISR de S2 con el segundo núcleo
-flag_s2_presionado = False
+# --- 3. CONEXIÓN ---
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(ssid, password)
 
-# --- HILO SECUNDARIO (Core 1) ---
-def nucleo_dos():
-    global flag_s2_presionado
-    while True:
-        # El núcleo 2 está monitoreando si la bandera se activó
-        if flag_s2_presionado:
-            led_s2.toggle() # Toggle en GPIO19
-            print("Núcleo 2: Toggle LED 2")
-            flag_s2_presionado = False # Reinicia la bandera
-            utime.sleep_ms(300) # Antirrebote
-        utime.sleep_ms(10)
+while not wlan.isconnected():
+    time.sleep(1)
+    print("Conectando...")
 
-# Inicia el Hilo 2
-_thread.start_new_thread(nucleo_dos, ())
+print("Conectado. IP:", wlan.ifconfig()[0])
 
-# --- RUTINAS DE INTERRUPCIÓN ---
-def isr_s1(pin):
-    # Esta ISR se ejecuta en el Núcleo 1 (Core 0)
-    led_s1.toggle() # Toggle en GPIO18
-    print("Núcleo 1: Toggle LED 1")
-    utime.sleep_ms(300)
+# --- 4. INTERFAZ HTML ---
+def web_page():
+    html = """
+    <html>
+    <head>
+        <title>Control de 4 Salidas</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body { font-family: Arial; text-align: center; }
+            .btn-on { background-color: #4CAF50; color: white; padding: 10px; margin: 5px; text-decoration: none; }
+            .btn-off { background-color: #f44336; color: white; padding: 10px; margin: 5px; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <h1>Panel de Control de 4 LEDs</h1>
+        <p>Equipo:Espinoza Matamoros Percival Ulises</p>
+        <p>Victor Jaziel Flores Colin</p>
+        <p>Angel Husiel Lara Hernandez</p>
+        <hr>
+    """
+    # Genera dinámicamente los botones para los 4 LEDs
+    for i in range(4):
+        estado = "ENCENDIDO" if leds[i].value() == 1 else "APAGADO"
+        html += f"<h3>LED {i} (GPIO {i}) - Estado: {estado}</h3>"
+        html += f'<p><a href="/?led{i}=on"><button class="btn-on">ENCENDER</button></a>'
+        html += f' <a href="/?led{i}=off"><button class="btn-off">APAGAR</button></a></p>'
+    
+    html += "</body></html>"
+    return html
 
-def isr_s2(pin):
-    # Activa la bandera para que el Núcleo 2 haga el trabajo
-    global flag_s2_presionado
-    flag_s2_presionado = True
+# --- 5. SERVIDOR ---
+s = socket.socket()
+s.bind(('0.0.0.0', 80))
+s.listen(5)
 
-# --- CONFIGURACIÓN DE INTERRUPCIONES ---
-S1.irq(trigger=Pin.IRQ_FALLING, handler=isr_s1) #
-S2.irq(trigger=Pin.IRQ_FALLING, handler=isr_s2) #
-
-print("Multinúcleo listo. Presione S1 o S2.")
-
-# --- BUCLE DEL HILO PRINCIPAL (Core 0) ---
 while True:
-    pass
+    cl, addr = s.accept()
+    request = str(cl.recv(1024))
+    
+    # Lógica para identificar cuál de los 4 LEDs controlar
+    for i in range(4):
+        if f"/?led{i}=on" in request:
+            leds[i].value(1)
+        if f"/?led{i}=off" in request:
+            leds[i].value(0)
+            
+    cl.send('HTTP/1.1 200 OK\nContent-Type: text/html\nConnection: close\n\n')
+    cl.sendall(web_page())
+    cl.close()

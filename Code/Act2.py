@@ -1,32 +1,27 @@
-from machine import Pin
-import utime
+import network #
+from time import sleep #
 
-S1 = Pin(12, Pin.IN, Pin.PULL_UP)
-# Salida para la señal cuadrada en GPIO 20 (LED)
-salida_senal = Pin(20, Pin.OUT)
+# --- DATOS DE TU RED ---
+ssid = 'S23+ de Angel'        # Nombre de tu red Wi-Fi
+password = 'angel280731'  # Contraseña de tu red
 
-# Variable global para comunicar la ISR con el bucle principal
-generar_senal = False
+wlan = network.WLAN(network.STA_IF) #
+wlan.active(True) #
+wlan.connect(ssid, password) #
 
-def FuncISR_S1(pin):
-    global generar_senal
-    generar_senal = not generar_senal # Alterna el estado (Activa/Desactiva la señal)
-    print("Estado de señal cambiado")
-    utime.sleep_ms(200) # Antirrebote
+connection_timeout = 10 # Tiempo máximo de espera: 10 segundos
 
-# Configura la interrupción por flanco de bajada
-S1.irq(trigger=Pin.IRQ_FALLING, handler=FuncISR_S1)
+while connection_timeout > 0: #
+    # El estado 3 o mayor significa que la conexión fue exitosa
+    if wlan.status() >= 3: #
+        break #
+    connection_timeout -= 1 #
+    print('Espera conexión WIFI...') #
+    sleep(1) #
 
-print("Presiona S1 para iniciar/detener la señal de 1Hz")
-
-while True:
-    if generar_senal:
-        # Genera una señal de 1 Hz (1 ciclo por segundo = 0.5s en Alto y 0.5s en Bajo)
-        salida_senal.value(1)
-        utime.sleep(0.5)
-        salida_senal.value(0)
-        utime.sleep(0.5)
-    else:
-        # Si no debe generar señal, asegura que la salida esté apagada
-        salida_senal.value(0)
-        utime.sleep(0.1) # Pequeña pausa para no saturar el procesador
+if wlan.status() != 3: #
+    raise RuntimeError('Error en conexión') # Muestra un error si falló
+else: #
+    print('Conexión establecida') #
+    network_info = wlan.ifconfig() # Obtiene los datos IP asignados por el módem
+    print('IP address:', network_info[0]) # Anota esta IP, la usarás en tu navegador
