@@ -5,6 +5,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 
+
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 % --- PAQUETES MATEMÁTICOS --
@@ -12,7 +13,6 @@
 \usepackage{amssymb}
 \usepackage{cancel}
 \usepackage{mathrsfs}
-
 % --- PAQUETES GRÁFICOS Y DE DISEÑO ---
 \usepackage{graphicx}
 \usepackage{float}
@@ -26,6 +26,8 @@
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing}
 \usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{positioning}
+
 \usepackage{circuitikz}
 \usetikzlibrary{shapes.geometric, shapes.multipart, shapes.symbols, positioning, arrows.meta, calc, shadows, decorations.pathreplacing,babel}
 
@@ -316,10 +318,12 @@
     \section{Objetivo:}
 
     Introducir al estudiante en el control de sistemas empleando la comunicación WiFi, para la realización de aplicaciones de tipo IOT.
-    \section*{Actividad 1}
+
+\section*{Actividad 1}
+
     \noindent Escribir el siguiente código; con ayuda de la documentación oficial comentar que hace cada línea e indicar que hace; Reportar mediante captura de pantalla la ejecución del mismo.
 
-    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 12-2. Codigo de ejemplo; actividad 1}]
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Figura 12-2. Código de ejemplo; actividad 1}]
         import network 
 
         wlan = network.WLAN(network.STA_IF) 
@@ -333,13 +337,61 @@
 
     \section*{Propuesta de solución}
 
+    El código proporcionado para esta actividad consiste en utilizar el módulo \texttt{network} de MicroPython para configurar la Raspberry Pi Pico W comoun cliente y obtener todas las redes disponibles cercanas. Primero, se importa la librería \texttt{network} y se crea un objeto \texttt{wlan} en modo \texttt{STA\_IF} (Station Interface), que permite que el dispositivo actúe como un cliente WiFi. Se activa la interfaz con \texttt{wlan.active(True)} y se ejecuta el método \texttt{scan()}, que devuelve una lista de tuplas con información de las redes detectadas: SSID (nombre de la red), BSSID (dirección MAC del punto de acceso), canal, intensidad de señal (RSSI en dBm), modo de autenticación y si la red está oculta. Finalmente, se imprimen los resultados en la terminal.
+
+    \begin{center}
+    \begin{tikzpicture}[scale=0.75, transform shape, node distance=0.8cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        arrow/.style={thick,->,>=stealth}]
+
+        \node (start) [startstop] {Inicio};
+        \node (import) [process, below=of start] {Importar módulo network};
+        % Se escapó el guion bajo en STA\_IF
+        \node (config) [process, below=of import] {Crear interfaz wlan en modo STA\_IF}; 
+        \node (active) [process, below=of config] {Activar interfaz con wlan.active(True)};
+        \node (scan) [process, below=of active] {Ejecutar wlan.scan() para buscar redes};
+        \node (printheader) [process, below=of scan] {Imprimir Redes cercanas:};
+        \node (forloop) [process, below=of printheader] {for net in networks: Iniciar bucle};
+        \node (printnet) [process, below=of forloop] {Imprimir tupla con datos de la red};
+        % Ajustamos la posición de 'end' para que las flechas del bucle no se crucen feo
+        \node (end) [startstop, below=1.2cm of printnet] {Fin};
+
+        \draw [arrow] (start) -- (import);
+        \draw [arrow] (import) -- (config);
+        \draw [arrow] (config) -- (active);
+        \draw [arrow] (active) -- (scan);
+        \draw [arrow] (scan) -- (printheader);
+        \draw [arrow] (printheader) -- (forloop);
+        \draw [arrow] (forloop) -- (printnet);
+        
+        % Flecha de retorno del bucle (corregida estética para que no choque)
+        \draw [arrow] (printnet.east) -- ++(0.5,0) |- (forloop.east);
+        
+        % Flecha hacia fin (cuando termina el bucle)
+        \draw [arrow] (forloop.west) -- ++(-0.8,0) |- (end.west);
+
+    \end{tikzpicture}
+    \end{center}
+
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=Codigo comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código comentado de la Actividad 1, basicstyle=\ttfamily\scriptsize]{Code/Act1.py}
 
-    \subsection*{Analisis de resultados}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad1/Act1_1.jpg}
+        \caption{Consola mostrando las redes WiFi detectadas por la Raspberry Pi Pico W, incluyendo SSID, BSSID, canal, intensidad de señal, autenticación y estado oculto.}
+    \end{figure}
+
+    \subsection*{Análisis de resultados}
+
+    Los resultados obtenidos en la Actividad 1 demuestran el correcto funcionamiento del escaneo de redes WiFi mediante la Raspberry Pi Pico W. Como se observa en la Figura 1, la consola muestra múltiples redes detectadas con sus respectivos parámetros: el SSID (nombre de red como "s23+ de Angel", "Lab. de Redes y Seguridad", "Microcomputadoras"), que es la red personal que utilizamos, el BSSID (dirección MAC del punto de acceso en formato hexadecimal), el canal (valores como 1, 2, 4, 6, 7, 9, 11), la intensidad de señal (RSSI en dBm, donde valores más cercanos a 0 indican mejor señal, como -25 dBm para "s23+ de Angel"), el modo de autenticación (0 = abierta, 5 = WPA2-PSK, etc.), y si la red está oculta (1 = sí, 0 = no). La impresión de información sobre las redes cercanas es fundamental para aplicaciones de IoT donde la Pico W necesita conectarse a una red específica, ya que permite identificar las redes disponibles y seleccionar la adecuada según la intensidad de señal o el modo de seguridad.
+
+\newpage
 
     \newpage
+
     \section*{Actividad 2}
     \noindent Para el siguiente código, identificar los parámetros faltantes. Complementar con los datos indicados, escribir el código; con ayuda de la documentación oficial comentar que hace cada línea, e
     indicar que hace el programa; reportar mediante captura de pantalla la ejecución del mismo.
@@ -661,21 +713,144 @@
     \subsection*{Análisis de resultados}
 
     Los resultados obtenidos en la Actividad 5 confirman el correcto funcionamiento del servidor web para el control independiente de 4 salidas GPIO desde una interfaz web dinámica. En la Figura 4, la consola de Thonny muestra la conexión exitosa a la red WiFi con la misma dirección IP 192.168.79.233, lo que indica que el módulo WiFi opera de manera estable entre ejecuciones consecutivas. La Figura 5 presenta la interfaz web del panel de control accedida desde un dispositivo móvil, donde se visualizan los 4 LEDs con estado ENCENDIDO, cada uno con sus respectivos botones verdes (ENCENDER) y rojos (APAGAR), confirmando que la generación dinámica del HTML mediante el bucle \texttt{for} con f-strings produce correctamente el contenido para cada LED. La Figura 6 demuestra el control individual de las salidas, mostrando únicamente el LED 3 (GPIO 3) en estado ENCENDIDO mientras los demás permanecen APAGADO, lo que valida que el análisis de la URL con \texttt{f\textquotedbl/?led\{i\}=on\textquotedbl} identifica correctamente cuál LED debe cambiar de estado sin afectar a los demás. La Figura 7 muestra todos los LEDs en estado APAGADO tras apagarlos individualmente, confirmando que los comandos de apagado funcionan para cada salida de forma independiente. En las Figuras 1 a 3 se observa la tarjeta Pico W con diferentes combinaciones de LEDs encendidos, corroborando físicamente los estados mostrados en la interfaz web: la Figura 1 muestra un solo LED activo, la Figura 2 muestra otro LED encendido y la Figura 3 presenta tres LEDs encendidos simultáneamente. La correspondencia entre el estado reportado en la página web y el estado físico de los LEDs valida que la función \texttt{leds[i].value()} opera correctamente tanto para la lectura del estado como para la escritura. 
-    \newpage
-    \section*{Actividad 6}
-    \noindent Realizar un control (Web Server), de manera que controle, el funcionamiento de 4 GPIO
-    como salida, 2 entrada digitales, 1 entrada analógica y se permita controlar la salida PWM; elegir los
-    recursos que sean pertinentes en cada caso, para ver el funcionamiento de esta aplicación.
+\newpage
+
+\section*{Actividad 6}
+
+    \noindent Realizar un control (Web Server), de manera que controle, el funcionamiento de 4 GPIO como salida, 2 entradas digitales, 1 entrada analógica y se permita controlar la salida PWM; elegir los recursos que sean pertinentes en cada caso, para ver el funcionamiento de esta aplicación.
 
     \section*{Propuesta de solución}
 
+    Nuestra propuesta de solución consiste en implementar un servidor web en la Raspberry Pi Pico W que permita controlar y monitorear múltiples periféricos desde un dispositivo movil con navegador dentro de la misma red local. Se configuran 3 LEDs individuales en los GPIO 18, 19 y 20 como salidas digitales, 2 botones en los GPIO 12 y 13 como entradas digitales con resistencia pull-up, un zumbador en el GPIO 17 como salida PWM para control de volumen, y un LED RGB conectado a través de un expansor PCF8574 en el bus I2C (dirección 0x39). La interfaz web se actualiza dinámicamente mostrando el estado de los botones (PRESIONADO/LIBERADO), el estado de cada LED (ON/OFF), el color actual del RGB y el nivel de volumen del zumbador (0\%, 25\%, 100\%). Cada acción del usuario (encender/apagar LEDs, cambiar color RGB, ajustar volumen) se envía mediante peticiones HTTP GET con parámetros en la URL, los cuales son analizados por el servidor para ejecutar las acciones correspondientes sobre el hardware.
+
+    \begin{center}
+    \begin{tikzpicture}[scale=0.65, transform shape, node distance=0.9cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=0.6cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.0cm, minimum height=0.6cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.0cm, minimum height=0.6cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        arrow/.style={thick,->,>=stealth}]
+
+        \node (start) [startstop] {Inicio};
+        \node (hw) [process, below=of start] {Configurar hardware:\\3 LEDs, 2 botones,\\PWM buzzer, I2C PCF8574};
+        \node (wifi) [process, below=of hw] {Conectar a WiFi\\STA\_IF};
+        \node (ip) [process, below=of wifi] {Mostrar IP asignada};
+        \node (socket) [process, below=of ip] {Crear socket TCP\\puerto 80};
+        \node (listen) [process, below=of socket] {socket.listen(5)};
+        \node (accept) [process, below=of listen] {Esperar conexion\\cl = s.accept()};
+        \node (recv) [process, below=of accept] {Recibir peticion\\request = cl.recv(1024)};
+        \node (chkled) [decision, below=of recv] {Parametro led?};
+        \node (setled) [process, right=3.5cm of chkled] {Cambiar estado\\LED (ON/OFF)};
+        \node (chkpwm) [decision, below=1.0cm of chkled] {Parametro pwm?};
+        \node (setpwm) [process, right=3.5cm of chkpwm] {Cambiar duty\_u16\\del zumbador};
+        \node (chkrgb) [decision, below=1.0cm of chkpwm] {Parametro rgb?};
+        \node (setrgb) [process, right=3.5cm of chkrgb] {Configurar PCF8574\\para RGB (R/G/B)};
+        \node (readbtn) [process, below=1.0cm of chkrgb] {Leer estado\\botones S1 y S2};
+        \node (html) [process, below=of readbtn] {Generar HTML con\\estados actualizados};
+        \node (send) [process, below=of html] {Enviar cabeceras\\y contenido HTML};
+        \node (close) [process, below=of send] {Cerrar conexion\\cl.close()};
+
+        \draw [arrow] (start) -- (hw);
+        \draw [arrow] (hw) -- (wifi);
+        \draw [arrow] (wifi) -- (ip);
+        \draw [arrow] (ip) -- (socket);
+        \draw [arrow] (socket) -- (listen);
+        \draw [arrow] (listen) -- (accept);
+        \draw [arrow] (accept) -- (recv);
+        \draw [arrow] (recv) -- (chkled);
+        \draw [arrow] (chkled) -- node[above, font=\tiny]{Si} (setled);
+        \draw [arrow] (chkled) -- node[right, font=\tiny]{No} (chkpwm);
+        \draw [arrow] (setled.south) -- ++(0,-0.3) -| (chkpwm.east);
+        \draw [arrow] (chkpwm) -- node[above, font=\tiny]{Si} (setpwm);
+        \draw [arrow] (chkpwm) -- node[right, font=\tiny]{No} (chkrgb);
+        \draw [arrow] (setpwm.south) -- ++(0,-0.3) -| (chkrgb.east);
+        \draw [arrow] (chkrgb) -- node[above, font=\tiny]{Si} (setrgb);
+        \draw [arrow] (chkrgb) -- node[right, font=\tiny]{No} (readbtn);
+        \draw [arrow] (setrgb) |- (readbtn.east);
+        \draw [arrow] (readbtn) -- (html);
+        \draw [arrow] (html) -- (send);
+        \draw [arrow] (send) -- (close);
+        \draw [arrow] (close.west) -- ++(-5.0,0) |- (accept.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    En el diagrama de flujo se observa que el programa inicia configurando todo el hardware (LEDs, botones, PWM, I2C), se conecta a la red WiFi, crea un socket en el puerto 80 y entra en un bucle infinito esperando conexiones de clientes. Cuando recibe una petición, analiza los parámetros GET en la URL: si contiene "led" cambia el estado del LED correspondiente, si contiene "pwm" ajusta el duty cycle del zumbador, si contiene "rgb" configura el color del LED RGB mediante el expansor PCF8574. Luego lee el estado actual de los botones S1 y S2, genera la página HTML completa con todos los valores actualizados, envía la respuesta HTTP y cierra la conexión, regresando a esperar nuevas peticiones.
 
     \section*{Desarrollo}
 
-    \lstinputlisting[language={[LAB]Python}, caption=C\'odigo de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
+    \lstinputlisting[language={[LAB]Python}, caption=Código de la Actividad 6, basicstyle=\ttfamily\scriptsize]{Code/Act6.py}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_1.jpg}
+        \caption{LED1 (GPIO18) encendido.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_2.jpg}
+        \caption{LED1 (GPIO18)  y LED 2 (GPIO19) encendidos}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_3.jpg}
+        \caption{LED1 (GPIO18), LED 2 (GPIO19) y LED 3 (GPIO20) encendidos}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_4.jpg}
+        \caption{LED1 (GPIO18) y LED 3 (GPIO20) encendidos y LED 2(GPIO19) apagado. }
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_5.jpg}
+        \caption{LED1 (GPIO18) y LED 3 (GPIO20) encendidos y LED 2(GPIO19) apagado y RGB en color Rojo (intensidad 1).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_6.jpg}
+        \caption{LED1 (GPIO18) y LED 3 (GPIO20) encendidos y LED 2(GPIO19) apagado y RGB en color Verde (intensidad 2).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_7.jpg}
+        \caption{LED1 (GPIO18) y LED 3 (GPIO20) encendido y LED 2(GPIO19) apagado y RGB en color Azul (intensidad 3).}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_8.jpg}
+        \caption{Conexión correcta a la red personal.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_10.jpg}
+        \caption{Datos de los integrantes del equipo y secciones para controlar los actuadores conectados a la Raspberry por medio de PWM.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_9.jpg}
+        \caption{Estado inicial de todos los actuadores, apagados y con la intensidad al 0\%, excepto con el zumador que esta en su máxima intensidad.}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{img/Actividad6/Act6_11.jpg}
+        \caption{Estado Actual, LEDS 1 y 3 (GPIO 18 y 20) encendidos, RGB en azul y ambos botones en estado de liberado.}
+    \end{figure}
 
     \subsection*{Análisis de resultados}
+
+    Los resultados obtenidos en la Actividad 6 demuestran el  funcionamiento del servidor web en la Raspberry Pi Pico W para el control y monitoreo de múltiples periféricos. En las primeras 7 figuras se observa la variación de intensidad de los LEDs blancos conectados a los GPIO 18, 19 y 20 mediante señales PWM, mostrando diferentes niveles de brillo durante la fase de pruebas, lo que valida el correcto funcionamiento de la modulación por ancho de pulso en las salidas digitales.
+
+    En las ultimas 3 figuras se muestran todos los controles disponibles: el estado de los botones S1 y S2 (entradas digitales), los botones ON/OFF para cada uno de los 3 LEDs (salidas digitales), los controles para el LED RGB vía expansor PCF8574 (Rojo, Verde, Azul, Apagar), y los controles de volumen del zumbador mediante PWM (0\%, 25\%, 100\%), en la última imagen se puede observa como la interfaz con el botón S1 presionado demuestra que el servidor lee correctamente el estado de las entradas digitales, Además al mostrar la interfaz después de encender los LEDs 1 y 3, y seleccionar el color AZUL para el RGB, se confirma que el servidor procesa adecuadamente los parámetros GET en la URL y actualiza el estado del hardware y la interfaz en tiempo real.
 
 
     \newpage
@@ -684,7 +859,9 @@
     \begin{itemize}
         \item \textbf{Espinoza Matamoros Percival Ulises:} 
 
-        \item \textbf{Flores Colin Victor Jaziel:} 
+        \item \textbf{Flores Colin Victor Jaziel:} En esta última práctica logré comprender de manera más profunda cómo funciona la conectividad WiFi en la Raspberry Pi Pico W y cómo implementar un servidor web para controlar y monitorear periféricos de forma remota, aunque al principio tuvimos problemas para identificar los puertos para trabajar con los actuadores, ya que en nuestra tarjeta los puertos eran diferentes a los del manual pero, finalmente conseguimos dar con los puertos correctos en la Raspberry y pudimos realizar los experimentos de forma optima.
+        
+        Al trabajar con las diferentes actividades pude observar cómo cada petición del cliente es analizada por el servidor para ejecutar acciones específicas sobre el hardware, como encender LEDs, ajustar el volumen del zumbador mediante PWM o cambiar el color del RGB a través del expansor PCF8574. Me pareció muy interesante ver cómo el servidor también puede leer el estado de entradas digitales (como los botones S1 y S2) y mostrarlas en tiempo real en la interfaz web, lo que permite una interacción bidireccional completa entre el usuario y la Pico W. También me quedó claro el concepto de generación dinámica de HTML, donde los estados actuales de los dispositivos se insertan directamente en la página antes de enviarla al cliente, evitando tener que hacer múltiples peticiones al servidor.
 
         \item \textbf{Lara Hernandez Angel Husiel:} En esta práctica pude entender de forma más clara cómo funciona la conectividad WiFi dentro de la Raspberry Pi Pico W y cómo aprovecharla para crear servidores web embebidos que permitan controlar hardware de forma remota. Al principio me costó un poco comprender el flujo completo de la comunicación, desde la conexión a la red hasta la creación del socket y el manejo de las peticiones HTTP, pero conforme fui avanzando con las actividades todo fue tomando sentido. Me pareció muy interesante ver cómo con unas pocas líneas de MicroPython se puede levantar un servidor funcional que responde a peticiones desde un celular o una computadora, y cómo los parámetros en la URL permiten controlar los pines GPIO de manera directa. También me quedó más claro el concepto de sockets y cómo el protocolo HTTP funciona por debajo, ya que tuve que construir manualmente las cabeceras de respuesta y gestionar cada conexión. Lo que más me llamó la atención fue la actividad de las 4 salidas, donde al generar la interfaz de forma dinámica con un bucle se logra un código mucho más limpio y escalable que escribir todo de forma manual para cada LED.
 
