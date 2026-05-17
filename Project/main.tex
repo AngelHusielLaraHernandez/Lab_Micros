@@ -728,7 +728,7 @@
         \begin{subfigure}[b]{0.48\textwidth}
             \centering
             \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_3.jpg}
-            \caption{Aparición gradual del nombre del primer integrante Ezpinoza Percival.}
+            \caption{Aparición gradual del nombre del primer integrante Espinoza Percival.}
             \label{fig:anim3}
         \end{subfigure}
         \hfill
@@ -839,7 +839,7 @@
         \begin{subfigure}[b]{0.48\textwidth}
             \centering
             \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/Corriente/Corriente_2.jpg}
-            \caption{visualización de la medición de voltaje DC a de una pila de 9V, se observan 8.81V.}
+            \caption{visualización de la medición de voltaje DC a de una pila de 9V, solo conectando el borne negativo a tierra, 0[V] se muestra en pantalla.}
             \label{fig:volt2}
         \end{subfigure}
         \caption{Medición de voltaje DC (parte 1 de 2).}
@@ -971,7 +971,12 @@
 
         \subsection{Espinoza Matamoros Percival Ulises}
 
-        El desarrollo de este multímetro digital me permitió consolidar la comprensión de la arquitectura de la Raspberry Pi Pico 2W y su ecosistema de desarrollo en MicroPython. La implementación de la máquina de estados para gestionar la navegación entre la animación de inicio, el menú principal y los modos de medición fue particularmente enriquecedora, ya que me enfrentó al reto de coordinar eventos asíncronos —las pulsaciones de los botones— con un bucle de actualización continua de las lecturas. El sistema de anti-rebote por software y el filtrado mediante promedio de muestras del ADC demostraron ser soluciones simples pero efectivas para mejorar la estabilidad del instrumento sin añadir componentes externos. Considero que el proyecto logró un equilibrio adecuado entre funcionalidad, costo y complejidad, y me deja como aprendizaje principal la importancia de planificar la estructura del código antes de escribirlo, especialmente cuando se combinan periféricos de entrada, salida y comunicación serial en un solo firmware.
+        El desarrollo de este proyecto me permitió aplicar los conceptos que he adquirido a lo largo del laboratorio de microcomputadoras, de forma que al construir un voltímetro y amperímetro usando la raspberry pi pico 2w, pude terminar de comprender la importancia y utilidad de las microcomputadoras, ya que en el caso de la Raspberry Pi Pico 2W, su convertidor analógico digital fue fundamental para poder medir las magnitudes físicas que se nos pidieron, y a su vez, el protocolo I2C fue esencial para la comunicación con la pantalla OLED. Además, el uso de MicroPython me permitió escribir un código más legible y fácil de depurar, lo que facilitó la implementación de la interfaz gráfica y la lógica de medición.
+
+        Por otro lado para poder implementar de forma correcta el proyecto se tuvieron que aplicar conocimientos previos obtenidos en materias de Circuitos eléctricos para diseñar un divisor de voltaje adecuado para medir voltajes de hasta 20 V sin exceder el límite de 3.3 V del ADC, de forma que para implementaciones de proyectos más complejos, es fundamental tener una base sólida en otras disciplinas que se relacionan como lo son los circuitos eléctricos, para poder diseñar adecuadamente los circuitos de acondicionamiento de señal necesarios para las mediciones.
+
+        Es por esto que gracias a realizar este proyecto, pude comprender la importancia de las microcomputadoras, siendo de gran utilidad para la resolución de problemas en el ámbito de la ingeniería, donde se pueden implementar junto con otras disciplinas para crear soluciones innovadoras y eficientes.
+
 
         \subsection{Flores Colin Victor Jaziel}
 
