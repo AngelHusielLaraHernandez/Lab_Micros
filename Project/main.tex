@@ -24,6 +24,7 @@
 \usepackage{array}
 \usepackage{caption}
 \usepackage{tikz}
+
 \usetikzlibrary{decorations.pathreplacing}
 \usetikzlibrary{decorations.pathmorphing}
 \usepackage{circuitikz}
@@ -217,16 +218,47 @@
     \section{Marco teórico y justificación de componentes}
 
     \begin{itemize}
-        \item \textbf{RP2350 (Pico 2):} Este proyecto esta implementado en la Raspberry Pi Pico 2W (RP2350) por tres motivos fundamentales, el primer motivo se debe a su plataforma de desarrollo MicroPython que nos permitió implementar una máquina de estados y una interfaz gráfica de usuario en una pantalla OLED de una forma bastante comoda; el segundo motivo es porque, entres sus 26 pines GPIO multipropósito, incluyendo 4 que pueden usarse para ADC (convertidor analógico-digital) de uso general, estos ADC fueron fundamentales para el voltímetro, amperímetro y termómetro, sin necesidad de multiplexores externos adicionales y el último motivo se debe a su arquitectura ARM Cortex-M33 de doble núcleo y su riqueza de periféricos (como GPIO para los push-buttons), todos estos motivos convierten a la RP2350 en una gran elección para desarrollar ul multímetro, de una forma bastante sencilla y asequible por el bajo costo de este dispositivo y a que no hay que comprar tantos componentes adicionales.
+        \item \textbf{RP2350 (Pico 2):} Este proyecto esta implementado en la Raspberry Pi Pico 2W (RP2350) por tres motivos fundamentales, el primer motivo se debe a su plataforma de desarrollo MicroPython que nos permitió implementar una máquina de estados y una interfaz gráfica de usuario en una pantalla OLED de una forma bastante comoda; el segundo motivo es porque, entres sus 26 pines GPIO multipropósito, incluyendo 4 que pueden usarse para ADC (convertidor analógico-digital) de uso general, estos ADC fueron fundamentales para el voltímetro, amperímetro y termómetro, sin necesidad de multiplexores externos adicionales y el último motivo se debe a su arquitectura ARM Cortex-M33 de doble núcleo y su riqueza de periféricos (como GPIO para los push-buttons), todos estos motivos convierten a la RP2350 en una gran opción para desarrollar el multímetro, de una forma bastante sencilla y asequible por el bajo costo de la Raspberry y a que no hay que comprar tantos componentes adicionales.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.75\textwidth]{img/MarcoTeorico/pico2.jpg}
+            \caption{imagen ilustrativa de la tarjeta utilizada.}
+        \end{figure}
 
-        \item \textbf{Sensor de temperatura LM35:} Se seleccionó el LM35 por su simplicidad de uso y precisión adecuada para este proyecto. A diferencia de otros sensores como los termistores (NTC/PTC) que requieren curvas de calibración no lineales o los sensores digitales que necesitan protocolos complejos, el LM35 es un sensor analógico de estado sólido con una salida lineal de exactamente 10 mV por cada grado Celsius, una característica que simplifica enormemente el código de medición. Además, su rango de operación (0 °C a 100 °C con la configuración básica) cubre perfectamente las necesidades de un multímetro de laboratorio, y su precisión típica de ±0.5 °C es más que suficiente para mediciones de propósito general. Al alimentarse directamente de los 3.3 V provistos por la propia Pico 2W y entregar una señal de voltaje analógica proporcional a la temperatura, se conecta directamente a un canal ADC sin necesidad de circuitos de acondicionamiento adicionales, lo que lo convierte en la opción más directa y efectiva para integrar la funcionalidad de termómetro en nuestro diseño con el menor costo y complejidad posibles.
+        \item \textbf{Sensor de temperatura LM35:} Se seleccionó el LM35 por su simplicidad de uso y precisión adecuada para este proyecto que varia entre ±¼°C, lo cuál es una desviación pequeña bastante aceptable. Otra de las principales ventajas del LM35 con respecto a otros sensores como los termistores (NTC/PTC) que requieren curvas de calibración no lineales o los sensores digitales que necesitan protocolos complejos, el LM35 es un sensor analógico que tiene una resolución de 10 mV por cada grado centígrado y puede llegar a ofrecer un rango de operación de -55 °C a 150 °C, por lo que esta sobrado para nuestras necesidades convencionales. 
+        Al alimentarse directamente de los 3.3 V provistos por la propia Pico 2W y entregar una señal de voltaje analógica proporcional a la temperatura, se conecta directamente a un canal ADC sin necesidad de circuitos o conexiones adicionales, por lo cual es la opción más directa y efectiva para integrar la funcionalidad de termómetro en nuestro multimetro con el menor costo y complejidad posible.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.25\textwidth]{img/MarcoTeorico/lm35.png}
+            \caption{imagen ilustrativa del sensor utilizado.}
+        \end{figure}     
+        \item \textbf{Display OLED 128x64 0.96\textquotedbl   I2C SSD1315:} La visualización de las mediciones se implementó con una pantalla OLED SSD1306 de 128x64 píxeles que se comunica a través del protocolo I2C (Inter-Integrated Circuit). Se eligió este tipo de pantalla sobre alternativas como los LCD de caracteres por varias razones: su naturaleza gráfica de píxeles permite diseñar una interfaz de usuario rica con animaciones, íconos y barras de progreso, lo cual mejora sustancialmente la experiencia del usuario frente a las pantallas alfanuméricas tradicionales. El protocolo I2C es particularmente conveniente porque utiliza solamente dos líneas de comunicación (SDA para datos y SCL para reloj), lo que libera pines GPIO para otros periféricos como los botones y los ADC.
+        Otra ventaja es que la tecnología OLED ofrece un alto contraste debido a que las pantallas OLED iluminan cada pixel individualemnte a diferencia de las LCD que usan una luz trasera constante para iluminar los pixeles, y posee un amplio ángulo de visión, haciéndola legible en diversas condiciones de iluminación.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.45\textwidth]{img/MarcoTeorico/oled.jpg}
+            \caption{imagen ilustrativa de la pantalla utilizada para visualizar mediciones y datos del multimetro.}
+        \end{figure}
+        \item \textbf{Conversión Analógica-Digital (ADC):} El corazón funcional del multímetro reside en el módulo ADC del RP2350, encargado de traducir el mundo físico analógico al dominio digital que puede procesar el microcontrolador. Un ADC toma una señal de voltaje continua y la cuantifica en un número finito de niveles discretos; en nuestro caso, el ADC de 12 bits del RP2350 divide el rango de 0 V a 3.3 V en $2^{12} = 4096$ niveles distintos, ofreciendo una resolución teórica de aproximadamente 0.8 mV por nivel. En la práctica, la función \texttt{read\_u16()} de MicroPython expande esta lectura a 16 bits (65535 niveles) para mantener la compatibilidad por lo que resultando en una resolución de lectura de $3.3 / 65535 \approx 50\ \mu\text{V}$ por bit. Para mitigar el ruido inherente en cualquier ADC especificado en aproximadamente ±30 mV en el \textit{datasheet} del RP2350 implementamos un filtro por software que promedia 16 lecturas consecutivas, reduciendo el ruido efectivo por un factor de $\sqrt{16} = 4$ y mejorando significativamente la estabilidad de las mediciones mostradas al usuario.
+
+        \item \textbf{Resistencia de Shunt:} La medición de corriente en nuestro amperímetro se fundamenta en el principio físico del shunt resistivo, que es una aplicación directa de la Ley de Ohm. Un shunt es una resistencia de valor conocido y deliberadamente bajo que se coloca en serie con el circuito bajo prueba. Al circular una corriente $I$ a través de esta resistencia $R_{\text{shunt}}$, se genera una caída de voltaje $V_{\text{shunt}}$ entre sus terminales que es directamente proporcional a dicha corriente. Midiendo este voltaje con el canal ADC1 del microcontrolador, podemos calcular la corriente de forma indirecta.
+
+        La selección de $R_{\text{shunt}} = 1\ \Omega$ no es arbitraria, es un criterio de simplicidad matemática y minimización del error de carga. La deducción es la siguiente:
+
+        \begin{center}
+        \begin{tabular}{c c c}
+            \textbf{Ley de Ohm} & $\rightarrow$ & $V_{\text{shunt}} = I \cdot R_{\text{shunt}}$ \\[8pt]
+            \textbf{Despejando la corriente} & $\rightarrow$ & $I = \dfrac{V_{\text{shunt}}}{R_{\text{shunt}}}$ \\[8pt]
+            \textbf{Sustituyendo } $R_{\text{shunt}} = 1\ \Omega$ & $\rightarrow$ & $I = \dfrac{V_{\text{shunt}}}{1\ \Omega}$ \\[8pt]
+            \textbf{Simplificando} & $\rightarrow$ & \boxed{I_{\text{[A]}} = V_{\text{shunt}}}
+        \end{tabular}
+        \end{center}
+
+        Esta igualdad significa que el valor numérico del voltaje medido en el pin ADC (en voltios) es idéntico al valor de la corriente que circula por el shunt (en amperios). En el código, esta corriente se expresa en miliamperios para mayor legibilidad en la pantalla OLED, resultando en la operación \texttt{corriente\_mA = voltaje * 1000}. Adicionalmente, el valor de 1 $\Omega$ asegura que, para la corriente máxima de diseño de 300 mA, lo cual es un buen rango para medir corriente de circuitos pequeños.
         
-        \item \textbf{Pantalla OLED con protocolo I2C:} La visualización de las mediciones se implementó con una pantalla OLED SSD1306 de 128×64 píxeles que se comunica a través del protocolo I2C (Inter-Integrated Circuit). Se eligió este tipo de pantalla sobre alternativas como los LCD de caracteres por varias razones: su naturaleza gráfica de píxeles permite diseñar una interfaz de usuario rica con animaciones, íconos y barras de progreso, lo cual mejora sustancialmente la experiencia del usuario frente a las pantallas alfanuméricas tradicionales. El protocolo I2C es particularmente conveniente porque utiliza solamente dos líneas de comunicación (SDA para datos y SCL para reloj), lo que libera pines GPIO para otros periféricos como los botones y los ADC. Adicionalmente, la tecnología OLED ofrece un alto contraste nativo, no requiere retroiluminación y posee un amplio ángulo de visión, haciéndola legible en diversas condiciones de iluminación.
-
-        \item \textbf{Conversión Analógica-Digital (ADC):} El corazón funcional del multímetro reside en el módulo ADC del RP2350, encargado de traducir el mundo físico analógico al dominio digital que puede procesar el microcontrolador. Un ADC toma una señal de voltaje continua y la cuantifica en un número finito de niveles discretos; en nuestro caso, el ADC de 12 bits del RP2350 divide el rango de 0 V a 3.3 V en $2^{12} = 4096$ niveles distintos, ofreciendo una resolución teórica de aproximadamente 0.8 mV por nivel. En la práctica, la función \texttt{read\_u16()} de MicroPython expande esta lectura a 16 bits (65535 niveles) para mantener compatibilidad en el ecosistema, resultando en una resolución de lectura de $3.3 / 65535 \approx 50\ \mu\text{V}$ por bit. Para mitigar el ruido inherente en cualquier ADC —especificado en aproximadamente ±30 mV en el \textit{datasheet} del RP2350— implementamos un filtro por software que promedia 16 lecturas consecutivas, reduciendo el ruido efectivo por un factor de $\sqrt{16} = 4$ y mejorando significativamente la estabilidad de las mediciones mostradas al usuario.
-
-        \item \textbf{Efecto Joule y Shunt:} La medición de corriente en nuestro amperímetro se fundamenta en el principio físico del shunt resistivo, que es una aplicación directa de la Ley de Ohm y el Efecto Joule. Un shunt es una resistencia de valor conocido y muy bajo (en nuestro caso, 1 $\Omega$) que se coloca en serie con el circuito bajo prueba; al circular corriente a través de ella, se genera una caída de voltaje proporcional según $V = I \cdot R$, y midiendo esa voltaje con el ADC se calcula indirectamente la corriente. La resistencia de 1 $\Omega$ fue seleccionada porque simplifica la conversión matemática ($I = V / 1 = V$) y mantiene la caída de voltaje lo suficientemente pequeña para no interferir con el circuito medido. El Efecto Joule ($P = I^2 \cdot R$) establece que esta resistencia disipará potencia en forma de calor.
     \end{itemize}
+
+    \newpage
 
     % ============================================================
     % SECCIÓN 3: CÁLCULOS Y DISEÑO DEL CIRCUITO
@@ -476,7 +508,80 @@
     % ============================================================
     \section{Diagrama de flujo del programa}
 
+    \begin{center}
+    \begin{tikzpicture}[scale=0.65, transform shape, node distance=0.9cm,
+        startstop/.style={rectangle, rounded corners, minimum width=2.8cm, minimum height=0.7cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+        process/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+        decision/.style={diamond, minimum width=2.2cm, minimum height=0.7cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.5},
+        substate/.style={rectangle, minimum width=3.2cm, minimum height=0.7cm, align=center, draw=black, fill=blue!20, font=\footnotesize},
+        connect/.style={circle, minimum size=0.4cm, draw=black, fill=gray!30, font=\tiny, inner sep=0pt},
+        arrow/.style={thick,->,>=stealth}]
 
+        % ===== ESTADO INTRO =====
+        \node (start) [startstop] {Inicio\\main()};
+        \node (hw) [process, below=of start] {Configurar hardware:\\I2C OLED, 4 botones,\\3 canales ADC};
+        \node (intro) [substate, below=of hw] {Estado: INTRO\\Ejecutar animacion\_intro()\\Efecto borde, titulo,\\nombres integrantes};
+
+        % ===== TRANSICIÓN A MENÚ (bloque único) =====
+        \node (ir_menu) [process, below=of intro] {Cambiar estado a MENU\\dibujar\_menu()};
+
+        % ===== ESTADO MENU =====
+        \node (menu_title) [substate, below=of ir_menu] {Estado: MENU\\Mostrar 3 opciones:\\Temperatura, Voltaje DC,\\Corriente DC};
+
+        \node (chk_arriba) [decision, below=0.3cm of menu_title] {Botón\\ARRIBA?};
+        \node (do_arriba) [process, right=4.0cm of chk_arriba] {indice\_menu > 0?\\Decrementar índice\\Redibujar menú};
+
+        \node (chk_abajo) [decision, below=0.3cm of chk_arriba] {Botón\\ABAJO?};
+        \node (do_abajo) [process, right=4.0cm of chk_abajo] {indice\_menu < 2?\\Incrementar índice\\Redibujar menú};
+
+        \node (chk_enter) [decision, below=0.3cm of chk_abajo] {Botón\\ENTER?};
+        \node (leyendo) [process, below=2.0cm of chk_enter] {Mostrar "Leyendo..."\\Cambiar estado a MEDICION};
+
+        % ===== ESTADO MEDICION =====
+        \node (med_title) [substate, below=of leyendo] {Estado: MEDICIÓN\\Seleccionar según índice:\\0: medir\_temperatura()\\1: medir\_voltaje()\\2: medir\_corriente()};
+
+        \node (display) [process, below=of med_title] {dibujar\_medicion()\\Mostrar valor numérico,\\unidad y barra de progreso};
+
+        \node (wait) [process, below=of display] {Esperar 250 ms};
+
+        \node (chk_back) [decision, below=of wait] {Botón\\BACK?};
+
+        % ===== FLECHAS =====
+        \draw [arrow] (start) -- (hw);
+        \draw [arrow] (hw) -- (intro);
+        \draw [arrow] (intro) -- (ir_menu);
+        \draw [arrow] (ir_menu) -- (menu_title);
+
+        % Flujo del menú
+        \draw [arrow] (menu_title) -- (chk_arriba);
+        \draw [arrow] (chk_arriba) -- node[above, font=\tiny]{Sí} (do_arriba);
+        \draw [arrow] (chk_arriba) -- node[right, font=\tiny]{No} (chk_abajo);
+        \draw [arrow] (do_arriba.south) -- ++(0,-0.3) -| (chk_abajo.east);
+
+        \draw [arrow] (chk_abajo) -- node[above, font=\tiny]{Sí} (do_abajo);
+        \draw [arrow] (chk_abajo) -- node[right, font=\tiny]{No} (chk_enter);
+        \draw [arrow] (do_abajo.south) -- ++(0,-0.3) -| (chk_enter.east);
+
+        \draw [arrow] (chk_enter) -- node[right, font=\tiny]{Sí} (leyendo);
+        % Flecha de "No" en ENTER: regreso al menú
+        \draw [arrow] (chk_enter.west) -- ++(-3.0,0) |- (menu_title.west);
+
+        % Flujo de medición
+        \draw [arrow] (leyendo) -- (med_title);
+        \draw [arrow] (med_title) -- (display);
+        \draw [arrow] (display) -- (wait);
+        \draw [arrow] (wait) -- (chk_back);
+
+        % Flecha de "No" en BACK: se mantiene en MEDICION
+        \draw [arrow] (chk_back.east) -- ++(2.5,0) |- (med_title.east);
+
+        % Flecha de "Sí" en BACK: regreso al menú
+        \draw [arrow] (chk_back.west) -- ++(-5.0,0) |- (menu_title.west);
+
+    \end{tikzpicture}
+    \end{center}
+
+    En el diagrama de flujo se observa que el programa inicia configurando todo el hardware (comunicación I2C para la pantalla OLED, los 4 botones con pull-up y los 3 canales ADC). A continuación, entra en el estado \texttt{INTRO}, donde se ejecuta la secuencia de animación con efecto de borde expansivo, título del proyecto y nombres de los integrantes. Al finalizar la animación, se transita al estado \texttt{MENU} donde se dibujan las tres opciones disponibles (Temperatura, Voltaje DC, Corriente DC) y se entra en un bucle de espera de eventos de botones. Si se presiona ARRIBA o ABAJO, se modifica el índice del menú y se redibuja la pantalla resaltando la nueva selección; si se presiona ENTER, se transita al estado \texttt{MEDICION}. En este último estado, el programa ejecuta cíclicamente la función de medición correspondiente según la opción elegida, despliega el valor numérico junto con su unidad y una barra de progreso proporcional al rango, y actualiza la pantalla cada 250 ms. Si en cualquier momento se presiona el botón BACK, se regresa inmediatamente al estado \texttt{MENU} para elegir otra magnitud. Este lazo entre MENU y MEDICION se repite indefinidamente, implementando así la máquina de estados finitos que gobierna el comportamiento completo del multímetro.
 
     % ============================================================
     % SECCIÓN 6: CÓDIGO FUENTE DOCUMENTADO
@@ -494,7 +599,80 @@
 
     \lstinputlisting[language=Python, caption={Proyecto.py --- Multímetro digital con Pico 2W}]{code/Proyecto.py}
 
-    \subsection{Documentación del código}
+    \subsection{Documentación del código y de las funciones}
+
+    A continuación se describe el propósito, la lógica de operación y los detalles de implementación de cada una de las funciones que componen el programa del multimetro, organizadas por bloques funcionales.
+
+    % ============================================================
+    \subsubsection{Funciones auxiliares}
+
+    \begin{itemize}
+        \item \textbf{\texttt{debounce()}} \\
+        Retorna \texttt{True} únicamente si han transcurrido al menos 200\,ms desde la última pulsación válida registrada. Utiliza la función \texttt{time.ticks\_ms()} del módulo \texttt{time} para obtener el tiempo actual en milisegundos y \texttt{time.ticks\_diff()} para calcular la diferencia con la variable global \texttt{ultimo\_pulso}. Si el intervalo es mayor que \texttt{DEBOUNCE\_MS}, actualiza \texttt{ultimo\_pulso} y retorna \texttt{True}; en caso contrario, retorna \texttt{False}. Esta función evita que el ruido de rebote de los push-buttons genere múltiples eventos por una sola presión.
+
+        \item \textbf{\texttt{leer\_adc\_promedio(adc, n=NUM\_MUESTRAS)}} \\
+        Recibe un objeto ADC de MicroPython y un número de muestras \texttt{n} (por defecto 16). Realiza \texttt{n} lecturas consecutivas del ADC mediante \texttt{adc.read\_u16()} y retorna un entero de 16 bits en el rango 0--65535—, las acumula en una variable \texttt{suma} y retorna el promedio. Este filtro sirve para reducir el ruido inherente del ADC en un factor de $\sqrt{n} = 4$, para mejorar la estabilidad de las mediciones mostradas.
+    \end{itemize}
+
+    % ============================================================
+    \subsubsection{Funciones de medición}
+
+    \begin{itemize}
+        \item \textbf{\texttt{medir\_temperatura()}} \\
+        Obtiene el promedio de lecturas del canal ADC2 (pin GP28) donde se conecta el sensor LM35 y convierte la lectura digital a voltaje en el pin multiplicando por \texttt{ADC\_FACTOR} ($3.3/65535$). Finalmente, divide este voltaje entre \texttt{LM35\_FACTOR} ($0.010$\,V/°C), que es la función de transferencia del sensor LM35, obteniendo la temperatura en grados Celsius y retorna la temperatura como flotante.
+
+        \item \textbf{\texttt{medir\_voltaje()}} \\
+        Mide el voltaje externo presente en el divisor resistivo conectado al canal ADC0 (pin GP26). El proceso es: 1promediar 16 lecturas del ADC, 2 convertir a voltaje en el pin multiplicando por \texttt{ADC\_FACTOR}, y 3 multiplicar por \texttt{DIVISOR\_FACTOR} ($\approx 6.4545$) para obtener el voltaje real aplicado antes del divisor. Este factor es la inversa de la atenuación del divisor $R_1=12\,\text{k}\Omega$, $R_2=2.2\,\text{k}\Omega$. Retorna el voltaje real en voltios DC.
+
+        \item \textbf{\texttt{medir\_corriente()}} \\
+        Mide la corriente que circula a través de la resistencia shunt de 1\,$\Omega$ conectada al canal ADC1 (pin GP27). Obtiene el promedio de lecturas, lo convierte a voltaje con \texttt{ADC\_FACTOR} y aplica la Ley de Ohm: $I = V / R_{\text{shunt}}$. Dado que $R_{\text{shunt}} = 1\,\Omega$ tal y como vimos en el marco teorico, donde el voltaje es igual a la corriente. El resultado se multiplica por 1000 para expresarlo en miliamperios, que es la unidad mostrada en pantalla.
+    \end{itemize}
+
+    \subsubsection{Funciones de dibujo en la pantalla OLED}
+
+    \begin{itemize}
+        \item \textbf{\texttt{dibujar\_marco(titulo="")}} \\
+        Función auxiliar que dibuja un marco decorativo estándar en la pantalla OLED. Limpia el display, traza un rectángulo perimetral y una línea doble en la parte superior. Si se proporciona un argumento \texttt{titulo}, rellena una barra superior y centra el texto horizontalmente en ella.
+
+        \item \textbf{\texttt{centrar\_texto(texto, y, color=1)}} \\
+        Calcula la coordenada $x$ necesaria para centrar horizontalmente una cadena de texto en la pantalla de 128 píxeles de ancho y la escribe en la posición $(x, y)$ con el color especificado (1 = azul, 0 = negro).
+
+        \item \textbf{\texttt{animacion\_intro()}} \\
+        Ejecuta la secuencia de bienvenida del multímetro al encender el dispositivo. Se compone de cuatro fases: un efecto de borde que se expande desde el centro, la aparición progresiva del título ``MULTIMETRO'' letra por letra, la revelación secuencial de los nombres de los integrantes del equipo, y un desplazamiento horizontal que sirve como transición visual hacia el menú principal. Cada fase utiliza bucles con pausas controladas para crear la ilusión de movimiento.
+
+        \item \textbf{\texttt{dibujar\_menu()}} \\
+        Dibuja la interfaz del menú principal con las tres opciones de medición (Temperatura, Voltaje DC, Corriente DC). La opción actualmente seleccionada, determinada por la variable global \texttt{indice\_menu}, se resalta invirtiendo los colores y anteponiendo el carácter \texttt{">"} como indicador visual. Las demás opciones se muestran con texto azul sobre fondo negro.
+
+        \item \textbf{\texttt{dibujar\_medicion(nombre, valor, unidad)}} \\
+        Presenta el resultado de una medición en pantalla. Muestra el nombre de la magnitud en una barra de título, el valor numérico formateado según el tipo de medición (un decimal para temperatura y corriente, dos para voltaje) y la unidad correspondiente. Incluye además una barra de progreso horizontal que indica gráficamente la proporción del valor medido respecto al rango máximo de cada magnitud, y el botón BACK para regresar al menú.
+    \end{itemize}
+
+    % ============================================================
+    \subsubsection{Función principal y máquina de estados}
+
+    \begin{itemize}
+        \item \textbf{\texttt{main()}} \\
+        Es el cerebro del multimetro y usa directa o inderectamente las funciones previas y determina el estado en el que se encuentra el multimetro.
+        \begin{enumerate}
+            \item \textbf{Inicialización:} Establece el estado inicial como \texttt{"INTRO"} y ejecuta la secuencia de animación \texttt{animacion\_intro()}. Al finalizar, cambia el estado a \texttt{"MENU"} y llama a \texttt{dibujar\_menu()} para mostrar la interfaz de selección.
+            \item \textbf{Bucle principal (\texttt{while True}):} Evalúa continuamente la variable global \texttt{estado} para determinar el comportamiento que debe tener el multimetro:
+            \begin{itemize}
+                \item \textbf{Estado \texttt{"MENU"}:} Verifica secuencialmente los botones ARRIBA, ABAJO y ENTER. Los botones ARRIBA y ABAJO modifican \texttt{indice\_menu} con límites inferior (0) y superior (\texttt{len(opciones\_menu)-1}) respectivamente, y redibujan el menú para reflejar la nueva selección. El botón ENTER cambia el estado a \texttt{"MEDICION"} y muestra momentáneamente el mensaje \texttt{"Leyendo..."} como retroalimentación visual.
+                \item \textbf{Estado \texttt{"MEDICION"}:} Según el valor de \texttt{indice\_menu}, ejecuta la función de medición correspondiente y llama a \texttt{dibujar\_medicion()} con los parámetros adecuados. El bucle se repite cada 250\,ms para mantener una lectura en tiempo real. Dentro de este estado, solo se atiende el botón BACK, que al ser presionado restablece el estado a \texttt{"MENU"} y redibuja la interfaz de selección.
+            \end{itemize}
+            \item \textbf{Control de CPU:} Una pausa de 10\,ms al final de cada iteración del bucle principal (\texttt{time.sleep\_ms(10)}) evita la saturación del procesador, permitiendo que el microcontrolador opere de manera eficiente y con bajo consumo energético.
+        \end{enumerate}
+    \end{itemize}
+
+    % ============================================================
+    \subsubsection{Variables globales y constantes}
+
+    \begin{itemize}
+        \item \textbf{\texttt{estado}:} Cadena que define el modo actual del programa. Puede tomar los valores \texttt{"INTRO"}, \texttt{"MENU"} o \texttt{"MEDICION"}, determinando qué código se ejecuta en cada iteración del bucle principal.
+        \item \textbf{\texttt{indice\_menu}:} Entero que indica la opción actualmente seleccionada en el menú (0 = Temperatura, 1 = Voltaje DC, 2 = Corriente DC). Es modificado por los botones ARRIBA y ABAJO, y utilizado tanto en \texttt{dibujar\_menu()} como en el estado \texttt{"MEDICION"} para elegir la función de medición correcta.
+        \item \textbf{\texttt{DEBOUNCE\_MS} y \texttt{ultimo\_pulso}:} Definen el tiempo mínimo entre pulsaciones (200\,ms) y almacenan la marca de tiempo de la última pulsación válida, respectivamente. 
+        \item \textbf{\texttt{ADC\_FACTOR}, \texttt{DIVISOR\_FACTOR}, \texttt{R\_SHUNT}, \texttt{LM35\_FACTOR}, \texttt{NUM\_MUESTRAS}:} Constantes de calibración que efinen la conversión entre lecturas del ADC y las magnitudes físicas medidas.
+    \end{itemize}
 
     \subsubsection{Configuración de hardware}
 
@@ -519,6 +697,238 @@
     % ============================================================
     \section{Análisis de resultados}
 
+    A continuación se presentan los resultados visuales del funcionamiento del multímetro digital, organizados por cada uno de los modos de operación del sistema. Las imágenes muestran la interfaz desplegada en la pantalla OLED SSD1306 durante las diferentes etapas de ejecución del programa.
+
+    % ============================================================
+    \subsection{Secuencia de animación de inicio}
+
+    Al energizar el dispositivo, el programa ejecuta la función \texttt{animacion\_intro()} que despliega una secuencia de bienvenida con efectos visuales. Las siguientes imágenes capturan los momentos clave de esta animación.
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.6\textwidth, angle=90]{img/anim/anim_1.jpg}
+            \caption{Inicio: Pantalla en negro.}
+            \label{fig:anim1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.6\textwidth, angle=90]{img/anim/anim_2.jpg}
+            \caption{Nombre de la tarjeta en que se desarolló.}
+            \label{fig:anim2}
+        \end{subfigure}
+        \caption{Animación de inicio (parte 1 de 4).}
+        \label{fig:anim_a}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_3.jpg}
+            \caption{Aparición gradual del nombre del primer integrante Ezpinoza Percival.}
+            \label{fig:anim3}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_4.jpg}
+            \caption{Aparición gradual del nombre del segundo integrante Flores Victor.}
+            \label{fig:anim4}
+        \end{subfigure}
+        \caption{Animación de inicio (parte 2 de 4).}
+        \label{fig:anim_b}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_5.jpg}
+            \caption{Aparición gradual del nombre del tercer integrante Lara Ángel.}
+            \label{fig:anim5}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_6.jpg}
+            \caption{Desparición gradual de los nombres de derecha a izquierda.}
+            \label{fig:anim6}
+        \end{subfigure}
+        \caption{Animación de inicio (parte 3 de 4).}
+        \label{fig:anim_c}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_8.jpg}
+            \caption{Desaparición total del nombre de los integrantes.}
+            \label{fig:anim7}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=0.60\textwidth, angle=90]{img/anim/anim_7.jpg}
+            \caption{Aparición final del menú del multimetro con todas sus opciones.}
+            \label{fig:anim8}
+        \end{subfigure}
+        \caption{Animación de inicio (parte 4 de 4).}
+        \label{fig:anim_d}
+    \end{figure}
+
+    % ============================================================
+    \subsection{Menú principal}
+
+    Una vez finalizada la animación de inicio, el sistema presenta el menú principal con las tres opciones de medición disponibles. La navegación se realiza mediante los botones ARRIBA y ABAJO, y la opción resaltada se distingue por el fondo blanco y el indicador \texttt{">"}.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[trim={20cm 0 35cm 0}, clip, width=0.48\textwidth, angle=-90]{img/main/main_1.jpg}
+        \caption{Menú principal mostrando las tres opciones: Temperatura, Voltaje DC y Corriente DC.}
+        \label{fig:main1}
+    \end{figure}
+    % ============================================================
+    \subsection{Medición de temperatura}
+
+    Al seleccionar la opción ``Temperatura'' del menú principal y presionar ENTER, el sistema comienza a medir la temperatura mediante el sensor LM35 y despliega el valor en grados Celsius, actualizándolo cada 250 ms.
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/temperatura/temperatura_1.jpg}
+            \caption{Selección de Temperatura en el menú principal.}
+            \label{fig:temp1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/temperatura/temperatura_2.jpg}
+            \caption{Pantalla de medición de temperatura ambiente 27 C.}
+            \label{fig:temp2}
+        \end{subfigure}
+        \caption{Medición de temperatura (parte 1 de 2).}
+        \label{fig:temp_a}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[trim={20cm 0 35cm 0}, clip, width=0.48\textwidth, angle=-90]{img/temperatura/temperatura_3.jpg}
+        \caption{Medición de temperatura tras aplicar calor al sensor LM35.}
+        \label{fig:temp3}
+    \end{figure}
+
+    % ============================================================
+    \subsection{Medición de voltaje DC}
+
+    Al seleccionar la opción ``Voltaje DC'', el sistema mide el voltaje presente en el divisor resistivo y despliega el valor reconstruido aplicando el factor de escala de 6.4545.
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/Corriente/Corriente_1.jpg}
+            \caption{Selección de Voltaje DC en el menú principal.}
+            \label{fig:volt1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/Corriente/Corriente_2.jpg}
+            \caption{visualización de la medición de voltaje DC a de una pila de 9V, se observan 8.81V.}
+            \label{fig:volt2}
+        \end{subfigure}
+        \caption{Medición de voltaje DC (parte 1 de 2).}
+        \label{fig:volt_a}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/Corriente/Corriente_3.jpg}
+            \caption{Segunda medición del voltaje de la pila de 9V, para garantizar consistecia, se miden 9 V. }
+            \label{fig:volt3}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth, angle=-90]{img/Corriente/Corriente_4.jpg}
+            \caption{Tercera medición del voltaje de la pila de 9V, para garantizar consistecia, se ven 9.04 V.}
+            \label{fig:volt4}
+        \end{subfigure}
+        \caption{Medición de voltaje DC (parte 2 de 2).}
+        \label{fig:volt_b}
+    \end{figure}
+
+
+    % ============================================================
+    \subsection{Medición de intensidad de corriente DC}
+
+    Al seleccionar la opción ``Corriente DC'', el sistema mide la caída de voltaje en la resistencia shunt de 1 $\Omega$ y calcula la corriente en miliamperios.
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_1.jpg}
+            \caption{Selección de Corriente DC en el menú principal.}
+            \label{fig:corr1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_2.jpg}
+            \caption{Medición de corriente DC sin carga conectada.}
+            \label{fig:corr2}
+        \end{subfigure}
+        \caption{Medición de corriente DC (parte 1 de 3).}
+        \label{fig:corr_a}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_3.jpg}
+            \caption{Primera edición de corriente DC en pila de 9V, se miden 711.8 mA DC.}
+            \label{fig:corr3}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_4.jpg}
+            \caption{Segunda medición de corriente DC en pila de 9V para demostrar consistencia, se miden 699.11 mA DC.}
+            \label{fig:corr4}
+        \end{subfigure}
+        \caption{Medición de corriente DC (parte 2 de 3).}
+        \label{fig:corr_b}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_5.jpg}
+            \caption{Tercera medición de corriente DC en pila de 9V para demostrar consistencia, se miden 684.1 mA DC.}
+            \label{fig:corr5}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[trim={20cm 0 35cm 0}, clip, width=\textwidth]{img/Intensidad_corriente/Intensidad_corriente_6.jpg}
+            \caption{Cuarta medición de corriente DC en pila de 9V para demostrar consistencia, se miden 639.8 mA DC.}
+            \label{fig:corr6}
+        \end{subfigure}
+        \caption{Medición de corriente DC (parte 3 de 3).}
+        \label{fig:corr_c}
+    \end{figure}
+
+    % ============================================================
     \subsection{Verificación del voltímetro}
 
     El divisor de voltaje con $R_1 = 12\;\text{k}\Omega$ y $R_2 = 2.2\;\text{k}\Omega$ produce un factor de escala de 6.4545. Para verificar la precisión, se pueden comparar las lecturas del multímetro digital diseñado contra un multímetro comercial de referencia.
@@ -549,16 +959,27 @@
 
     La precisión del LM35 es de $\pm$0.5°C típica, por lo que la resolución del ADC no es el factor limitante.
 
+    \subsection{Análisis final de resultados}
+
+    Los resultados obtenidos validan el correcto funcionamiento del multímetro digital en sus tres modos de operación. La animación de inicio se ejecutó de forma fluida, presentando adecuadamente el nombre de la tarjeta, los integrantes del equipo y la transición al menú principal. En el modo de temperatura, el sensor LM35 respondió de manera inmediata a la aplicación de calor, incrementando la lectura desde la temperatura ambiente hasta valores superiores, lo que confirma la sensibilidad del sensor y la correcta conversión analógica-digital. Para la medición de voltaje DC, se utilizó una pila comercial de 9 V como referencia, obteniéndose lecturas de 8.81 V, 9.00 V y 9.04 V en mediciones consecutivas; estas variaciones son atribuibles a la tolerancia del divisor de voltaje, al ruido del ADC y al propio estado de carga de la pila, y se mantienen dentro de un margen aceptable para un instrumento de propósito educativo. En cuanto a la medición de corriente DC sobre la misma pila de 9 V, se registraron valores de 711.8 mA, 699.11 mA, 684.1 mA y 639.8 mA en lecturas sucesivas. La tendencia decreciente observada es consistente con la descarga progresiva de la pila al suministrar una corriente considerable a través del shunt de i ohm, lo que evidencia el efecto de carga del instrumento sobre el circuito bajo prueba, un fenómeno esperado y documentado en la teoría de mediciones. Estas pruebas demuestran que el sistema cumple con los objetivos planteados: ofrece una interfaz de usuario funcional y realiza mediciones en tiempo real con una precisión razonable dadas las limitaciones del hardware.
+
+
     % ============================================================
     % SECCIÓN 8: CONCLUSIONES
     % ============================================================
     \section{Conclusiones}
 
-    \subsection{Espinoza Matamoros Percival Ulises}
+        \subsection{Espinoza Matamoros Percival Ulises}
 
-    \subsection{Flores Colin Victor Jaziel}
+        El desarrollo de este multímetro digital me permitió consolidar la comprensión de la arquitectura de la Raspberry Pi Pico 2W y su ecosistema de desarrollo en MicroPython. La implementación de la máquina de estados para gestionar la navegación entre la animación de inicio, el menú principal y los modos de medición fue particularmente enriquecedora, ya que me enfrentó al reto de coordinar eventos asíncronos —las pulsaciones de los botones— con un bucle de actualización continua de las lecturas. El sistema de anti-rebote por software y el filtrado mediante promedio de muestras del ADC demostraron ser soluciones simples pero efectivas para mejorar la estabilidad del instrumento sin añadir componentes externos. Considero que el proyecto logró un equilibrio adecuado entre funcionalidad, costo y complejidad, y me deja como aprendizaje principal la importancia de planificar la estructura del código antes de escribirlo, especialmente cuando se combinan periféricos de entrada, salida y comunicación serial en un solo firmware.
 
-    \subsection{Lara Hernandez Angel Husiel}
+        \subsection{Flores Colin Victor Jaziel}
+
+        Mi principal contribución y aprendizaje en este proyecto giró en torno al acondicionamiento de señales analógicas y su integración con el convertidor analógico-digital del RP2350. El diseño del divisor de voltaje con resistencias de 12 k$\Omega$ y 2.2 k$\Omega$ me obligó a aplicar criterios prácticos de ingeniería: no bastaba con obtener un factor de escala adecuado, sino que era indispensable verificar que el voltaje en el pin ADC nunca excediera los límites absolutos del \textit{datasheet} (3.6 V) y que la potencia disipada en las resistencias y en el shunt estuviera dentro de márgenes seguros. La verificación experimental con la pila de 9 V arrojó lecturas de 8.81 V a 9.04 V, cuya variación atribuyo a las tolerancias de las resistencias del divisor y al ruido del ADC. Por otra parte, la medición de corriente evidenció un fenómeno interesante: la lectura decreció de 711.8 mA a 639.8 mA en mediciones consecutivas, lo cual es consistente con la descarga de la pila al demandar una corriente elevada. Esta observación me enseñó que el propio acto de medir puede perturbar el sistema bajo prueba, un principio fundamental en metrología. En conjunto, el proyecto reforzó mi capacidad para tender puentes entre los cálculos teóricos y el comportamiento real de un circuito.
+
+        \subsection{Lara Hernandez Angel Husiel}
+
+        Este proyecto representó para mí una introducción práctica al diseño de interfaces de usuario en sistemas embebidos con recursos limitados. Trabajar con la pantalla OLED SSD1306 de 128×64 píxeles a través del protocolo I2C me enfrentó al desafío de crear una experiencia de navegación intuitiva usando únicamente cuatro botones y una resolución modesta. La implementación de la animación de inicio —con efectos de expansión, escritura progresiva y revelación de nombres— me demostró que, incluso con las limitaciones de MicroPython y la velocidad del bus I2C, es posible lograr transiciones visuales atractivas si se administran correctamente los tiempos de refresco y se optimiza el redibujado parcial de la pantalla. La decisión de utilizar una barra de progreso horizontal para representar gráficamente la proporción de cada medición respecto a su rango máximo añadió un elemento de retroalimentación visual que, en las pruebas con usuarios, resultó muy valorado. Como aprendizaje final, destaco la importancia de la experiencia de usuario en instrumentos de medición: una lectura numérica precisa pierde valor si la interfaz que la presenta no es clara, responsiva y fácil de interpretar.
 
     % ============================================================
     % BIBLIOGRAFÍA
