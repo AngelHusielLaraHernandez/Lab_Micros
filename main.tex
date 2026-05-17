@@ -424,17 +424,96 @@
             print('IP address:', network_info[0]) 
     \end{lstlisting}
 
-    \section*{Propuesta de solucion}
+    \section*{Propuesta de solución}
 
+    \begin{figure}[H]
+        \begin{tikzpicture}[node distance=0.4cm and 0.4cm,
+            startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=0.8cm, align=center, draw=black, fill=red!30, font=\footnotesize},
+            process/.style={rectangle, minimum width=3cm, minimum height=0.8cm, align=center, draw=black, fill=orange!30, font=\footnotesize},
+            decision/.style={diamond, minimum width=3cm, minimum height=0.8cm, align=center, draw=black, fill=green!30, font=\footnotesize, aspect=2.2},
+            io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=0.8cm, align=center, draw=black, fill=blue!30, font=\footnotesize},
+            arrow/.style={thick,->,>=stealth}]
+
+            % --- Columna Principal (Configuración y flujo base) ---
+            \node (start) [startstop] {Inicio};
+            \node (setup) [process, below=of start] {Importar \texttt{network, sleep}\\Definir \texttt{ssid, password}};
+            \node (wlan) [process, below=of setup] {\texttt{wlan = network.WLAN()}\\ \texttt{wlan.active(True)}\\ \texttt{wlan.connect()}};
+            \node (timer) [process, below=of wlan] {\texttt{connection\_timeout = 10}};
+
+            \node (loop1) [decision, below=of timer] {¿\texttt{timeout > 0}?};
+            \node (loop2) [decision, below=of loop1] {¿\texttt{wlan.status() $\ge$ 3}?};
+
+            % --- Columna Derecha (Cuerpo del bucle while) ---
+            \node (dec_time) [process, right=0.8cm of loop2] {\texttt{timeout -= 1}};
+            \node (print_wait) [io, below=of dec_time] {Espera conexión WIFI};
+            \node (sleep) [process, below=of print_wait] {\texttt{sleep(1)}};
+
+            % --- Chequeo Final (Columna Principal) ---
+            % Separado hacia abajo para dar espacio a los nodos de la derecha
+            \node (check_final) [decision, below=3.8cm of loop2] {¿\texttt{wlan.status() $\neq$ 3}?};
+
+            % --- Flujo de Error (Derecha del chequeo final) ---
+            \node (error) [process, right=1.2cm of check_final] {\texttt{raise RuntimeError}\\('Error en conexión')};
+            \node (end_err) [startstop, below=of error] {Fin (Error)};
+
+            % --- Flujo de Éxito (Columna Principal) ---
+            \node (print_ok) [io, below=of check_final] {Conexion establecida};
+            \node (get_ip) [process, below=of print_ok] {\texttt{network\_info = wlan.ifconfig()}};
+            \node (print_ip) [io, below=of get_ip] {IP address:\\ \texttt{network\_info[0]}};
+            \node (end_ok) [startstop, below=of print_ip] {Fin (Éxito)};
+
+            % --- Conexiones ---
+            \draw [arrow] (start) -- (setup);
+            \draw [arrow] (setup) -- (wlan);
+            \draw [arrow] (wlan) -- (timer);
+            \draw [arrow] (timer) -- (loop1);
+
+            % Lógica del Bucle (while)
+            \draw [arrow] (loop1) -- node[left, font=\footnotesize] {Sí} (loop2);
+            % Salida del while por timeout (False)
+            \draw [arrow] (loop1.west) -- ++(-1.5,0) node[above, font=\footnotesize] {No} |- (check_final.west);
+
+            % Lógica interna del bucle (if status >= 3)
+            \draw [arrow] (loop2) -- node[above, font=\footnotesize] {No} (dec_time);
+            % Salida por break (True)
+            \draw [arrow] (loop2.south) -- node[left, font=\footnotesize] {Sí (Break)} (check_final.north);
+
+            % Regreso del bucle
+            \draw [arrow] (dec_time) -- (print_wait);
+            \draw [arrow] (print_wait) -- (sleep);
+            \draw [arrow] (sleep.east) -- ++(1.2,0) |- (loop1.east);
+
+            % Lógica post-bucle
+            \draw [arrow] (check_final) -- node[above, font=\footnotesize] {Sí} (error);
+            \draw [arrow] (error) -- (end_err);
+
+            \draw [arrow] (check_final) -- node[left, font=\footnotesize] {No} (print_ok);
+            \draw [arrow] (print_ok) -- (get_ip);
+            \draw [arrow] (get_ip) -- (print_ip);
+            \draw [arrow] (print_ip) -- (end_ok);
+        \end{tikzpicture}
+        \centering
+    \end{figure}
+    
+    En el código proporcionado lo primero que se realiza es la importación de la biblioteca \texttt{network}, este módulo es el que permite controlar el hardware de red de la Raspberry Pi Pico W, y la función \texttt{sleep} del módulo \texttt{time}, que se utiliza para pausar la ejecución del programa durante un período de tiempo específico. 
+
+    Posteriormente, se definen dos variables nombradas \texttt{ssid} y \texttt{password}, las cuales deben ser reemplazadas por el nombre de la red WiFi a la que se desea conectar la Pico W y su contraseña correspondiente. En nuestro caso para disminuir los problemas de conexión se opto por utilizar una red personal creada con un teléfono móvil, con el nombre \texttt{S23+ de Angel} y la contraseña \texttt{angel1280731}.
+
+    Ya con las credenciales de la red Wi-fi definidas, se procede a crear un objeto \texttt{wlan} utilizando la clase \texttt{WLAN} del módulo \texttt{network}, configurándolo en modo estación (STA\_IF) para que la Pico W actúe como cliente. Luego, se activa la interfaz WiFi con \texttt{wlan.active(True)} y se intenta conectar a la red especificada mediante \texttt{wlan.connect(ssid, password)}, durante la conexión se espera un máximo de 10 segundos, esta verificación se realoza por medio de un ciclo \texttt{while} que revisa el estado de la conexión con \texttt{wlan.status()}. Si la conexión se establece exitosamente (estado 3 o superior), se rompe el ciclo; de lo contrario, se decrementa el contador de tiempo y se imprime un mensaje indicando que se está esperando la conexión. Si después del tiempo límite la conexión no se ha establecido, se lanza una excepción \texttt{RuntimeError} indicando un error en la conexión. En caso de éxito, se imprime un mensaje confirmando que la conexión fue establecida y se obtiene la configuración de red asignada a la Pico W mediante \texttt{wlan.ifconfig()}, mostrando específicamente la dirección IP obtenida.
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]Python}, caption=Codigo de la Actividad 2, basicstyle=\ttfamily\scriptsize]{Code/Act2.py}
 
-
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad2/Act2_1.jpg}
+        \caption{Consola mostrando los intentos de conexión WiFi, el mensaje de éxito y la dirección IP asignada a la Raspberry Pi Pico W.}
+    \end{figure}
 
     \subsection*{Analisis de resultados}
 
+    Al ejecutar el código de la Actividad 2, se observa en la consola que la Raspberry Pi Pico W intenta establecer una conexión WiFi con la red especificada. Durante el proceso, se imprimen mensajes indicando que se está esperando la conexión. En nuestro caso, despúe de unos segundos, se muestra el mensaje "Conexión establecida", lo que indica que la Pico W logró conectarse exitosamente a la red WiFi. A continuación, se imprime la dirección IP asignada a la Pico W, lo que confirma que ha obtenido una configuración de red válida. De forma que a partir de esta dirección IP, la Pico W puede ser accedida desde otros dispositivos en la misma red local, lo que es fundamental para aplicaciones del internet de las cosas donde se requiere comunicación entre dispositivos. 
     \newpage
     \section*{Actividad 3}
 
@@ -455,16 +534,39 @@
     \end{lstlisting}
     \section*{Propuesta de solución}
 
+    El código HTML proporcionado para esta actividad es una página web simple que permite controlar un LED conectado al pin GPIO2 de la Raspberry Pi Pico W a través de botones. La estructura del documento HTML se compone de las siguientes partes:
 
+    \begin{itemize}
+        \item \texttt{<html>}: Es la etiqueta raíz que define el inicio del documento HTML.
+        \item \texttt{<head>}: Contiene metadatos y elementos que no se muestran directamente en la página, en este caso el titulo de la pestaña.
+        \item \texttt{<title>}: Define el título de la página que se muestra en la pestaña del navegador.
+        \item \texttt{<body>}: Contiene el contenido visible de la página.
+        \item \texttt{<h1>}: Es un encabezado de nivel 1, la cuál se usa para mostrar el título principal de la página.
+        \item \texttt{<p>}: Define un párrafo que contiene un enlace con un botón para encender el LED. El enlace apunta a la URL \texttt{/?led=on}, lo que indica que al hacer clic en el botón, se enviará una petición al servidor con el parámetro  \texttt{led} establecido en \texttt{\texttt{on}}.
+        \item Otro \texttt{<p>} Es lo mismo que la linea anterior, pero con un botón para apagar el LED, apuntando a \texttt{/?led=off}. Esto permitirá al servidor interpretar la acción del usuario y controlar el estado del LED en consecuencia. 
+    \end{itemize}
+
+    A partir de esta estructura principal de código HTML, se dio formato a la página utilizando etiquetas de estilo CSS para personalizar la apariencia de los botones, el fondo y el texto, con el objetivo de mejorar la experiencia del usuario al interactuar con la interfaz web para controlar el LED.
+
+    La primera modificación fue cambiar el nombre del título por \texttt{Servidor Web Pico W} posteriormente por medio de código CSS se personalizó aspectos como el tipo de letra, el tamaño, el color y el fondo de la página. Para los botones se aplicaron dos estilos diferentes, uno para el botón de encendido (LED 1 ON) con un fondo verde y otro para el botón de apagado (LED 1 OFF) con un fondo gris, ambos con texto blanco para mejorar la legibilidad. 
+
+    Para añadir el nombre de los integrantes del equipo, se agregó una linea \texttt{hr} para separar visualmente el contenido principal de la página y debajo de esta se añadió un encabezado \texttt{<h3>} con el texto \texttt{Integrantes del equipo} posteriormente se añadieron párrafos con los nombres de cada integrante del equipo, utilizando la etiqueta \texttt{<p>} para cada nombre.
 
 
     \section*{Desarrollo}
 
     \lstinputlisting[language={[LAB]HTMLCSS}, caption=Código de la Actividad 3, basicstyle=\ttfamily\scriptsize]{Code/Act3.html}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/Actividad3/Act3_1.jpg}
+        \caption{Visualización de la página web con la personalización aplicada y los nombres de los integrantes del equipo.}
+    \end{figure}
+
 
     \subsection*{Análisis de resultados}
 
+    Al ingresar a la dirección IP de la Raspberry Pi Pico W (\texttt{192.168.79.233}) con el código HTML modificado, se muestra una página web la personalización esperada, en la parte superior se encuentra el título \texttt{Servidor Web Pico W}, un encabezado centrado con la leyenda \texttt{Control de Microcomputadoras} y los respectivos botones para encender y apagar el LED, con el formato de colores aplicado (verde para ON y gris para OFF) y en la parte inferior de la página se muestra una sección con el encabezado \texttt{Integrantes del equipo} seguido de los nombres de cada integrante, lo que confirma que las modificaciones realizadas al código HTML fueron exitosas y se visualizan correctamente en el navegador.
 
     \newpage
 
@@ -857,8 +959,12 @@
     \section{Conclusiones:}
 
     \begin{itemize}
-        \item \textbf{Espinoza Matamoros Percival Ulises:} 
+        \item \textbf{Espinoza Matamoros Percival Ulises:} A partir de la realización de esta práctica pude aprender como conectarme a una red WiFi utilizando la Raspberry Pi Pico W, entendiend el proceso inicial que se debe realziar para conectarse a una red Wifi, de forma que la raspberry puede actuar como un servidor web embebido, permitiendo controlar y monitorear periféricos conectados a la Pico W desde cualquier dispositivo como leds, zumbadores, botones, etc siempre y cuando nos encontremos conectados dentro de la misma red local. Sin embargo esto no se limita solo a controlar periféricos, sino que en general se puede utilizar para cualquier proyecto que requiera comunicación inalámbrica con lo visto en prácticas anteriores como lo puede ser el control de una señal PWM, o la lectura de un sensor analógico, comunicación I2C, etc. De forma que la unica limitacion es el diseño para que funcione correctamente todo lo anteriormente mencionado a partir de las respuestas o solicitudes que se hagan desde la interfaz web.
+        
+        Por otro lado, como la inerfaz web hace uso de HTML y CSS, se pueden diseñar páginas con estilos personalizados para mejorar la experiencia del usuario ofrecindo una gran flexibilidad para mostrar la información de los periféricos y los controles de una forma más atractiva. Donde el tener conocimiendo sobre desarrollo web puede ser de gran ayuda para crear interfaces más complejas y funcionales, aunque con lo visto en esta práctica se pueden crear interfaces simples pero efectivas para controlar los periféricos conectados a la Raspberry Pi Pico W.
 
+        Por lo que en especifico la raspberry pi pico w es un microcontrolador muy versatil que al contar con conectividad WiFi integrada, se pueden realizar una gran diversidad de proyectos donde a parte de aprovechar sus capacidades de conectividad, se pueden aprovechar sus otras funcionaldades como doble core, comunicación I2C, ADC, PWM, etc. para crear aplicaciones completas y funcionales.
+        
         \item \textbf{Flores Colin Victor Jaziel:} En esta última práctica logré comprender de manera más profunda cómo funciona la conectividad WiFi en la Raspberry Pi Pico W y cómo implementar un servidor web para controlar y monitorear periféricos de forma remota, aunque al principio tuvimos problemas para identificar los puertos para trabajar con los actuadores, ya que en nuestra tarjeta los puertos eran diferentes a los del manual pero, finalmente conseguimos dar con los puertos correctos en la Raspberry y pudimos realizar los experimentos de forma optima.
         
         Al trabajar con las diferentes actividades pude observar cómo cada petición del cliente es analizada por el servidor para ejecutar acciones específicas sobre el hardware, como encender LEDs, ajustar el volumen del zumbador mediante PWM o cambiar el color del RGB a través del expansor PCF8574. Me pareció muy interesante ver cómo el servidor también puede leer el estado de entradas digitales (como los botones S1 y S2) y mostrarlas en tiempo real en la interfaz web, lo que permite una interacción bidireccional completa entre el usuario y la Pico W. También me quedó claro el concepto de generación dinámica de HTML, donde los estados actuales de los dispositivos se insertan directamente en la página antes de enviarla al cliente, evitando tener que hacer múltiples peticiones al servidor.
